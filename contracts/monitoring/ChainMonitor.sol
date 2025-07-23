@@ -8,7 +8,9 @@ import "../cache/DistributedCache.sol";
 
 /**
  * @title ChainMonitor
- * @dev Sistema de monitoreo y mantenimiento para la cadena Arbitrum
+ * @notice Blockchain monitoring contract for BrainSafes
+ * @dev Tracks chain health, events, and anomalies
+ * @author BrainSafes Team
  */
 contract ChainMonitor is AccessControl {
     bytes32 public constant MONITOR_ROLE = keccak256("MONITOR_ROLE");
@@ -94,7 +96,13 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Recolectar métricas de la cadena
+     * @notice Collects metrics from the blockchain.
+     * @dev Only roles with MONITOR_ROLE can call this function.
+     *      Checks if metrics are collected within the METRICS_INTERVAL.
+     *      Retrieves block information from NodeInterface.
+     *      Calculates and caches metrics.
+     *      Emits MetricsCollected event.
+     *      Performs threshold checks.
      */
     function collectMetrics() external onlyRole(MONITOR_ROLE) {
         require(
@@ -129,7 +137,12 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Realizar health check
+     * @notice Performs a health check on the blockchain.
+     * @dev Only roles with MONITOR_ROLE can call this function.
+     *      Checks if health check is performed within the HEALTH_CHECK_INTERVAL.
+     *      Evaluates chain health, state size, and average block time.
+     *      Emits HealthCheckPerformed event.
+     *      Creates maintenance tasks if health is compromised.
      */
     function performHealthCheck() external onlyRole(MONITOR_ROLE) {
         require(
@@ -186,7 +199,13 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Crear tarea de mantenimiento
+     * @notice Creates a new maintenance task.
+     * @dev Only roles with MAINTAINER_ROLE can call this function.
+     *      Assigns a task ID and initializes its status.
+     *      Emits MaintenanceTaskCreated event.
+     * @param description A description of the task.
+     * @param taskType The type of maintenance task.
+     * @return The ID of the created maintenance task.
      */
     function createMaintenanceTask(
         string calldata description,
@@ -217,7 +236,13 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Completar tarea de mantenimiento
+     * @notice Completes a maintenance task.
+     * @dev Only roles with MAINTAINER_ROLE can call this function.
+     *      Updates the task's status, completion time, and result.
+     *      Emits MaintenanceTaskCompleted event.
+     * @param taskId The ID of the task to complete.
+     * @param success A boolean indicating if the task completed successfully.
+     * @param result A string containing the result of the task.
      */
     function completeMaintenanceTask(
         uint256 taskId,
@@ -236,7 +261,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Verificar umbrales
+     * @notice Checks various thresholds and emits warnings if conditions are met.
+     * @dev Internal function to evaluate metrics against predefined thresholds.
+     * @param metrics The current chain metrics.
      */
     function _checkThresholds(ChainMetrics memory metrics) internal {
         if (metrics.stateSize >= WARN_STATE_SIZE) {
@@ -249,7 +276,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Obtener tamaño del estado
+     * @notice Retrieves the current state size of the blockchain.
+     * @dev Placeholder implementation.
+     * @return The current state size in bytes.
      */
     function _getStateSize() internal view returns (uint256) {
         // Implementar obtención real del tamaño del estado
@@ -257,7 +286,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Obtener conteo de transacciones
+     * @notice Retrieves the current transaction count of the blockchain.
+     * @dev Placeholder implementation.
+     * @return The current transaction count.
      */
     function _getTxCount() internal view returns (uint256) {
         // Implementar conteo real de transacciones
@@ -265,7 +296,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Calcular tiempo promedio de bloque
+     * @notice Calculates the average block time of the blockchain.
+     * @dev Placeholder implementation.
+     * @return The average block time in seconds.
      */
     function _calculateAvgBlockTime() internal view returns (uint256) {
         // Implementar cálculo real
@@ -273,7 +306,11 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Añadir advertencia al array
+     * @notice Appends a warning message to the array of warnings.
+     * @dev Internal helper function to concatenate warnings.
+     * @param warnings The existing array of warnings.
+     * @param warning The new warning message to add.
+     * @return A new array containing all original warnings plus the new one.
      */
     function _appendWarning(
         string[] memory warnings,
@@ -288,7 +325,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Obtener última marca de tiempo de métricas
+     * @notice Retrieves the timestamp of the last collected metrics.
+     * @dev Public view function.
+     * @return The timestamp of the last collected metrics.
      */
     function getLastMetricTimestamp() public view returns (uint256) {
         if (lastMetricId == 0) return 0;
@@ -296,7 +335,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Obtener última marca de tiempo de health check
+     * @notice Retrieves the timestamp of the last performed health check.
+     * @dev Public view function.
+     * @return The timestamp of the last health check.
      */
     function getLastHealthCheckTimestamp() public view returns (uint256) {
         if (lastHealthCheckId == 0) return 0;
@@ -304,7 +345,11 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Obtener métricas históricas
+     * @notice Retrieves historical metrics within a specified range.
+     * @dev Public view function.
+     * @param fromId The starting metric ID.
+     * @param toId The ending metric ID.
+     * @return An array of ChainMetrics.
      */
     function getHistoricalMetrics(
         uint256 fromId,
@@ -321,7 +366,9 @@ contract ChainMonitor is AccessControl {
     }
 
     /**
-     * @dev Obtener tareas de mantenimiento pendientes
+     * @notice Retrieves pending maintenance tasks.
+     * @dev Public view function.
+     * @return An array of MaintenanceTask objects.
      */
     function getPendingTasks() external view returns (MaintenanceTask[] memory) {
         uint256 pendingCount = 0;

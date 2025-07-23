@@ -6,6 +6,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../optimizations/AddressCompressor.sol";
 import "../cache/DistributedCache.sol";
 
+/**
+ * @title EnhancedEducationSystem
+ * @notice Enhanced education management contract for BrainSafes
+ * @dev Provides advanced features for courses, tracking, and analytics
+ * @author BrainSafes Team
+ */
 contract EnhancedEducationSystem {
     ArbSys constant arbsys = ArbSys(address(0x64));
     
@@ -77,6 +83,14 @@ contract EnhancedEducationSystem {
         });
     }
 
+    /**
+     * @notice Verifies a cross-chain certificate by validating its proof.
+     * @param certificateId The ID of the certificate to verify.
+     * @param l1Hash The hash of the certificate on Layer 1.
+     * @param l2Hash The hash of the certificate on Layer 2.
+     * @param proof The cross-chain proof data.
+     * @return bool True if the certificate is verified, false otherwise.
+     */
     function verifyCrosschainCertificate(
         uint256 certificateId,
         bytes32 l1Hash,
@@ -117,6 +131,11 @@ contract EnhancedEducationSystem {
         return true;
     }
 
+    /**
+     * @notice Distributes a reward to a student based on their score.
+     * @param student The address of the student receiving the reward.
+     * @param score The total score of the student.
+     */
     function _distributeReward(address student, uint256 score) internal {
         require(block.timestamp >= lastRewardTime[student] + rewardConfig.cooldownPeriod, "Cooldown active");
 
@@ -143,6 +162,13 @@ contract EnhancedEducationSystem {
         emit RewardDistributed(student, finalAmount, "Certificate completion");
     }
 
+    /**
+     * @notice Updates the skill level of a student for a specific skill.
+     * @param student The address of the student.
+     * @param skill The name of the skill.
+     * @param newLevel The new skill level.
+     * @param proof The proof data for the skill update.
+     */
     function updateSkillLevel(
         address student,
         string memory skill,
@@ -163,6 +189,11 @@ contract EnhancedEducationSystem {
         emit SkillLevelUpdated(student, skill, newLevel);
     }
 
+    /**
+     * @notice Optimizes the storage of a student's certificate data by removing old, verified certificates.
+     * @param student The address of the student.
+     * @return uint256 The amount of storage saved.
+     */
     function optimizeStorageData(address student) external returns (uint256) {
         EducationalData storage data = studentData[student];
         uint256 savedStorage = 0;
@@ -212,6 +243,11 @@ contract EnhancedEducationSystem {
     }
 
     // Getters optimizados
+    /**
+     * @notice Retrieves the list of certificate IDs for a specific student.
+     * @param student The address of the student.
+     * @return uint256[] The list of certificate IDs.
+     */
     function getStudentCertificates(address student) external view returns (uint256[] memory) {
         bytes32 cacheKey = keccak256(abi.encodePacked("certs", student));
         bytes memory cached = cache.get(cacheKey);
@@ -223,6 +259,12 @@ contract EnhancedEducationSystem {
         return studentData[student].certificateIds;
     }
 
+    /**
+     * @notice Retrieves the skill level of a student for a specific skill.
+     * @param student The address of the student.
+     * @param skill The name of the skill.
+     * @return uint256 The skill level.
+     */
     function getSkillLevel(address student, string memory skill) external view returns (uint256) {
         bytes32 cacheKey = keccak256(abi.encodePacked(student, skill));
         bytes memory cached = cache.get(cacheKey);

@@ -7,7 +7,9 @@ import "../cache/DistributedCache.sol";
 
 /**
  * @title BlobManager
- * @dev Gestor de blobs para soporte post-4844 en Arbitrum
+ * @notice Blob storage manager for BrainSafes
+ * @dev Handles large data storage and retrieval
+ * @author BrainSafes Team
  */
 contract BlobManager is AccessControl, ReentrancyGuard {
     bytes32 public constant BLOB_ADMIN_ROLE = keccak256("BLOB_ADMIN_ROLE");

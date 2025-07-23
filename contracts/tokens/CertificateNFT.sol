@@ -12,8 +12,8 @@ import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
 /**
  * @title CertificateNFT
- * @dev NFTs for verifiable educational certificates with comprehensive metadata
- * @dev Features: Rich metadata, blockchain verification, controlled transfers
+ * @notice ERC721 NFT contract for educational certificates in BrainSafes
+ * @dev Supports rich metadata, endorsements, and verification
  * @author BrainSafes Team
  */
 contract CertificateNFT is 

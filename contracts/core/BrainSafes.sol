@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title BrainSafes
- * @dev Main contract of the BrainSafes ecosystem - Immutable version
- * @dev This version cannot be upgraded and is suitable for users who prefer immutability
+ * @notice Core contract for the BrainSafes e-learning and credential ecosystem
+ * @dev Handles user management, course lifecycle, achievements, AI integration, and external modules
  * @author BrainSafes Team
  */
 contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
@@ -205,6 +205,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== REGISTRATION FUNCTIONS ==========
     /**
      * @dev Registers a new user on the platform
+     * @param _name The name of the user.
+     * @param _email The email address of the user.
+     * @param _ipfsProfile The IPFS hash of the user's profile.
      */
     function registerUser(
         string memory _name,
@@ -235,6 +238,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Registers an instructor
+     * @param instructor The address of the instructor to register.
      */
     function registerInstructor(address instructor) external onlyRole(ADMIN_ROLE) {
         require(userProfiles[instructor].isActive, "User must be registered first");
@@ -244,6 +248,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Registers an organization
+     * @param organization The address of the organization to register.
      */
     function registerOrganization(address organization) external onlyRole(ADMIN_ROLE) {
         require(userProfiles[organization].isActive, "User must be registered first");
@@ -253,6 +258,15 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== COURSE FUNCTIONS ==========
     /**
      * @dev Creates a new course
+     * @param _title The title of the course.
+     * @param _description The description of the course.
+     * @param _ipfsContent The IPFS hash of the course content.
+     * @param _price The price of the course.
+     * @param _duration The duration of the course in days.
+     * @param _maxStudents The maximum number of students for the course.
+     * @param _skills An array of skills associated with the course.
+     * @param _difficulty The difficulty level of the course (1-5).
+     * @return The ID of the created course.
      */
     function createCourse(
         string memory _title,
@@ -300,6 +314,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Enroll in a course
+     * @param courseId The ID of the course to enroll in.
      */
     function enrollInCourse(uint256 courseId) external payable onlyValidUser(msg.sender) onlyActiveCourse(courseId) whenNotPaused {
         Course storage course = courses[courseId];
@@ -342,6 +357,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Complete a course
+     * @param courseId The ID of the course to complete.
+     * @param score The score achieved by the student.
+     * @param proofOfCompletion A proof of completion (e.g., hash of a document).
      */
     function completeCourse(
         uint256 courseId,
@@ -399,6 +417,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== AI FUNCTIONS ==========
     /**
      * @dev Predict student performance using AI
+     * @param student The address of the student.
+     * @param courseId The ID of the course.
+     * @return The predicted performance score.
      */
     function predictStudentPerformance(address student, uint256 courseId) public view returns (uint256) {
         require(aiIntegrationEnabled, "AI integration disabled");
@@ -407,6 +428,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Get personalized learning path with AI
+     * @param student The address of the student.
+     * @return An array of course IDs recommended for the student.
      */
     function getPersonalizedLearningPath(address student) public view returns (uint256[] memory) {
         require(aiIntegrationEnabled, "AI integration disabled");
@@ -415,6 +438,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Detect fraudulent activity
+     * @param user The address of the user.
+     * @param activityHash A hash of the activity to detect fraud for.
+     * @return True if the activity is fraudulent, false otherwise.
      */
     function detectFraudulentActivity(address user, bytes32 activityHash) public view returns (bool) {
         require(aiIntegrationEnabled, "AI integration disabled");
@@ -423,6 +449,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Batch predict student performance
+     * @param students An array of student addresses.
+     * @param courseIds An array of course IDs.
+     * @return An array of predicted performance scores.
      */
     function batchPredictPerformance(
         address[] calldata students,
@@ -434,6 +463,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Update AI insights for a user
+     * @param user The address of the user.
      */
     function _updateAIInsights(address user) internal aiEnabled {
         uint256 prediction = aiOracle.predictStudentPerformance(user, 0); // General prediction
@@ -454,6 +484,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== SCHOLARSHIP FUNCTIONS ==========
     /**
      * @dev Apply for a scholarship automatically
+     * @param amount The amount of scholarship to apply for.
+     * @param reason A reason for the scholarship application.
      */
     function applyForScholarship(uint256 amount, string memory reason) external onlyValidUser(msg.sender) {
         scholarshipManager.applyForScholarship(msg.sender, amount, reason);
@@ -461,6 +493,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Evaluate scholarship eligibility with AI
+     * @param student The address of the student to evaluate.
+     * @return The calculated score and eligibility status.
      */
     function evaluateScholarshipEligibility(address student) external view returns (uint256 score, bool eligible) {
         return scholarshipManager.evaluateScholarshipAI(student);
@@ -469,6 +503,11 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== ACHIEVEMENT FUNCTIONS ==========
     /**
      * @dev Create a new achievement
+     * @param _name The name of the achievement.
+     * @param _description A description of the achievement.
+     * @param _ipfsMetadata The IPFS hash of the achievement metadata.
+     * @param _requiredPoints The reputation points required to unlock the achievement.
+     * @param _reward The reward amount in EDU tokens.
      */
     function createAchievement(
         string memory _name,
@@ -493,6 +532,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Check and award achievements
+     * @param user The address of the user to check achievements for.
      */
     function _checkAchievements(address user) internal {
         UserProfile storage profile = userProfiles[user];
@@ -525,6 +565,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== HELPER FUNCTIONS ==========
     /**
      * @dev Calculate course completion reward
+     * @param coursePrice The price of the course.
+     * @param score The score achieved by the student.
+     * @return The calculated reward amount.
      */
     function _calculateCompletionReward(uint256 coursePrice, uint256 score) internal pure returns (uint256) {
         if (score < 60) return 0;
@@ -535,6 +578,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Distribute payments among stakeholders
+     * @param courseId The ID of the course.
+     * @param amount The total amount to distribute.
      */
     function _distributePayments(uint256 courseId, uint256 amount) internal {
         Course storage course = courses[courseId];
@@ -554,6 +599,9 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Find enrollment ID
+     * @param courseId The ID of the course.
+     * @param student The address of the student.
+     * @return The ID of the enrollment.
      */
     function _findEnrollmentId(uint256 courseId, address student) internal view returns (uint256) {
         for (uint256 i = 1; i <= _enrollmentIdCounter.current(); i++) {
@@ -567,6 +615,11 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== ADMINISTRATION FUNCTIONS ==========
     /**
      * @dev Update platform configuration
+     * @param _platformFeePercentage The new platform fee percentage (0-1000).
+     * @param _instructorRewardPercentage The new instructor reward percentage (0-10000).
+     * @param _studentRewardPercentage The new student reward percentage (0-1000).
+     * @param _minimumStakeAmount The new minimum stake amount in EDU tokens.
+     * @param _maxCoursesPerInstructor The new maximum courses per instructor.
      */
     function updatePlatformConfig(
         uint256 _platformFeePercentage,
@@ -588,6 +641,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Emergency pause/unpause contracts
+     * @param reason The reason for the emergency pause.
      */
     function emergencyPause(string memory reason) external onlyRole(ADMIN_ROLE) {
         _pause();
@@ -608,6 +662,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== VIEW FUNCTIONS ==========
     /**
      * @dev Get user information
+     * @param user The address of the user.
+     * @return The user's profile information.
      */
     function getUserProfile(address user) external view returns (UserProfile memory) {
         return userProfiles[user];
@@ -615,6 +671,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Get user courses
+     * @param user The address of the user.
+     * @return An array of course IDs the user is enrolled in.
      */
     function getUserCourses(address user) external view returns (uint256[] memory) {
         return userCourses[user];
@@ -622,6 +680,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Get course students
+     * @param courseId The ID of the course.
+     * @return An array of student addresses enrolled in the course.
      */
     function getCourseStudents(uint256 courseId) external view returns (address[] memory) {
         return courseStudents[courseId];
@@ -629,6 +689,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Get user AI insights
+     * @param user The address of the user.
+     * @return The user's AI insights.
      */
     function getAIInsights(address user) external view returns (AIInsight memory) {
         return aiInsights[user];
@@ -636,6 +698,7 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
 
     /**
      * @dev Get platform statistics
+     * @return The total number of courses, enrollments, achievements, and users.
      */
     function getPlatformStats() external view returns (
         uint256 totalCourses,
@@ -654,6 +717,8 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     // ========== UPGRADE FUNCTIONS ==========
     /**
      * @dev Update external contract address
+     * @param contractName The name of the contract to update.
+     * @param newAddress The new address for the contract.
      */
     function updateContractAddress(string memory contractName, address newAddress) external onlyRole(ADMIN_ROLE) {
         require(newAddress != address(0), "Invalid address");

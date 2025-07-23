@@ -8,7 +8,9 @@ import "../cache/DistributedCache.sol";
 
 /**
  * @title AdvancedOptimizations
- * @dev Implementación de BoLD (Better Online Data Availability) y TimeBoost
+ * @notice Advanced gas and storage optimization contract for BrainSafes
+ * @dev Implements cutting-edge optimization techniques
+ * @author BrainSafes Team
  */
 contract AdvancedOptimizations is AccessControl {
     bytes32 public constant OPTIMIZER_ROLE = keccak256("OPTIMIZER_ROLE");

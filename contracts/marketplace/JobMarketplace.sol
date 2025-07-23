@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * @title JobMarketplace
- * @dev Decentralized marketplace to connect students with employers
- * @dev Features: Smart matching, credential verification, automated payments
+ * @notice Decentralized job marketplace for BrainSafes ecosystem
+ * @dev Handles job posting, application, matching, and hiring with AI integration
  * @author BrainSafes Team
  */
 contract JobMarketplace is AccessControl, ReentrancyGuard, Pausable {

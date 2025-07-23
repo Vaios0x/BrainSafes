@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 /**
  * @title AddressCompressor
- * @dev Utilidad para compresión y descompresión de direcciones usando ArbAddressTable en Arbitrum
+ * @notice Utility for compressing and decompressing addresses in BrainSafes
+ * @dev Optimizes storage and gas by mapping addresses to indices
  * @author BrainSafes Team
  */
 import "@arbitrum/nitro-contracts/src/precompiles/ArbAddressTable.sol";

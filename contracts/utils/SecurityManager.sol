@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 /**
  * @title SecurityManager
- * @dev Control de seguridad: listas blancas/negras, validación de contratos y upgrades.
+ * @notice Role and security management utility for BrainSafes
+ * @dev Handles access control, contract security, and critical validations
  * @author BrainSafes Team
  */
 contract SecurityManager {

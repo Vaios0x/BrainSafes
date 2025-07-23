@@ -13,9 +13,8 @@ import "@arbitrum/nitro-contracts/src/bridge/ITokenGateway.sol";
 
 /**
  * @title EDUToken
- * @dev Native ERC-20 token for the BrainSafes ecosystem
- * @dev Features: Mintable, Burnable, Pausable, with Rewards and Staking System
- * @dev Optimized for Arbitrum with custom bridge support
+ * @notice ERC20 utility token for BrainSafes ecosystem
+ * @dev Supports minting, burning, staking, and rewards
  * @author BrainSafes Team
  */
 contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausable, ICustomToken {

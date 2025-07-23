@@ -7,7 +7,9 @@ import "../cache/DistributedCache.sol";
 
 /**
  * @title BoLDSystem
- * @dev Sistema de Better Online Data Availability para BrainSafes
+ * @notice Blockchain-based Open Learning Data system for BrainSafes
+ * @dev Manages open learning data and analytics
+ * @author BrainSafes Team
  */
 contract BoLDSystem is AccessControl, ReentrancyGuard {
     bytes32 public constant BOLD_ADMIN_ROLE = keccak256("BOLD_ADMIN_ROLE");
@@ -78,6 +80,9 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Almacenar nuevo chunk de datos
+     * @param data Raw data to be stored.
+     * @param compressedData Compressed data.
+     * @return bytes32 The hash of the stored data chunk.
      */
     function storeDataChunk(
         bytes calldata data,
@@ -125,6 +130,9 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Validar chunk de datos
+     * @param dataHash The hash of the data chunk to validate.
+     * @param approve True to approve, false to reject.
+     * @param validationHash A unique hash for the validation.
      */
     function validateDataChunk(
         bytes32 dataHash,
@@ -170,6 +178,8 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Verificar si un chunk debe ser invalidado
+     * @param dataHash The hash of the data chunk to check.
+     * @return bool True if the chunk should be invalidated, false otherwise.
      */
     function _shouldInvalidateChunk(bytes32 dataHash) internal view returns (bool) {
         uint256 rejections = 0;
@@ -186,6 +196,8 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Invalidar chunk de datos
+     * @param dataHash The hash of the data chunk to invalidate.
+     * @param reason The reason for invalidation.
      */
     function _invalidateChunk(bytes32 dataHash, string memory reason) internal {
         DataChunk storage chunk = dataChunks[dataHash];
@@ -200,6 +212,11 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Actualizar configuración de compresión
+     * @param _minCompressionRatio Minimum compression ratio.
+     * @param _maxChunkSize Maximum chunk size.
+     * @param _minValidations Minimum validations required.
+     * @param _validationTimeout Validation timeout.
+     * @param _compressionRequired True if compression is required.
      */
     function updateCompressionConfig(
         uint256 _minCompressionRatio,
@@ -221,6 +238,9 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Obtener información de chunk
+     * @param dataHash The hash of the data chunk to get info for.
+     * @return chunk DataChunk struct.
+     * @return chunkValidations Array of ValidationInfo.
      */
     function getDataChunkInfo(
         bytes32 dataHash
@@ -234,6 +254,9 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Verificar validez de datos
+     * @param dataHash The hash of the data chunk to verify.
+     * @param data The raw data to verify against.
+     * @return bool True if data is valid, false otherwise.
      */
     function verifyData(
         bytes32 dataHash,
@@ -247,6 +270,10 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Obtener estadísticas del sistema
+     * @return chunks Total number of chunks.
+     * @return validationCount Total number of validations.
+     * @return dataSize Total size of all data chunks.
+     * @return compressionRatio Average compression ratio.
      */
     function getSystemStats() external view returns (
         uint256 chunks,
@@ -264,6 +291,8 @@ contract BoLDSystem is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Obtener score de validador
+     * @param validator The address of the validator.
+     * @return uint256 The score of the validator.
      */
     function getValidatorScore(address validator) external view returns (uint256) {
         return validatorScores[validator];

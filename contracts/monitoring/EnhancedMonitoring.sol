@@ -6,6 +6,12 @@ import "@arbitrum/nitro-contracts/src/precompiles/NodeInterface.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../optimizations/AddressCompressor.sol";
 
+/**
+ * @title EnhancedMonitoring
+ * @notice Advanced monitoring contract for BrainSafes
+ * @dev Provides analytics, alerts, and automated responses
+ * @author BrainSafes Team
+ */
 contract EnhancedMonitoring is AccessControl {
     ArbSys constant arbsys = ArbSys(address(0x64));
     NodeInterface constant nodeInterface = NodeInterface(address(0xc8));
@@ -78,6 +84,13 @@ contract EnhancedMonitoring is AccessControl {
         _setupRole(RECOVERY_ROLE, msg.sender);
     }
 
+    /**
+     * @notice Monitors a transaction and updates system metrics.
+     * @dev This function is only callable by MONITOR_ROLE.
+     * @param txHash The hash of the transaction.
+     * @param contract_ The address of the contract that executed the transaction.
+     * @param txData The data of the transaction.
+     */
     function monitorTransaction(
         bytes32 txHash,
         address contract_,
@@ -123,6 +136,12 @@ contract EnhancedMonitoring is AccessControl {
         }
     }
 
+    /**
+     * @notice Updates system metrics for a given contract.
+     * @param contract_ The address of the contract.
+     * @param success Whether the transaction was successful.
+     * @param gasUsed The gas used for the transaction.
+     */
     function _updateSystemMetrics(
         address contract_,
         bool success,
@@ -148,6 +167,12 @@ contract EnhancedMonitoring is AccessControl {
         );
     }
 
+    /**
+     * @notice Initiates a recovery process for a failed transaction.
+     * @param txHash The hash of the failed transaction.
+     * @param contract_ The address of the contract that executed the transaction.
+     * @param txData The data of the transaction.
+     */
     function _initiateRecovery(
         bytes32 txHash,
         address contract_,
@@ -176,6 +201,11 @@ contract EnhancedMonitoring is AccessControl {
         emit RecoveryAttempted(txHash, attempt.attemptCount, attempt.successful);
     }
 
+    /**
+     * @notice Attempts to retry a failed transaction with increased gas.
+     * @param contract_ The address of the contract.
+     * @param txData The data of the transaction.
+     */
     function _retryWithMoreGas(
         address contract_,
         bytes calldata txData
@@ -190,6 +220,11 @@ contract EnhancedMonitoring is AccessControl {
         }
     }
 
+    /**
+     * @notice Attempts to fragment a failed transaction.
+     * @param contract_ The address of the contract.
+     * @param txData The data of the transaction.
+     */
     function _fragmentTransaction(
         address contract_,
         bytes calldata txData
@@ -198,6 +233,11 @@ contract EnhancedMonitoring is AccessControl {
         // Este es un placeholder - la implementación real dependería del contexto
     }
 
+    /**
+     * @notice Attempts to perform a rollback for a failed transaction.
+     * @param contract_ The address of the contract.
+     * @param txHash The hash of the transaction.
+     */
     function _performRollback(
         address contract_,
         bytes32 txHash
@@ -206,6 +246,11 @@ contract EnhancedMonitoring is AccessControl {
         // Este es un placeholder - la implementación real dependería del contexto
     }
 
+    /**
+     * @notice Extracts an error message from a transaction's result data.
+     * @param result The result data of the transaction.
+     * @return A string containing the error message.
+     */
     function _extractError(bytes memory result) internal pure returns (string memory) {
         // Extraer mensaje de error de los datos de respuesta
         if (result.length < 68) return "Unknown error";
@@ -220,23 +265,48 @@ contract EnhancedMonitoring is AccessControl {
     }
 
     // Funciones de consulta
+    /**
+     * @notice Retrieves detailed metrics for a specific transaction.
+     * @param txHash The hash of the transaction.
+     * @return TransactionMetrics The metrics for the transaction.
+     */
     function getTransactionMetrics(bytes32 txHash) external view returns (TransactionMetrics memory) {
         return transactionMetrics[txHash];
     }
 
+    /**
+     * @notice Retrieves system metrics for a specific contract.
+     * @param contract_ The address of the contract.
+     * @return SystemMetrics The system metrics for the contract.
+     */
     function getSystemMetrics(address contract_) external view returns (SystemMetrics memory) {
         return contractMetrics[contract_];
     }
 
+    /**
+     * @notice Retrieves the recovery status for a specific transaction.
+     * @param txHash The hash of the transaction.
+     * @return RecoveryAttempt The recovery status.
+     */
     function getRecoveryStatus(bytes32 txHash) external view returns (RecoveryAttempt memory) {
         return recoveryAttempts[txHash];
     }
 
+    /**
+     * @notice Retrieves the error count for a specific contract.
+     * @param contract_ The address of the contract.
+     * @return uint256 The error count.
+     */
     function getErrorCount(address contract_) external view returns (uint256) {
         return errorCounts[contract_];
     }
 
     // Función de limpieza
+    /**
+     * @notice Cleans up old metrics.
+     * @dev This function is only callable by MONITOR_ROLE.
+     * @param age The age in blocks of metrics to keep.
+     */
     function cleanupOldMetrics(uint256 age) external onlyRole(MONITOR_ROLE) {
         // Implementar limpieza de métricas antiguas
         // Este es un placeholder - la implementación real dependería del contexto

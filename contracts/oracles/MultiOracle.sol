@@ -11,7 +11,9 @@ import "./interfaces/IChronicleOracle.sol";
 
 /**
  * @title MultiOracle
- * @dev Integra múltiples oráculos para mayor confiabilidad y descentralización
+ * @notice Aggregates multiple oracles for redundancy and reliability in BrainSafes
+ * @dev Supports fallback and consensus mechanisms for data feeds
+ * @author BrainSafes Team
  */
 contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant ORACLE_MANAGER_ROLE = keccak256("ORACLE_MANAGER_ROLE");
@@ -76,7 +78,11 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Obtiene datos agregados de múltiples oráculos
+     * @notice Retrieves aggregated data from multiple oracles
+     * @param dataKey The key identifying the data to be aggregated
+     * @return value The aggregated value
+     * @return numResponses The number of valid responses received
+     * @return timestamp The timestamp of the aggregation
      */
     function getAggregatedData(bytes32 dataKey) external view returns (
         uint256 value,
@@ -91,7 +97,9 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Obtiene el precio de un token usando Chainlink
+     * @notice Retrieves the price of a token using Chainlink
+     * @param token The address of the token
+     * @return price The current price of the token
      */
     function getTokenPrice(address token) external view returns (uint256) {
         (, int256 price,,,) = chainlinkOracle.latestRoundData();
@@ -100,21 +108,29 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Obtiene datos educativos usando API3
+     * @notice Retrieves educational data using API3
+     * @param dataKey The key identifying the educational data
+     * @return data The educational data in bytes
      */
     function getEducationalData(bytes32 dataKey) external view returns (bytes memory) {
         return api3Oracle.getData(dataKey);
     }
 
     /**
-     * @dev Obtiene datos históricos usando Chronicle
+     * @notice Retrieves historical data using Chronicle
+     * @param dataKey The key identifying the historical data
+     * @param timestamp The timestamp for which historical data is requested
+     * @return data The historical data value
      */
     function getHistoricalData(bytes32 dataKey, uint256 timestamp) external view returns (uint256) {
         return chronicleOracle.getHistoricalData(dataKey, timestamp);
     }
 
     /**
-     * @dev Recibe y procesa respuesta de oráculo
+     * @notice Receives and processes an oracle response
+     * @param oracle The address of the oracle sending the response
+     * @param dataKey The key identifying the data being responded to
+     * @param value The value provided by the oracle
      */
     function receiveOracleResponse(
         address oracle,
@@ -193,7 +209,9 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Autoriza o desautoriza un oráculo
+     * @notice Authorizes or deauthorizes an oracle
+     * @param oracle The address of the oracle to authorize/deauthorize
+     * @param authorized True to authorize, false to deauthorize
      */
     function setOracleAuthorization(
         address oracle,
@@ -204,7 +222,9 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Actualiza dirección de oráculo
+     * @notice Updates the address of an oracle
+     * @param oracleType The type of oracle (e.g., "chainlink", "api3", "supra", "chronicle")
+     * @param newAddress The new address for the oracle
      */
     function updateOracleAddress(
         string memory oracleType,
@@ -231,14 +251,14 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Pausa el contrato
+     * @notice Pauses the contract
      */
     function pause() external onlyRole(ORACLE_MANAGER_ROLE) {
         _pause();
     }
 
     /**
-     * @dev Despausa el contrato
+     * @notice Unpauses the contract
      */
     function unpause() external onlyRole(ORACLE_MANAGER_ROLE) {
         _unpause();

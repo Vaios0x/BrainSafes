@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 /**
  * @title EnhancedMulticall
- * @dev Permite ejecutar múltiples llamadas a contratos en una sola transacción, con soporte de gas y revert selectivo.
+ * @notice Utility for batch execution of multiple calls in BrainSafes
+ * @dev Supports gas optimization and advanced call aggregation
  * @author BrainSafes Team
  */
 contract EnhancedMulticall {

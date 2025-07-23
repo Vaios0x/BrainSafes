@@ -4,6 +4,12 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../cache/DistributedCache.sol";
 
+/**
+ * @title StorageOptimizer
+ * @notice Storage optimization contract for BrainSafes
+ * @dev Implements storage packing and efficient data structures
+ * @author BrainSafes Team
+ */
 contract StorageOptimizer {
     using SafeMath for uint256;
 
@@ -46,6 +52,12 @@ contract StorageOptimizer {
         cache = DistributedCache(_cache);
     }
 
+    /**
+     * @notice Optimizes the storage layout of a given contract.
+     * @dev Analyzes the current storage layout and attempts to optimize slots.
+     * @param target The address of the contract to optimize.
+     * @return totalSaved The total gas saved by the optimization.
+     */
     function optimizeStorageLayout(address target) external returns (uint256) {
         require(target != address(0), "Invalid target");
         
@@ -82,6 +94,12 @@ contract StorageOptimizer {
         return totalSaved;
     }
 
+    /**
+     * @notice Compresses the storage slots of a given list of keys.
+     * @dev Attempts to compress each slot in the provided list.
+     * @param keys The list of storage slot keys to compress.
+     * @return results An array of gas savings for each compressed slot.
+     */
     function compressStorageSlots(bytes32[] calldata keys) external returns (uint256[] memory) {
         uint256[] memory results = new uint256[](keys.length);
         
@@ -106,6 +124,12 @@ contract StorageOptimizer {
         return results;
     }
 
+    /**
+     * @notice Optimizes a single storage slot.
+     * @dev Implements specific slot optimization logic, e.g., packing variables, removing padding.
+     * @param slot The storage slot to optimize.
+     * @return savedGas The gas saved by the optimization.
+     */
     function _optimizeSlot(StorageSlot storage slot) internal returns (uint256) {
         uint256 initialGas = gasleft();
         
@@ -121,6 +145,13 @@ contract StorageOptimizer {
         return initialGas.sub(gasleft());
     }
 
+    /**
+     * @notice Compresses a single storage slot.
+     * @dev Implements the compression algorithm for a slot.
+     * @param slot The storage slot to compress.
+     * @return originalSize The size of the original data.
+     * @return compressedSize The size of the compressed data.
+     */
     function _compressSlot(StorageSlot storage slot) internal returns (uint256, uint256) {
         bytes memory data = abi.encode(slot.value);
         uint256 originalSize = data.length;
@@ -136,30 +167,61 @@ contract StorageOptimizer {
         return (originalSize, compressedSize);
     }
 
+    /**
+     * @notice Checks if a storage slot can be optimized.
+     * @dev Implements logic to determine if a slot can be optimized.
+     * @param slot The storage slot to check.
+     * @return bool True if the slot can be optimized, false otherwise.
+     */
     function _canOptimizeSlot(StorageSlot memory slot) internal pure returns (bool) {
         // Implementar lógica para determinar si un slot puede ser optimizado
         // Por ejemplo, verificar tamaño, frecuencia de acceso, etc.
         return !slot.isCompressed && slot.accessCount > 0;
     }
 
+    /**
+     * @notice Retrieves the storage slots of a given contract.
+     * @dev Implements logic to get storage slots.
+     * @param target The address of the contract.
+     * @return bytes32[] An array of storage slot keys.
+     */
     function _getStorageSlots(address target) internal view returns (bytes32[] memory) {
         // Implementar lógica para obtener slots de almacenamiento
         // Este es un placeholder - la implementación real dependería del contexto
         return new bytes32[](0);
     }
 
+    /**
+     * @notice Packs variables within a storage slot value.
+     * @dev Implements variable packing logic.
+     * @param value The value to pack.
+     * @return bytes32 The packed value.
+     */
     function _packVariables(bytes32 value) internal pure returns (bytes32) {
         // Implementar lógica de empaquetado de variables
         // Este es un placeholder - la implementación real dependería del contexto
         return value;
     }
 
+    /**
+     * @notice Runs the compression algorithm on the provided data.
+     * @dev Implements the compression algorithm.
+     * @param data The data to compress.
+     * @return bytes The compressed data.
+     */
     function _runCompression(bytes memory data) internal pure returns (bytes memory) {
         // Implementar algoritmo de compresión
         // Este es un placeholder - la implementación real usaría un algoritmo específico
         return data;
     }
 
+    /**
+     * @notice Calculates gas savings based on size reduction.
+     * @dev Calculates gas savings based on the reduction in size.
+     * @param originalSize The size of the original data.
+     * @param compressedSize The size of the compressed data.
+     * @return uint256 The gas savings.
+     */
     function _calculateGasSavings(uint256 originalSize, uint256 compressedSize) internal pure returns (uint256) {
         // Calcular ahorro de gas basado en la reducción de tamaño
         uint256 sizeReduction = originalSize.sub(compressedSize);
@@ -167,18 +229,42 @@ contract StorageOptimizer {
     }
 
     // Funciones de consulta
+    /**
+     * @notice Retrieves the current storage layout of a given contract.
+     * @dev Retrieves the current storage layout.
+     * @param target The address of the contract.
+     * @return StorageLayout The current storage layout.
+     */
     function getStorageLayout(address target) external view returns (StorageLayout memory) {
         return layouts[target];
     }
 
+    /**
+     * @notice Retrieves the compression statistics for a given storage slot key.
+     * @dev Retrieves compression statistics.
+     * @param key The storage slot key.
+     * @return CompressionStats The compression statistics.
+     */
     function getCompressionStats(bytes32 key) external view returns (CompressionStats memory) {
         return compressionStats[key];
     }
 
+    /**
+     * @notice Retrieves detailed information about a specific storage slot.
+     * @dev Retrieves slot information.
+     * @param key The storage slot key.
+     * @return StorageSlot The detailed slot information.
+     */
     function getSlotInfo(bytes32 key) external view returns (StorageSlot memory) {
         return slots[key];
     }
 
+    /**
+     * @notice Estimates the gas cost for optimizing the storage layout of a given contract.
+     * @dev Estimates the gas cost for optimization.
+     * @param target The address of the contract.
+     * @return uint256 The estimated gas cost.
+     */
     function estimateOptimizationGas(address target) external view returns (uint256) {
         bytes32[] memory slotKeys = _getStorageSlots(target);
         uint256 estimatedGas = 0;

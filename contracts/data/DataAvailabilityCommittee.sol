@@ -7,7 +7,9 @@ import "../optimizations/AddressCompressor.sol";
 
 /**
  * @title DataAvailabilityCommittee
- * @dev Implementación del comité de disponibilidad de datos para AnyTrust
+ * @notice Data availability committee contract for BrainSafes
+ * @dev Ensures data availability and integrity for the system
+ * @author BrainSafes Team
  */
 contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
     bytes32 public constant DAC_MEMBER_ROLE = keccak256("DAC_MEMBER_ROLE");
@@ -57,6 +59,8 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Añadir un nuevo miembro al DAC
+     * @param member The address of the new member.
+     * @param endpoint The endpoint URL for the new member.
      */
     function addMember(
         address member,
@@ -81,6 +85,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Remover un miembro del DAC
+     * @param member The address of the member to remove.
      */
     function removeMember(address member) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(members[member].isActive, "Member not active");
@@ -96,6 +101,8 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Enviar datos para confirmación
+     * @param data The data bytes to submit.
+     * @return The hash of the submitted data.
      */
     function submitData(
         bytes calldata data
@@ -117,6 +124,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Confirmar disponibilidad de datos
+     * @param dataHash The hash of the data chunk to confirm.
      */
     function confirmData(bytes32 dataHash) external onlyRole(DAC_MEMBER_ROLE) {
         require(members[msg.sender].isActive, "Not an active member");
@@ -145,6 +153,8 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Verificar si un miembro está activo
+     * @param member The address of the member to check.
+     * @return True if the member is active, false otherwise.
      */
     function isMemberActive(address member) public view returns (bool) {
         DACMember memory dacMember = members[member];
@@ -154,6 +164,8 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Verificar si los datos están disponibles
+     * @param dataHash The hash of the data chunk to check.
+     * @return True if the data is available, false otherwise.
      */
     function isDataAvailable(bytes32 dataHash) external view returns (bool) {
         return dataChunks[dataHash].isConfirmed;
@@ -161,6 +173,8 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Obtener información de un miembro
+     * @param member The address of the member to get info for.
+     * @return A DACMember struct containing member information.
      */
     function getMemberInfo(address member) external view returns (DACMember memory) {
         return members[member];
@@ -168,6 +182,9 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Obtener estado del comité
+     * @return activeMembers The number of active members.
+     * @return totalStake The total stake of all members.
+     * @return confirmedDataChunks The number of confirmed data chunks.
      */
     function getCommitteeStatus() external view returns (
         uint256 activeMembers,
@@ -184,6 +201,8 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
 
     /**
      * @dev Actualizar configuración del comité
+     * @param _minStake The new minimum stake required for a member.
+     * @param _requiredConfirmations The new number of confirmations required.
      */
     function updateConfig(
         uint256 _minStake,

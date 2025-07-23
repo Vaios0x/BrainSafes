@@ -9,7 +9,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * @title QuadraticVoting
- * @dev Sistema de votación cuadrática con distribución de créditos y protección anti-Sybil
+ * @notice Quadratic voting contract for BrainSafes governance
+ * @dev Implements quadratic voting logic for fairer decision making
  * @author BrainSafes Team
  */
 contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {

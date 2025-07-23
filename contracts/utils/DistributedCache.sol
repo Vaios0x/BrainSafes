@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 /**
  * @title DistributedCache
- * @dev Cache distribuido para almacenar resultados costosos con expiración y limpieza.
+ * @notice Distributed cache utility for BrainSafes
+ * @dev Stores and retrieves expensive computation results for gas savings
  * @author BrainSafes Team
  */
 contract DistributedCache {

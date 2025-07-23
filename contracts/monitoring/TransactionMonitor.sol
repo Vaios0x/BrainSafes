@@ -9,7 +9,9 @@ import "../cache/DistributedCache.sol";
 
 /**
  * @title TransactionMonitor
- * @dev Sistema de monitoreo y recuperación de transacciones
+ * @notice Transaction monitoring contract for BrainSafes
+ * @dev Logs and analyzes transaction activity for security and analytics
+ * @author BrainSafes Team
  */
 contract TransactionMonitor is AccessControl, ReentrancyGuard {
     bytes32 public constant MONITOR_ROLE = keccak256("MONITOR_ROLE");

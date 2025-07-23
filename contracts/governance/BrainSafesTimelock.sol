@@ -8,7 +8,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title BrainSafesTimelock
- * @dev Timelock para propuestas de gobernanza con soporte para emergencias
+ * @notice Timelock contract for secure governance execution in BrainSafes
+ * @dev Enforces delay on sensitive actions and upgrades
  * @author BrainSafes Team
  */
 contract BrainSafesTimelock is AccessControl, ReentrancyGuard, Pausable {

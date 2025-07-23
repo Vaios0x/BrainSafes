@@ -8,7 +8,9 @@ import "../cache/DistributedCache.sol";
 
 /**
  * @title CostOptimizer
- * @dev Sistema de optimización de costos para transacciones
+ * @notice Cost optimization contract for BrainSafes
+ * @dev Reduces gas and storage costs for key operations
+ * @author BrainSafes Team
  */
 contract CostOptimizer is AccessControl, ReentrancyGuard {
     bytes32 public constant OPTIMIZER_ROLE = keccak256("OPTIMIZER_ROLE");
@@ -94,7 +96,12 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Crear nuevo batch de operaciones
+     * @notice Creates a new batch of operations.
+     * @dev Only roles with OPTIMIZER_ROLE can call this function.
+     * @param targets Array of addresses to call.
+     * @param data Array of bytes data for each operation.
+     * @param values Array of uint256 values for each operation.
+     * @return bytes32 The ID of the created batch.
      */
     function createBatch(
         address[] calldata targets,
@@ -153,7 +160,10 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Procesar batch de operaciones
+     * @notice Processes a batch of operations.
+     * @dev Only roles with BATCH_PROCESSOR_ROLE can call this function.
+     * @param batchId The ID of the batch to process.
+     * @return bool True if the batch was processed successfully, false otherwise.
      */
     function processBatch(
         bytes32 batchId
@@ -188,7 +198,10 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Ejecutar operaciones del batch
+     * @notice Executes operations within a batch.
+     * @dev This function is called internally by processBatch.
+     * @param batchId The ID of the batch to execute.
+     * @return bool True if all operations were executed successfully, false otherwise.
      */
     function executeBatchOperations(
         bytes32 batchId
@@ -206,7 +219,12 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Estimar gas para una operación
+     * @notice Estimates gas for a single operation.
+     * @dev This function is used to estimate gas for a single operation.
+     * @param target The address to call.
+     * @param data The bytes data for the operation.
+     * @param value The uint256 value for the operation.
+     * @return uint256 The estimated gas.
      */
     function _estimateGas(
         address target,
@@ -221,7 +239,11 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Ejecutar operación individual (para estimación)
+     * @notice Executes a single operation individually (for estimation).
+     * @dev This function is used to execute a single operation for gas estimation.
+     * @param target The address to call.
+     * @param data The bytes data for the operation.
+     * @param value The uint256 value for the operation.
      */
     function executeOperation(
         address target,
@@ -234,7 +256,14 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Actualizar configuración de optimización
+     * @notice Updates the optimization configuration.
+     * @dev Only roles with DEFAULT_ADMIN_ROLE can call this function.
+     * @param _minBatchSize The minimum batch size.
+     * @param _maxBatchSize The maximum batch size.
+     * @param _minGasThreshold The minimum gas threshold.
+     * @param _maxGasPerBatch The maximum gas per batch.
+     * @param _compressionEnabled Whether compression is enabled.
+     * @param _targetGasPrice The target gas price.
      */
     function updateConfig(
         uint256 _minBatchSize,
@@ -260,7 +289,9 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener información de batch
+     * @notice Retrieves information about a batch.
+     * @param batchId The ID of the batch to retrieve.
+     * @return BatchOperation The information about the batch.
      */
     function getBatchInfo(
         bytes32 batchId
@@ -269,7 +300,11 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener estadísticas de optimización
+     * @notice Retrieves optimization statistics.
+     * @return uint256 The total number of batches.
+     * @return uint256 The total number of operations.
+     * @return uint256 The total gas saved.
+     * @return uint256 The average gas saving.
      */
     function getOptimizationStats() external view returns (
         uint256 batches,
@@ -286,7 +321,10 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Verificar si una operación debe ser optimizada
+     * @notice Checks if an operation should be optimized.
+     * @param gasEstimate The estimated gas for the operation.
+     * @param operationCount The number of operations in the batch.
+     * @return bool True if optimization should be applied, false otherwise.
      */
     function shouldOptimize(
         uint256 gasEstimate,
@@ -297,7 +335,8 @@ contract CostOptimizer is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener gas price objetivo actual
+     * @notice Gets the current target gas price.
+     * @return uint256 The target gas price.
      */
     function getTargetGasPrice() external view returns (uint256) {
         return config.targetGasPrice;

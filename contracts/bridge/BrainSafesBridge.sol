@@ -10,7 +10,9 @@ import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 
 /**
  * @title BrainSafesBridge
- * @dev Puente optimizado para transferir activos y datos entre L1 y L2
+ * @notice Bridge contract for cross-chain asset and message transfer in BrainSafes
+ * @dev Handles L1-L2 communication and asset bridging
+ * @author BrainSafes Team
  */
 contract BrainSafesBridge is AccessControl, ReentrancyGuard, Pausable {
     // Precompilados de Arbitrum
@@ -110,7 +112,10 @@ contract BrainSafesBridge is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Inicia un depósito de tokens de L1 a L2
+     * @notice Initiates a token deposit from L1 to L2.
+     * @param recipient The address to receive the tokens on L2.
+     * @param amount The amount of tokens to deposit.
+     * @param data Additional data for the deposit.
      */
     function depositTokens(
         address recipient,
@@ -149,7 +154,9 @@ contract BrainSafesBridge is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Inicia un retiro de tokens de L2 a L1
+     * @notice Initiates a token withdrawal from L2 to L1.
+     * @param recipient The address to receive the tokens on L1.
+     * @param amount The amount of tokens to withdraw.
      */
     function initiateWithdrawal(
         address recipient,
@@ -188,7 +195,10 @@ contract BrainSafesBridge is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Bridge de certificados NFT
+     * @notice Bridges a certificate NFT from L1 to L2.
+     * @param tokenId The ID of the NFT to bridge.
+     * @param recipient The address to receive the NFT on L2.
+     * @param metadata Additional metadata for the NFT.
      */
     function bridgeCertificate(
         uint256 tokenId,
@@ -222,7 +232,10 @@ contract BrainSafesBridge is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Procesa mensaje recibido de L1
+     * @notice Processes a message received from L1.
+     * @param messageId The ID of the message.
+     * @param sender The address from which the message originated.
+     * @param data The encoded data of the message.
      */
     function processL1Message(
         bytes32 messageId,
@@ -250,7 +263,10 @@ contract BrainSafesBridge is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Procesa mensaje recibido de L2
+     * @notice Processes a message received from L2.
+     * @param messageId The ID of the message.
+     * @param sender The address from which the message originated.
+     * @param data The encoded data of the message.
      */
     function processL2Message(
         bytes32 messageId,

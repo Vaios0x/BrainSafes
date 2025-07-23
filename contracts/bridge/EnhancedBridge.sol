@@ -10,7 +10,9 @@ import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 
 /**
  * @title EnhancedBridge
- * @dev Bridge optimizado con retryable tickets y compresión de datos
+ * @notice Enhanced bridge contract for advanced cross-chain operations in BrainSafes
+ * @dev Supports additional features and optimizations for asset/message transfer
+ * @author BrainSafes Team
  */
 contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant BRIDGE_OPERATOR_ROLE = keccak256("BRIDGE_OPERATOR_ROLE");

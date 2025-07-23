@@ -9,7 +9,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * @title DelegateRewards
- * @dev Sistema de recompensas para delegados con múltiples incentivos
+ * @notice Rewards contract for governance delegates in BrainSafes
+ * @dev Distributes incentives based on participation and voting
  * @author BrainSafes Team
  */
 contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
@@ -149,7 +150,10 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Registra participación en votación
+     * @notice Records a vote participation event for a delegate.
+     * @dev Only callable by the GOVERNANCE_ROLE.
+     * @param delegate The address of the delegate.
+     * @param proposalId The ID of the proposal being voted on.
      */
     function recordVoteParticipation(
         address delegate,
@@ -191,7 +195,9 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Registra creación de propuesta
+     * @notice Records a proposal creation event for a delegate.
+     * @dev Only callable by the GOVERNANCE_ROLE.
+     * @param delegate The address of the delegate.
      */
     function recordProposalCreation(
         address delegate
@@ -215,7 +221,9 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Activa bonus por racha
+     * @notice Activates the streak bonus for a delegate.
+     * @dev Internal function to be called when a streak bonus is achieved.
+     * @param delegate The address of the delegate.
      */
     function _activateStreakBonus(address delegate) internal {
         DelegateStats storage stats = delegateStats[delegate];
@@ -238,7 +246,10 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Calcula recompensa base
+     * @notice Calculates the base reward for a delegate.
+     * @dev Internal view function.
+     * @param delegate The address of the delegate.
+     * @return uint256 The calculated base reward.
      */
     function _calculateBaseReward(
         address delegate
@@ -260,7 +271,10 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Calcula multiplicador total
+     * @notice Calculates the total multiplier for a delegate.
+     * @dev Internal view function.
+     * @param delegate The address of the delegate.
+     * @return uint256 The calculated total multiplier.
      */
     function _calculateMultiplier(
         address delegate
@@ -287,7 +301,8 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Reclama recompensas disponibles
+     * @notice Claims available rewards for a delegate.
+     * @dev Only callable by non-reentrant and non-paused delegates.
      */
     function claimRewards() external nonReentrant whenNotPaused {
         DelegateStats storage stats = delegateStats[msg.sender];
@@ -315,7 +330,10 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Crea nuevo período de recompensas
+     * @notice Creates a new reward period.
+     * @dev Only callable by the ADMIN_ROLE.
+     * @param duration The duration of the reward period in blocks.
+     * @param totalRewards The total rewards to be distributed in this period.
      */
     function createRewardPeriod(
         uint256 duration,
@@ -345,7 +363,9 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Finaliza período de recompensas
+     * @notice Finalizes a reward period.
+     * @dev Only callable by the ADMIN_ROLE.
+     * @param periodId The ID of the reward period to finalize.
      */
     function finalizeRewardPeriod(
         uint256 periodId
@@ -360,7 +380,12 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Registra evento de recompensa
+     * @notice Records a reward event for a delegate.
+     * @dev Internal function to be called by other functions to log rewards.
+     * @param delegate The address of the delegate.
+     * @param amount The amount of the reward.
+     * @param rewardType The type of reward (e.g., "Vote participation", "Proposal creation").
+     * @param multiplier The multiplier applied to the reward.
      */
     function _recordRewardEvent(
         address delegate,
@@ -382,7 +407,17 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Actualiza configuración de recompensas
+     * @notice Updates the reward configuration.
+     * @dev Only callable by the ADMIN_ROLE.
+     * @param _baseReward The new base reward amount.
+     * @param _proposalCreationReward The new proposal creation reward amount.
+     * @param _votingStreakBonus The new voting streak bonus amount.
+     * @param _reputationMultiplier The new reputation multiplier.
+     * @param _maxMultiplier The new maximum multiplier.
+     * @param _minVotesForReward The new minimum votes required for a reward.
+     * @param _streakThreshold The new streak threshold for bonus activation.
+     * @param _bonusDuration The new bonus duration in blocks.
+     * @param _cooldownPeriod The new cooldown period in blocks.
      */
     function updateRewardConfig(
         uint256 _baseReward,
@@ -419,7 +454,10 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Actualiza reputación del delegado
+     * @notice Updates the reputation score of a delegate.
+     * @dev Only callable by the GOVERNANCE_ROLE.
+     * @param delegate The address of the delegate.
+     * @param newReputation The new reputation score.
      */
     function updateDelegateReputation(
         address delegate,
@@ -465,21 +503,23 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Pausa el contrato
+     * @notice Pauses the contract.
+     * @dev Only callable by the ADMIN_ROLE.
      */
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
     /**
-     * @dev Despausa el contrato
+     * @notice Unpauses the contract.
+     * @dev Only callable by the ADMIN_ROLE.
      */
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }
 
     /**
-     * @dev Recibe ETH
+     * @notice Receives ETH.
      */
     receive() external payable {}
 } 

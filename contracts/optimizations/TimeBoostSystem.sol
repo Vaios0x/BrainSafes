@@ -7,7 +7,9 @@ import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 
 /**
  * @title TimeBoostSystem
- * @dev Sistema de optimización de tiempo para transacciones en BrainSafes
+ * @notice Time-based incentive system for BrainSafes
+ * @dev Rewards users for timely actions and engagement
+ * @author BrainSafes Team
  */
 contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     bytes32 public constant TIMEBOOST_ADMIN_ROLE = keccak256("TIMEBOOST_ADMIN_ROLE");
@@ -71,7 +73,11 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Solicitar boost para una transacción
+     * @notice Request a boost for a transaction.
+     * @dev This function allows users to request a boost for a transaction.
+     * @param txHash The hash of the transaction.
+     * @param confirmations The number of confirmations for the transaction.
+     * @return boostFactor The calculated boost factor.
      */
     function requestBoost(
         bytes32 txHash,
@@ -121,7 +127,10 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Aplicar boost a una transacción
+     * @notice Apply a boost to a transaction.
+     * @dev This function allows validators to apply a boost to a transaction.
+     * @param txHash The hash of the transaction.
+     * @return timeToSkip The time to skip.
      */
     function applyBoost(
         bytes32 txHash
@@ -147,7 +156,10 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Calcular factor de boost basado en confirmaciones
+     * @notice Calculate the boost factor based on confirmations.
+     * @dev This function calculates the boost factor based on the number of confirmations.
+     * @param confirmations The number of confirmations.
+     * @return boostFactor The calculated boost factor.
      */
     function _calculateBoostFactor(uint256 confirmations) internal view returns (uint256) {
         if (confirmations < config.minConfirmations) return 100; // 1x
@@ -159,7 +171,10 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Calcular tiempo a saltar basado en factor de boost
+     * @notice Calculate the time to skip based on the boost factor.
+     * @dev This function calculates the time to skip based on the boost factor.
+     * @param boostFactor The boost factor.
+     * @return timeToSkip The time to skip.
      */
     function _calculateTimeSkip(uint256 boostFactor) internal pure returns (uint256) {
         // Convertir boost factor (100 = 1x) a segundos
@@ -167,7 +182,13 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Actualizar configuración de TimeBoost
+     * @notice Update the TimeBoost configuration.
+     * @dev This function allows administrators to update the TimeBoost configuration.
+     * @param _maxBoostFactor The maximum boost factor.
+     * @param _minConfirmations The minimum number of confirmations.
+     * @param _cooldownPeriod The cooldown period.
+     * @param _maxTimeSkip The maximum time to skip.
+     * @param _enabled Whether the boost is enabled.
      */
     function updateConfig(
         uint256 _maxBoostFactor,
@@ -191,7 +212,13 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Verificar elegibilidad para boost
+     * @notice Check if a user is eligible for a boost.
+     * @dev This function checks if a user is eligible for a boost based on their last boost time and confirmations.
+     * @param user The address of the user.
+     * @param confirmations The number of confirmations for the transaction.
+     * @return eligible Whether the user is eligible.
+     * @return potentialBoost The potential boost factor.
+     * @return cooldownRemaining The remaining cooldown time.
      */
     function checkBoostEligibility(
         address user,
@@ -219,7 +246,13 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener estadísticas de boost de usuario
+     * @notice Get the boost statistics for a user.
+     * @dev This function retrieves the boost statistics for a specific user.
+     * @param user The address of the user.
+     * @return boostCount The number of boosts applied.
+     * @return totalTimeSkipped The total time skipped.
+     * @return avgBoostFactor The average boost factor.
+     * @return isActive Whether the user is currently active.
      */
     function getUserBoostStats(
         address user
@@ -239,7 +272,11 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener estadísticas globales
+     * @notice Get the global boost statistics.
+     * @dev This function retrieves the global boost statistics.
+     * @return _totalBoosts The total number of boosts.
+     * @return _totalTimeSkipped The total time skipped.
+     * @return _avgBoostFactor The average boost factor.
      */
     function getGlobalStats() external view returns (
         uint256 _totalBoosts,
@@ -250,7 +287,10 @@ contract TimeBoostSystem is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener información de boost de transacción
+     * @notice Get the boost information for a transaction.
+     * @dev This function retrieves the boost information for a specific transaction.
+     * @param txHash The hash of the transaction.
+     * @return boost The boost information.
      */
     function getTransactionBoost(
         bytes32 txHash

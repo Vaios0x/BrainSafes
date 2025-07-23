@@ -8,7 +8,8 @@ import "../interfaces/IAIProcessor.sol";
 
 /**
  * @title AIOracle
- * @dev Oracle de IA optimizado con Stylus
+ * @notice AI-powered oracle for predictions, recommendations, and fraud detection in BrainSafes
+ * @dev Provides AI evaluation for scholarships, courses, and certificates
  * @author BrainSafes Team
  */
 contract AIOracle is AccessControl, ReentrancyGuard, Pausable {

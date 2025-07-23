@@ -7,7 +7,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title AEPFeeRouter
- * @dev Sistema de distribución de tarifas para AEP (Arbitrum Ecosystem Program)
+ * @notice Fee routing contract for BrainSafes ecosystem
+ * @dev Handles fee collection, distribution, and configuration
+ * @author BrainSafes Team
  */
 contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     bytes32 public constant FEE_ADMIN_ROLE = keccak256("FEE_ADMIN_ROLE");
@@ -67,7 +69,10 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Recolectar tarifas
+     * @notice Collects fees from collectors.
+     * @dev Only collectors with the COLLECTOR_ROLE can call this function.
+     * @param amount The amount of fees to collect.
+     * @param category The category of the fees (e.g., "transaction", "staking").
      */
     function collectFees(
         uint256 amount,
@@ -101,7 +106,9 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Distribuir tarifas a los destinatarios
+     * @notice Distributes fees to recipients based on their shares.
+     * @dev Internal function to calculate and distribute fees.
+     * @param amount The total amount of fees to distribute.
      */
     function _distributeFees(uint256 amount) internal {
         // Calcular montos por categoría
@@ -138,7 +145,11 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Actualizar configuración de tarifas
+     * @notice Updates the fee distribution configuration.
+     * @dev Only administrators with the FEE_ADMIN_ROLE can call this function.
+     * @param _daoShare The new DAO share percentage.
+     * @param _devShare The new developer share percentage.
+     * @param _ecosystemShare The new ecosystem share percentage.
      */
     function updateFeeConfig(
         uint256 _daoShare,
@@ -158,7 +169,10 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Añadir destinatario de tarifas
+     * @notice Adds a new recipient for fee distribution.
+     * @dev Only administrators with the FEE_ADMIN_ROLE can call this function.
+     * @param recipient The address of the new recipient.
+     * @param share The percentage share of the recipient.
      */
     function addRecipient(
         address recipient,
@@ -179,7 +193,9 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Remover destinatario de tarifas
+     * @notice Removes an existing recipient from fee distribution.
+     * @dev Only administrators with the FEE_ADMIN_ROLE can call this function.
+     * @param recipient The address of the recipient to remove.
      */
     function removeRecipient(address recipient) external onlyRole(FEE_ADMIN_ROLE) {
         require(recipients[recipient].isActive, "Recipient not active");
@@ -188,7 +204,9 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener destinatarios activos
+     * @notice Retrieves the list of active recipients.
+     * @dev Internal function to get recipients that are currently active.
+     * @return An array of addresses.
      */
     function _getActiveRecipients() internal view returns (address[] memory) {
         // Implementar lógica para obtener destinatarios activos
@@ -196,7 +214,10 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Verificar si es destinatario del DAO
+     * @notice Checks if a recipient is a DAO recipient.
+     * @dev Internal function to determine if a recipient belongs to the DAO.
+     * @param recipient The address to check.
+     * @return A boolean indicating if the recipient is a DAO recipient.
      */
     function _isDAORecipient(address recipient) internal pure returns (bool) {
         // Implementar lógica de verificación
@@ -204,7 +225,10 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Verificar si es destinatario desarrollador
+     * @notice Checks if a recipient is a developer recipient.
+     * @dev Internal function to determine if a recipient is a developer.
+     * @param recipient The address to check.
+     * @return A boolean indicating if the recipient is a developer.
      */
     function _isDevRecipient(address recipient) internal pure returns (bool) {
         // Implementar lógica de verificación
@@ -212,7 +236,9 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener reporte de tarifas
+     * @notice Retrieves a specific fee report by its ID.
+     * @param reportId The ID of the fee report to retrieve.
+     * @return A FeeReport struct containing the report details.
      */
     function getFeeReport(
         uint256 reportId
@@ -221,7 +247,9 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener información de destinatario
+     * @notice Retrieves information about a specific recipient.
+     * @param recipient The address of the recipient to query.
+     * @return A FeeRecipient struct containing the recipient's details.
      */
     function getRecipientInfo(
         address recipient
@@ -230,7 +258,8 @@ contract AEPFeeRouter is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @dev Obtener estadísticas globales
+     * @notice Retrieves global statistics about fee collection and distribution.
+     * @return A tuple containing total collected fees, total distributed fees, and number of active recipients.
      */
     function getGlobalStats() external view returns (
         uint256 totalCollected,

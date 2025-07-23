@@ -10,7 +10,8 @@ import "@api3/contracts/v0.8/interfaces/IApi3Oracle.sol";
 
 /**
  * @title ExternalDataOracle
- * @dev Sistema de oráculos para datos externos con múltiples fuentes
+ * @notice Oracle for external data feeds in BrainSafes
+ * @dev Integrates with off-chain sources for real-world data
  * @author BrainSafes Team
  */
 contract ExternalDataOracle is AccessControl, ReentrancyGuard, Pausable {

@@ -9,7 +9,9 @@ import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 
 /**
  * @title USDCPaymaster
- * @dev Permite a los usuarios pagar gas con USDC
+ * @notice Paymaster contract for gas abstraction using USDC in BrainSafes
+ * @dev Supports sponsored transactions and gas fee payments in USDC
+ * @author BrainSafes Team
  */
 contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
@@ -63,7 +65,11 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Sponsorea gas para una transacción
+     * @notice Sponsors gas for a transaction.
+     * @dev This function is used to sponsor gas fees for a transaction.
+     * @param user The address of the user sponsoring the gas.
+     * @param txData The calldata of the transaction.
+     * @return bool True if the gas sponsorship was successful.
      */
     function sponsorGas(
         address user,
@@ -112,7 +118,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Estima gas necesario para una transacción
+     * @notice Estimates the gas needed for a transaction.
+     * @dev This function is used to estimate the gas required for a transaction.
+     * @param txData The calldata of the transaction.
+     * @return uint256 The estimated gas limit.
      */
     function _estimateGas(bytes calldata txData) internal view returns (uint256) {
         // Usar precompilado de Arbitrum para estimación precisa
@@ -121,7 +130,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Convierte ETH a USDC usando precio de oracle
+     * @notice Converts ETH to USDC using an oracle price.
+     * @dev This function is used to convert an amount of ETH to USDC.
+     * @param ethAmount The amount of ETH to convert.
+     * @return uint256 The converted amount in USDC.
      */
     function _convertEthToUsdc(uint256 ethAmount) internal pure returns (uint256) {
         // TODO: Usar oracle para precio real
@@ -129,7 +141,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Whitelist un usuario
+     * @notice Whitelists a user.
+     * @dev This function is used to whitelist a user.
+     * @param user The address of the user to whitelist.
+     * @param whitelisted The boolean indicating if the user should be whitelisted.
      */
     function whitelistUser(
         address user,
@@ -140,7 +155,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Whitelist múltiples usuarios
+     * @notice Whitelists multiple users.
+     * @dev This function is used to whitelist multiple users.
+     * @param users An array of addresses to whitelist.
+     * @param whitelisted The boolean indicating if all users should be whitelisted.
      */
     function whitelistUsers(
         address[] calldata users,
@@ -153,7 +171,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Sponsorea un contrato
+     * @notice Sponsors a contract.
+     * @dev This function is used to sponsor a contract.
+     * @param contractAddress The address of the contract to sponsor.
+     * @param sponsored The boolean indicating if the contract should be sponsored.
      */
     function sponsorContract(
         address contractAddress,
@@ -164,7 +185,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Sponsorea una función
+     * @notice Sponsors a function.
+     * @dev This function is used to sponsor a function.
+     * @param functionSig The function signature to sponsor.
+     * @param sponsored The boolean indicating if the function should be sponsored.
      */
     function sponsorFunction(
         bytes4 functionSig,
@@ -175,7 +199,9 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Actualiza markup de gas
+     * @notice Updates the gas markup.
+     * @dev This function is used to update the gas markup.
+     * @param newMarkup The new markup value.
      */
     function updateGasMarkup(uint256 newMarkup) external onlyRole(ADMIN_ROLE) {
         require(newMarkup <= 2000, "Markup too high"); // Max 20%
@@ -185,7 +211,9 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Actualiza balance mínimo de USDC
+     * @notice Updates the minimum USDC balance.
+     * @dev This function is used to update the minimum USDC balance.
+     * @param newBalance The new minimum balance.
      */
     function updateMinBalance(uint256 newBalance) external onlyRole(ADMIN_ROLE) {
         uint256 oldBalance = minUsdcBalance;
@@ -194,7 +222,9 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Actualiza gas máximo sponsoreado
+     * @notice Updates the maximum gas sponsored.
+     * @dev This function is used to update the maximum gas sponsored.
+     * @param newMax The new maximum gas value.
      */
     function updateMaxGas(uint256 newMax) external onlyRole(ADMIN_ROLE) {
         uint256 oldMax = maxGasSponsored;
@@ -203,7 +233,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Retira USDC acumulado
+     * @notice Withdraws accumulated USDC.
+     * @dev This function is used to withdraw accumulated USDC.
+     * @param to The address to which the USDC will be transferred.
+     * @param amount The amount of USDC to withdraw.
      */
     function withdrawUsdc(
         address to,
@@ -213,7 +246,10 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Obtiene información de gas de usuario
+     * @notice Gets user gas information.
+     * @dev This function is used to retrieve gas information for a user.
+     * @param user The address of the user.
+     * @return UserGasInfo The gas information for the user.
      */
     function getUserGasInfo(
         address user
@@ -222,7 +258,12 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Verifica si una transacción es sponsoreable
+     * @notice Checks if a transaction is sponsoreable.
+     * @dev This function is used to check if a transaction is sponsoreable.
+     * @param user The address of the user.
+     * @param txData The calldata of the transaction.
+     * @return sponsoreable bool True if the transaction is sponsoreable, false otherwise.
+     * @return reason string The reason for the transaction not being sponsoreable.
      */
     function isTransactionSponsoreable(
         address user,
@@ -266,14 +307,16 @@ contract USDCPaymaster is AccessControl, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Pausa el contrato
+     * @notice Pauses the contract.
+     * @dev This function is used to pause the contract.
      */
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
     
     /**
-     * @dev Despausa el contrato
+     * @notice Unpauses the contract.
+     * @dev This function is used to unpause the contract.
      */
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();

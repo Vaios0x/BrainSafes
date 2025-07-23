@@ -8,7 +8,9 @@ import "@gelatonetwork/relay-context/contracts/vendor/GelatoRelayContext.sol";
 
 /**
  * @title GelatoVRF
- * @dev Integración con Gelato VRF para aleatoriedad verificable
+ * @notice Randomness provider contract for BrainSafes using Gelato VRF
+ * @dev Supplies verifiable random numbers for games, lotteries, and draws
+ * @author BrainSafes Team
  */
 contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayContext {
     bytes32 public constant VRF_MANAGER_ROLE = keccak256("VRF_MANAGER_ROLE");
@@ -74,7 +76,11 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Solicita palabras aleatorias
+     * @notice Requests random words from the VRF.
+     * @dev This function is non-reentrant and requires the contract to be not paused.
+     * @param numWords The number of random words to request.
+     * @param requestType The type of request (e.g., "game_draw", "lottery_draw").
+     * @return requestId The ID of the requested random words.
      */
     function requestRandomWords(
         uint256 numWords,
@@ -119,7 +125,10 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Callback para recibir palabras aleatorias
+     * @notice Callback function to fulfill random words.
+     * @dev This function is only callable by the CALLBACK_ROLE.
+     * @param requestId The ID of the request.
+     * @param randomWords The array of random words.
      */
     function fulfillRandomWords(
         uint256 requestId,
@@ -150,7 +159,13 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Configura parámetros para un tipo de solicitud
+     * @notice Sets the configuration parameters for a request type.
+     * @dev This function is only callable by the VRF_MANAGER_ROLE.
+     * @param requestType The type of request.
+     * @param minimumRequestConfirmations The minimum number of confirmations required.
+     * @param callbackGasLimit The gas limit for the callback.
+     * @param requestConfirmationDelay The delay in blocks before confirmations are counted.
+     * @param requestExpiryBlocks The number of blocks after which a request expires.
      */
     function setRequestConfig(
         bytes32 requestType,
@@ -180,7 +195,10 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Cancela una solicitud
+     * @notice Cancels a request.
+     * @dev This function is only callable by the VRF_MANAGER_ROLE.
+     * @param requestId The ID of the request to cancel.
+     * @param reason The reason for cancellation.
      */
     function cancelRequest(
         uint256 requestId,
@@ -193,7 +211,10 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Obtiene palabras aleatorias de una solicitud
+     * @notice Retrieves the random words for a specific request.
+     * @dev Requires the request to be fulfilled.
+     * @param requestId The ID of the request.
+     * @return randomWords The array of random words.
      */
     function getRandomWords(
         uint256 requestId
@@ -203,7 +224,9 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Obtiene solicitudes de un usuario
+     * @notice Retrieves all requests made by a specific user.
+     * @param user The address of the user.
+     * @return requestIds The array of request IDs.
      */
     function getUserRequests(
         address user
@@ -212,7 +235,9 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Obtiene detalles de una solicitud
+     * @notice Retrieves detailed information about a specific request.
+     * @param requestId The ID of the request.
+     * @return request The details of the request.
      */
     function getRequestDetails(
         uint256 requestId
@@ -221,7 +246,9 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Obtiene configuración de un tipo de solicitud
+     * @notice Retrieves the configuration parameters for a specific request type.
+     * @param requestType The type of request.
+     * @return config The configuration parameters.
      */
     function getRequestConfig(
         bytes32 requestType
@@ -241,14 +268,16 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
     }
 
     /**
-     * @dev Pausa el contrato
+     * @notice Pauses the contract.
+     * @dev This function is only callable by the VRF_MANAGER_ROLE.
      */
     function pause() external onlyRole(VRF_MANAGER_ROLE) {
         _pause();
     }
 
     /**
-     * @dev Despausa el contrato
+     * @notice Unpauses the contract.
+     * @dev This function is only callable by the VRF_MANAGER_ROLE.
      */
     function unpause() external onlyRole(VRF_MANAGER_ROLE) {
         _unpause();

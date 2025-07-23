@@ -10,7 +10,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title SnapshotIntegration
- * @dev Integración con Snapshot para votación off-chain con verificación on-chain
+ * @notice Snapshot integration contract for off-chain governance in BrainSafes
+ * @dev Syncs on-chain and off-chain voting and proposals
  * @author BrainSafes Team
  */
 contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712 {
@@ -129,7 +130,13 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     /**
-     * @dev Crea nuevo snapshot de propuesta
+     * @notice Creates a new proposal snapshot.
+     * @dev This function is only callable by the SNAPSHOT_ROLE.
+     * @param snapshotId The ID of the snapshot.
+     * @param startDelay The delay in blocks before the voting starts.
+     * @param duration The duration of the voting in blocks.
+     * @param quorumPercentage The minimum percentage of total voting power required for a proposal to pass.
+     * @return The ID of the created proposal snapshot.
      */
     function createProposalSnapshot(
         string memory snapshotId,
@@ -165,7 +172,14 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     /**
-     * @dev Envía voto off-chain
+     * @notice Submits an off-chain vote.
+     * @dev This function is only callable when the contract is not paused.
+     * @param proposalId The ID of the proposal.
+     * @param choice The choice of the vote (e.g., 1, 2, 3).
+     * @param votingPower The amount of voting power being cast.
+     * @param reason The reason for the vote.
+     * @param deadline The timestamp before which the vote must be submitted.
+     * @param signature The EIP-712 signature of the vote.
      */
     function submitVote(
         uint256 proposalId,
@@ -222,7 +236,9 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     /**
-     * @dev Envía votos en lote
+     * @notice Submits a batch of votes.
+     * @dev This function is only callable when the contract is not paused.
+     * @param batchVote The struct containing batch vote details.
      */
     function submitBatchVotes(BatchVote calldata batchVote) external nonReentrant whenNotPaused {
         require(
@@ -274,7 +290,14 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     /**
-     * @dev Valida voto off-chain
+     * @notice Validates an off-chain vote.
+     * @dev This function is only callable by the VALIDATOR_ROLE.
+     * @param proposalId The ID of the proposal.
+     * @param voter The address of the voter.
+     * @param choice The choice of the vote.
+     * @param votingPower The amount of voting power being cast.
+     * @param signature The EIP-712 signature of the vote.
+     * @return A boolean indicating if the vote is valid.
      */
     function validateVote(
         uint256 proposalId,
@@ -325,7 +348,9 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     /**
-     * @dev Finaliza snapshot de propuesta
+     * @notice Finalizes a proposal snapshot.
+     * @dev This function is only callable by the SNAPSHOT_ROLE.
+     * @param proposalId The ID of the proposal snapshot to finalize.
      */
     function finalizeProposalSnapshot(
         uint256 proposalId
@@ -366,7 +391,15 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     /**
-     * @dev Verifica firma EIP-712
+     * @notice Verifies an EIP-712 signature.
+     * @dev This function is external and can be called by anyone.
+     * @param signer The address that signed the data.
+     * @param proposalId The ID of the proposal.
+     * @param choice The choice of the vote.
+     * @param votingPower The amount of voting power being cast.
+     * @param deadline The timestamp before which the vote must be submitted.
+     * @param signature The EIP-712 signature of the vote.
+     * @return A boolean indicating if the signature is valid.
      */
     function verifySignature(
         address signer,
@@ -393,6 +426,16 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
     }
 
     // Getters
+    /**
+     * @notice Retrieves details of a proposal snapshot.
+     * @param proposalId The ID of the proposal snapshot.
+     * @return snapshotId The ID of the snapshot.
+     * @return startBlock The block number at which voting starts.
+     * @return endBlock The block number at which voting ends.
+     * @return totalVotingPower The total voting power cast for this proposal.
+     * @return quorum The minimum percentage of total voting power required.
+     * @return isFinalized A boolean indicating if the proposal is finalized.
+     */
     function getProposalSnapshot(
         uint256 proposalId
     ) external view returns (
@@ -414,6 +457,12 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
         );
     }
 
+    /**
+     * @notice Retrieves the number of votes received for a specific choice in a proposal.
+     * @param proposalId The ID of the proposal.
+     * @param choice The choice of the vote.
+     * @return The number of votes received for the choice.
+     */
     function getChoiceVotes(
         uint256 proposalId,
         uint256 choice
@@ -421,6 +470,12 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
         return proposals[proposalId].choiceTotals[choice];
     }
 
+    /**
+     * @notice Checks if a voter has already voted for a specific proposal.
+     * @param proposalId The ID of the proposal.
+     * @param voter The address of the voter.
+     * @return A boolean indicating if the voter has already voted.
+     */
     function hasVoted(
         uint256 proposalId,
         address voter
@@ -428,6 +483,15 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
         return proposals[proposalId].hasVoted[voter];
     }
 
+    /**
+     * @notice Retrieves the validation result for a specific vote.
+     * @param proposalId The ID of the proposal.
+     * @param voter The address of the voter.
+     * @param choice The choice of the vote.
+     * @param votingPower The amount of voting power being cast.
+     * @param signature The EIP-712 signature of the vote.
+     * @return A ValidationResult struct containing the validation details.
+     */
     function getValidationResult(
         uint256 proposalId,
         address voter,
@@ -445,23 +509,35 @@ contract SnapshotIntegration is AccessControl, ReentrancyGuard, Pausable, EIP712
         return validations[voteHash];
     }
 
+    /**
+     * @notice Retrieves the nonce for a specific voter.
+     * @param voter The address of the voter.
+     * @return The nonce for the voter.
+     */
     function getNonce(address voter) external view returns (uint256) {
         return nonces[voter];
     }
 
+    /**
+     * @notice Retrieves the timestamp of the last vote submitted by a voter.
+     * @param voter The address of the voter.
+     * @return The timestamp of the last vote.
+     */
     function getLastVoteTimestamp(address voter) external view returns (uint256) {
         return lastVoteTimestamp[voter];
     }
 
     /**
-     * @dev Pausa el contrato
+     * @notice Pauses the contract.
+     * @dev This function is only callable by the ADMIN_ROLE.
      */
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
     /**
-     * @dev Despausa el contrato
+     * @notice Unpauses the contract.
+     * @dev This function is only callable by the ADMIN_ROLE.
      */
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();

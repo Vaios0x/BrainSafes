@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * @title ScholarshipManager
- * @dev Automated scholarship management system with AI evaluation
- * @dev Features: Automatic evaluation, transparent distribution, tracking metrics
+ * @notice Automated scholarship management for BrainSafes
+ * @dev Handles applications, sponsor management, milestone tracking, and fund disbursement
  * @author BrainSafes Team
  */
 contract ScholarshipManager is AccessControl, ReentrancyGuard, Pausable {

@@ -9,7 +9,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * @title GovernanceMetrics
- * @dev Dashboard de métricas y análisis de gobernanza
+ * @notice Metrics and analytics contract for BrainSafes governance
+ * @dev Tracks participation, proposal outcomes, and voting statistics
  * @author BrainSafes Team
  */
 contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {

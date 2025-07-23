@@ -8,7 +8,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title DelegationManager
- * @dev Sistema avanzado de delegación con múltiples niveles y tipos
+ * @notice Delegation management contract for BrainSafes governance
+ * @dev Handles delegation of voting power and tracking
  * @author BrainSafes Team
  */
 contract DelegationManager is AccessControl, ReentrancyGuard, Pausable {

@@ -7,8 +7,10 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 /**
- * @title BrainSafes Upgradeable Base
- * @dev Base contract for all upgradeable implementations with storage protection
+ * @title BrainSafesUpgradeable
+ * @notice Upgradeable base contract for BrainSafes using UUPS
+ * @dev Provides storage gap, initialization, and upgrade hooks
+ * @author BrainSafes Team
  */
 abstract contract BrainSafesUpgradeable is 
     Initializable, 
