@@ -1,0 +1,81 @@
+{
+  "name": "brainsafes-pro",
+  "version": "1.0.0",
+  "description": "Sistema completo de e-learning descentralizado con IA, becas, NFTs y marketplace",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network arbitrumSepolia",
+    "deploy:arbitrum": "hardhat run scripts/deploy.js --network arbitrum",
+    "deploy:goerli": "hardhat run scripts/deploy.js --network arbitrumGoerli",
+    "verify:testnet": "hardhat verify --network arbitrumSepolia",
+    "verify:arbitrum": "hardhat verify --network arbitrum",
+    "verify:goerli": "hardhat verify --network arbitrumGoerli",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "coverage": "hardhat coverage",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix",
+    "size": "hardhat size-contracts",
+    "analyze": "slither .",
+    "flatten": "hardhat flatten",
+    "gas-report": "REPORT_GAS=true hardhat test",
+    "arbitrum:bridge": "node scripts/bridge-assets.js",
+    "arbitrum:status": "node scripts/check-arbitrum-status.js"
+  },
+  "keywords": [
+    "blockchain",
+    "solidity",
+    "education",
+    "elearning",
+    "nft",
+    "defi",
+    "ai",
+    "smart-contracts",
+    "web3",
+    "ethereum"
+  ],
+  "author": "BrainSafes Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.2",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.1.1",
+    "@typechain/ethers-v6": "^0.4.3",
+    "@typechain/hardhat": "^8.0.3",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.4.5",
+    "chai": "^4.3.7",
+    "hardhat": "^2.17.1",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solhint": "^3.6.2",
+    "solidity-coverage": "^0.8.4",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.3.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.6.1",
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.7.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brainsafes-team/brainsafes-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brainsafes-team/brainsafes-pro/issues"
+  },
+  "homepage": "https://brainsafes.pro"
+} 

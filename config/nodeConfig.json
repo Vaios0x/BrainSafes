@@ -1,0 +1,129 @@
+{
+  "chain": {
+    "id": 412346,
+    "name": "BrainSafes Chain",
+    "owner": "0x...",
+    "chainConfig": {
+      "homesteadBlock": 0,
+      "eip150Block": 0,
+      "eip155Block": 0,
+      "eip158Block": 0,
+      "byzantiumBlock": 0,
+      "constantinopleBlock": 0,
+      "petersburgBlock": 0,
+      "istanbulBlock": 0,
+      "berlinBlock": 0,
+      "londonBlock": 0
+    }
+  },
+  "node": {
+    "sequencer": {
+      "enabled": true,
+      "maxTxDataSize": 100000,
+      "maxBatchSize": 20,
+      "maxBatchSubmitTime": "30s",
+      "maxTxGasLimit": 30000000,
+      "batchPoster": {
+        "enabled": true,
+        "maxDelay": "1h"
+      }
+    },
+    "staker": {
+      "enabled": true,
+      "strategy": "MakeNodes",
+      "stakeToken": "0x...",
+      "stakeAmount": "1000000000000000000",
+      "targetDeadline": "1h",
+      "blockValidationConfig": {
+        "enabled": true,
+        "wasmModuleRoot": "0x...",
+        "wasmModulePath": "/path/to/wasm/module"
+      }
+    },
+    "validator": {
+      "enabled": true,
+      "strategy": "FullNode",
+      "targetDeadline": "30m",
+      "blockValidationConfig": {
+        "enabled": true,
+        "wasmModuleRoot": "0x...",
+        "wasmModulePath": "/path/to/wasm/module"
+      }
+    },
+    "feed": {
+      "input": {
+        "url": "wss://...",
+        "timeout": "5s"
+      },
+      "output": {
+        "addr": "0.0.0.0",
+        "port": 9642
+      }
+    },
+    "rpc": {
+      "addr": "0.0.0.0",
+      "port": 8547,
+      "path": "/",
+      "cors": "*"
+    },
+    "ws": {
+      "addr": "0.0.0.0", 
+      "port": 8548,
+      "path": "/",
+      "origins": "*"
+    },
+    "metrics": {
+      "enabled": true,
+      "addr": "0.0.0.0",
+      "port": 6060
+    },
+    "pprof": {
+      "enabled": true,
+      "addr": "0.0.0.0",
+      "port": 6061
+    }
+  },
+  "cache": {
+    "preimages": true,
+    "trie": true,
+    "gc": 256
+  },
+  "log": {
+    "level": "info",
+    "format": "json",
+    "file": "node.log"
+  },
+  "customPrecompiles": {
+    "education": {
+      "address": "0x70",
+      "gasLimit": 2000000,
+      "maxBatchSize": 100
+    },
+    "certificate": {
+      "address": "0x71", 
+      "gasLimit": 1500000,
+      "maxBatchSize": 100
+    },
+    "scholarship": {
+      "address": "0x72",
+      "gasLimit": 1800000,
+      "maxBatchSize": 100
+    }
+  },
+  "optimizations": {
+    "bold": {
+      "enabled": true,
+      "batchSize": 1000,
+      "compressionLevel": 9,
+      "dataRetentionPeriod": "30d",
+      "validatorThreshold": 3
+    },
+    "timeBoost": {
+      "enabled": true,
+      "maxTimeSkip": "1h",
+      "minConfirmations": 10,
+      "boostFactor": 200,
+      "cooldownPeriod": "1d"
+    }
+  }
+} 
