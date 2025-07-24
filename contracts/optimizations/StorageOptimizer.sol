@@ -1,281 +1,284 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../cache/DistributedCache.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 /**
- * @title StorageOptimizer
- * @notice Storage optimization contract for BrainSafes
- * @dev Implements storage packing and efficient data structures
- * @author BrainSafes Team
+ * @title BrainSafes Storage Optimizer
+ * @dev Handles storage optimizations and data packing
+ * @custom:security-contact security@brainsafes.com
  */
-contract StorageOptimizer {
-    using SafeMath for uint256;
+contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
+    // Roles
+    bytes32 public constant STORAGE_ADMIN = keccak256("STORAGE_ADMIN");
+    bytes32 public constant DATA_PACKER = keccak256("DATA_PACKER");
 
-    struct StorageSlot {
+    // Constants for bit packing
+    uint256 private constant UINT8_MASK = 0xFF;
+    uint256 private constant UINT16_MASK = 0xFFFF;
+    uint256 private constant UINT32_MASK = 0xFFFFFFFF;
+    uint256 private constant UINT64_MASK = 0xFFFFFFFFFFFFFFFF;
+
+    // Structs
+    struct PackedData {
         bytes32 key;
-        bytes32 value;
-        uint256 lastAccess;
-        uint256 accessCount;
+        bytes32 packedValue;
+        uint8 itemCount;
+        uint8[] bitSizes;
         bool isCompressed;
     }
 
     struct StorageLayout {
-        uint256 totalSlots;
-        uint256 compressedSlots;
-        uint256 savedGas;
-        uint256 lastOptimization;
+        bytes32 layoutId;
+        string name;
+        uint8[] fieldSizes;
+        string[] fieldNames;
+        bool isActive;
     }
 
     struct CompressionStats {
         uint256 originalSize;
         uint256 compressedSize;
-        uint256 savedGas;
-        uint256 timestamp;
+        uint256 accessCount;
+        uint256 lastAccess;
+        uint256 savingsPercent;
     }
 
-    // Estado del contrato
-    mapping(bytes32 => StorageSlot) public slots;
-    mapping(address => StorageLayout) public layouts;
+    // Storage
+    mapping(bytes32 => PackedData) public packedStorage;
+    mapping(bytes32 => StorageLayout) public layouts;
     mapping(bytes32 => CompressionStats) public compressionStats;
-    
-    // Cache distribuido
-    DistributedCache public cache;
-    
-    // Eventos
-    event SlotOptimized(bytes32 indexed key, uint256 savedGas);
-    event LayoutOptimized(address indexed contract_, uint256 savedGas);
-    event StorageCompressed(bytes32 indexed key, uint256 originalSize, uint256 compressedSize);
+    mapping(bytes32 => mapping(uint256 => uint256)) public slotHistory;
 
-    constructor(address _cache) {
-        cache = DistributedCache(_cache);
+    // Events
+    event DataPacked(bytes32 indexed key, uint8 itemCount, uint256 savingsPercent);
+    event LayoutRegistered(bytes32 indexed layoutId, string name, uint8 fieldCount);
+    event StorageOptimized(bytes32 indexed key, uint256 originalSize, uint256 newSize);
+    event CompressionUpdated(bytes32 indexed key, uint256 savingsPercent);
+
+    /**
+     * @dev Initialize the contract
+     */
+    function initialize() public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __Pausable_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(STORAGE_ADMIN, msg.sender);
     }
 
     /**
-     * @notice Optimizes the storage layout of a given contract.
-     * @dev Analyzes the current storage layout and attempts to optimize slots.
-     * @param target The address of the contract to optimize.
-     * @return totalSaved The total gas saved by the optimization.
+     * @dev Register a new storage layout
      */
-    function optimizeStorageLayout(address target) external returns (uint256) {
-        require(target != address(0), "Invalid target");
-        
-        StorageLayout storage layout = layouts[target];
-        uint256 initialGas = gasleft();
-        
-        // Analizar layout actual
-        bytes32[] memory slotKeys = _getStorageSlots(target);
-        uint256 compressedCount = 0;
-        uint256 totalSaved = 0;
+    function registerLayout(
+        string calldata name,
+        uint8[] calldata fieldSizes,
+        string[] calldata fieldNames
+    ) external onlyRole(STORAGE_ADMIN) returns (bytes32) {
+        require(fieldSizes.length == fieldNames.length, "Size/name mismatch");
+        require(fieldSizes.length > 0, "Empty layout");
 
-        for (uint256 i = 0; i < slotKeys.length; i++) {
-            StorageSlot storage slot = slots[slotKeys[i]];
-            
-            // Verificar si el slot puede ser optimizado
-            if (_canOptimizeSlot(slot)) {
-                uint256 savedGas = _optimizeSlot(slot);
-                totalSaved = totalSaved.add(savedGas);
-                compressedCount++;
-                
-                emit SlotOptimized(slotKeys[i], savedGas);
-            }
+        bytes32 layoutId = keccak256(abi.encodePacked(name, fieldSizes.length));
+        require(!layouts[layoutId].isActive, "Layout exists");
+
+        StorageLayout storage layout = layouts[layoutId];
+        layout.layoutId = layoutId;
+        layout.name = name;
+        layout.fieldSizes = fieldSizes;
+        layout.fieldNames = fieldNames;
+        layout.isActive = true;
+
+        emit LayoutRegistered(layoutId, name, uint8(fieldSizes.length));
+        return layoutId;
+    }
+
+    /**
+     * @dev Pack multiple values into a single storage slot
+     */
+    function packValues(
+        bytes32 layoutId,
+        bytes32 key,
+        uint256[] calldata values
+    ) external onlyRole(DATA_PACKER) returns (bytes32) {
+        StorageLayout storage layout = layouts[layoutId];
+        require(layout.isActive, "Invalid layout");
+        require(values.length == layout.fieldSizes.length, "Value count mismatch");
+
+        uint256 packedValue = 0;
+        uint256 bitPosition = 0;
+
+        for (uint i = 0; i < values.length; i++) {
+            uint256 maxValue = (1 << layout.fieldSizes[i]) - 1;
+            require(values[i] <= maxValue, "Value too large");
+
+            packedValue |= values[i] << bitPosition;
+            bitPosition += layout.fieldSizes[i];
         }
 
-        // Actualizar layout
-        layout.totalSlots = slotKeys.length;
-        layout.compressedSlots = compressedCount;
-        layout.savedGas = layout.savedGas.add(totalSaved);
-        layout.lastOptimization = block.timestamp;
+        PackedData storage data = packedStorage[key];
+        data.key = key;
+        data.packedValue = bytes32(packedValue);
+        data.itemCount = uint8(values.length);
+        data.bitSizes = layout.fieldSizes;
+        data.isCompressed = true;
 
-        uint256 gasUsed = initialGas.sub(gasleft());
-        emit LayoutOptimized(target, totalSaved);
+        // Calculate savings
+        uint256 originalSize = values.length * 32;
+        uint256 newSize = 32;
+        uint256 savingsPercent = (originalSize - newSize) * 100 / originalSize;
 
-        return totalSaved;
+        updateCompressionStats(key, originalSize, newSize);
+        emit DataPacked(key, uint8(values.length), savingsPercent);
+
+        return bytes32(packedValue);
     }
 
     /**
-     * @notice Compresses the storage slots of a given list of keys.
-     * @dev Attempts to compress each slot in the provided list.
-     * @param keys The list of storage slot keys to compress.
-     * @return results An array of gas savings for each compressed slot.
+     * @dev Unpack values from a storage slot
      */
-    function compressStorageSlots(bytes32[] calldata keys) external returns (uint256[] memory) {
-        uint256[] memory results = new uint256[](keys.length);
-        
-        for (uint256 i = 0; i < keys.length; i++) {
-            StorageSlot storage slot = slots[keys[i]];
-            
-            if (!slot.isCompressed) {
-                (uint256 originalSize, uint256 compressedSize) = _compressSlot(slot);
-                
-                CompressionStats storage stats = compressionStats[keys[i]];
-                stats.originalSize = originalSize;
-                stats.compressedSize = compressedSize;
-                stats.savedGas = _calculateGasSavings(originalSize, compressedSize);
-                stats.timestamp = block.timestamp;
-                
-                results[i] = stats.savedGas;
-                
-                emit StorageCompressed(keys[i], originalSize, compressedSize);
-            }
+    function unpackValues(
+        bytes32 key
+    ) external view returns (uint256[] memory) {
+        PackedData storage data = packedStorage[key];
+        require(data.isCompressed, "Data not packed");
+
+        uint256[] memory values = new uint256[](data.itemCount);
+        uint256 packedValue = uint256(data.packedValue);
+        uint256 bitPosition = 0;
+
+        for (uint i = 0; i < data.itemCount; i++) {
+            uint256 mask = (1 << data.bitSizes[i]) - 1;
+            values[i] = (packedValue >> bitPosition) & mask;
+            bitPosition += data.bitSizes[i];
         }
-        
-        return results;
+
+        return values;
     }
 
     /**
-     * @notice Optimizes a single storage slot.
-     * @dev Implements specific slot optimization logic, e.g., packing variables, removing padding.
-     * @param slot The storage slot to optimize.
-     * @return savedGas The gas saved by the optimization.
+     * @dev Pack address and uint96 into a single slot
      */
-    function _optimizeSlot(StorageSlot storage slot) internal returns (uint256) {
-        uint256 initialGas = gasleft();
-        
-        // Implementar optimización específica del slot
-        // Por ejemplo, empaquetar variables, eliminar padding, etc.
-        bytes32 optimizedValue = _packVariables(slot.value);
-        slot.value = optimizedValue;
-        
-        // Cachear resultado optimizado
-        bytes32 cacheKey = keccak256(abi.encodePacked(slot.key, "optimized"));
-        cache.set(cacheKey, abi.encode(optimizedValue), block.timestamp + 1 days);
-        
-        return initialGas.sub(gasleft());
+    function packAddressUint96(
+        address addr,
+        uint96 value
+    ) external pure returns (bytes32) {
+        return bytes32(uint256(uint160(addr)) | (uint256(value) << 160));
     }
 
     /**
-     * @notice Compresses a single storage slot.
-     * @dev Implements the compression algorithm for a slot.
-     * @param slot The storage slot to compress.
-     * @return originalSize The size of the original data.
-     * @return compressedSize The size of the compressed data.
+     * @dev Unpack address and uint96 from a single slot
      */
-    function _compressSlot(StorageSlot storage slot) internal returns (uint256, uint256) {
-        bytes memory data = abi.encode(slot.value);
-        uint256 originalSize = data.length;
-        
-        // Implementar algoritmo de compresión
-        bytes memory compressed = _runCompression(data);
-        uint256 compressedSize = compressed.length;
-        
-        // Actualizar slot
-        slot.value = bytes32(uint256(uint160(uint256(keccak256(compressed)))));
-        slot.isCompressed = true;
-        
-        return (originalSize, compressedSize);
+    function unpackAddressUint96(
+        bytes32 packed
+    ) external pure returns (address addr, uint96 value) {
+        addr = address(uint160(uint256(packed)));
+        value = uint96(uint256(packed) >> 160);
     }
 
     /**
-     * @notice Checks if a storage slot can be optimized.
-     * @dev Implements logic to determine if a slot can be optimized.
-     * @param slot The storage slot to check.
-     * @return bool True if the slot can be optimized, false otherwise.
+     * @dev Pack multiple small uints into a single slot
      */
-    function _canOptimizeSlot(StorageSlot memory slot) internal pure returns (bool) {
-        // Implementar lógica para determinar si un slot puede ser optimizado
-        // Por ejemplo, verificar tamaño, frecuencia de acceso, etc.
-        return !slot.isCompressed && slot.accessCount > 0;
-    }
+    function packMultipleUints(
+        uint8[] calldata uint8Values,
+        uint16[] calldata uint16Values,
+        uint32[] calldata uint32Values
+    ) external pure returns (bytes32) {
+        require(
+            uint8Values.length <= 32 &&
+            uint16Values.length <= 16 &&
+            uint32Values.length <= 8,
+            "Too many values"
+        );
 
-    /**
-     * @notice Retrieves the storage slots of a given contract.
-     * @dev Implements logic to get storage slots.
-     * @param target The address of the contract.
-     * @return bytes32[] An array of storage slot keys.
-     */
-    function _getStorageSlots(address target) internal view returns (bytes32[] memory) {
-        // Implementar lógica para obtener slots de almacenamiento
-        // Este es un placeholder - la implementación real dependería del contexto
-        return new bytes32[](0);
-    }
+        uint256 packed = 0;
+        uint256 bitPosition = 0;
 
-    /**
-     * @notice Packs variables within a storage slot value.
-     * @dev Implements variable packing logic.
-     * @param value The value to pack.
-     * @return bytes32 The packed value.
-     */
-    function _packVariables(bytes32 value) internal pure returns (bytes32) {
-        // Implementar lógica de empaquetado de variables
-        // Este es un placeholder - la implementación real dependería del contexto
-        return value;
-    }
-
-    /**
-     * @notice Runs the compression algorithm on the provided data.
-     * @dev Implements the compression algorithm.
-     * @param data The data to compress.
-     * @return bytes The compressed data.
-     */
-    function _runCompression(bytes memory data) internal pure returns (bytes memory) {
-        // Implementar algoritmo de compresión
-        // Este es un placeholder - la implementación real usaría un algoritmo específico
-        return data;
-    }
-
-    /**
-     * @notice Calculates gas savings based on size reduction.
-     * @dev Calculates gas savings based on the reduction in size.
-     * @param originalSize The size of the original data.
-     * @param compressedSize The size of the compressed data.
-     * @return uint256 The gas savings.
-     */
-    function _calculateGasSavings(uint256 originalSize, uint256 compressedSize) internal pure returns (uint256) {
-        // Calcular ahorro de gas basado en la reducción de tamaño
-        uint256 sizeReduction = originalSize.sub(compressedSize);
-        return sizeReduction.mul(16); // 16 gas por byte reducido
-    }
-
-    // Funciones de consulta
-    /**
-     * @notice Retrieves the current storage layout of a given contract.
-     * @dev Retrieves the current storage layout.
-     * @param target The address of the contract.
-     * @return StorageLayout The current storage layout.
-     */
-    function getStorageLayout(address target) external view returns (StorageLayout memory) {
-        return layouts[target];
-    }
-
-    /**
-     * @notice Retrieves the compression statistics for a given storage slot key.
-     * @dev Retrieves compression statistics.
-     * @param key The storage slot key.
-     * @return CompressionStats The compression statistics.
-     */
-    function getCompressionStats(bytes32 key) external view returns (CompressionStats memory) {
-        return compressionStats[key];
-    }
-
-    /**
-     * @notice Retrieves detailed information about a specific storage slot.
-     * @dev Retrieves slot information.
-     * @param key The storage slot key.
-     * @return StorageSlot The detailed slot information.
-     */
-    function getSlotInfo(bytes32 key) external view returns (StorageSlot memory) {
-        return slots[key];
-    }
-
-    /**
-     * @notice Estimates the gas cost for optimizing the storage layout of a given contract.
-     * @dev Estimates the gas cost for optimization.
-     * @param target The address of the contract.
-     * @return uint256 The estimated gas cost.
-     */
-    function estimateOptimizationGas(address target) external view returns (uint256) {
-        bytes32[] memory slotKeys = _getStorageSlots(target);
-        uint256 estimatedGas = 0;
-        
-        for (uint256 i = 0; i < slotKeys.length; i++) {
-            StorageSlot memory slot = slots[slotKeys[i]];
-            if (_canOptimizeSlot(slot)) {
-                estimatedGas = estimatedGas.add(21000); // Gas base por operación
-            }
+        // Pack uint8s
+        for (uint i = 0; i < uint8Values.length; i++) {
+            packed |= uint256(uint8Values[i]) << bitPosition;
+            bitPosition += 8;
         }
-        
-        return estimatedGas;
+
+        // Pack uint16s
+        for (uint i = 0; i < uint16Values.length; i++) {
+            packed |= uint256(uint16Values[i]) << bitPosition;
+            bitPosition += 16;
+        }
+
+        // Pack uint32s
+        for (uint i = 0; i < uint32Values.length; i++) {
+            packed |= uint256(uint32Values[i]) << bitPosition;
+            bitPosition += 32;
+        }
+
+        return bytes32(packed);
     }
+
+    /**
+     * @dev Update compression statistics
+     */
+    function updateCompressionStats(
+        bytes32 key,
+        uint256 originalSize,
+        uint256 newSize
+    ) internal {
+        CompressionStats storage stats = compressionStats[key];
+        stats.originalSize = originalSize;
+        stats.compressedSize = newSize;
+        stats.accessCount++;
+        stats.lastAccess = block.timestamp;
+        stats.savingsPercent = (originalSize - newSize) * 100 / originalSize;
+
+        emit CompressionUpdated(key, stats.savingsPercent);
+    }
+
+    /**
+     * @dev Get compression statistics
+     */
+    function getCompressionStats(
+        bytes32 key
+    ) external view returns (
+        uint256 originalSize,
+        uint256 compressedSize,
+        uint256 accessCount,
+        uint256 lastAccess,
+        uint256 savingsPercent
+    ) {
+        CompressionStats storage stats = compressionStats[key];
+        return (
+            stats.originalSize,
+            stats.compressedSize,
+            stats.accessCount,
+            stats.lastAccess,
+            stats.savingsPercent
+        );
+    }
+
+    /**
+     * @dev Get layout details
+     */
+    function getLayout(
+        bytes32 layoutId
+    ) external view returns (
+        string memory name,
+        uint8[] memory fieldSizes,
+        string[] memory fieldNames,
+        bool isActive
+    ) {
+        StorageLayout storage layout = layouts[layoutId];
+        return (
+            layout.name,
+            layout.fieldSizes,
+            layout.fieldNames,
+            layout.isActive
+        );
+    }
+
+    /**
+     * @dev Required by UUPS
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 

@@ -4,19 +4,22 @@ use stylus_sdk::{
     stylus_proc::stylus_fn,
 };
 
-use alloy_primitives::{Address, Bytes};
+use alloy_primitives::{Address, Bytes, FixedBytes};
 use core::marker::PhantomData;
 use wee_alloc::WeeAlloc;
 
 #[global_allocator]
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
+// Optimized data structures for Stylus
 #[derive(Debug)]
 pub struct AIProcessor {
     owner: Address,
     model_configs: StorageMap<U256, ModelConfig>,
     inference_results: StorageMap<U256, InferenceResult>,
     stats: StorageMap<U256, ProcessingStats>,
+    computation_cache: StorageMap<FixedBytes<32>, CacheEntry>,
+    off_chain_requests: StorageMap<U256, OffChainRequest>,
     _phantom: PhantomData<()>,
 }
 
@@ -28,6 +31,9 @@ pub struct ModelConfig {
     batch_size: U256,
     compute_units: U256,
     is_active: bool,
+    off_chain_enabled: bool,
+    cache_ttl: U256,
+    max_gas_limit: U256,
 }
 
 #[derive(Debug, Clone, Storage)]
@@ -38,6 +44,41 @@ pub struct InferenceResult {
     confidence: U256,
     timestamp: U256,
     gas_used: U256,
+    computation_source: ComputationSource,
+}
+
+#[derive(Debug, Clone, Storage)]
+pub struct CacheEntry {
+    result: Bytes,
+    timestamp: U256,
+    ttl: U256,
+    hits: U256,
+}
+
+#[derive(Debug, Clone, Storage)]
+pub struct OffChainRequest {
+    request_id: U256,
+    model_id: U256,
+    input_data: Bytes,
+    callback_address: Address,
+    callback_data: Bytes,
+    deadline: U256,
+    status: RequestStatus,
+}
+
+#[derive(Debug, Clone, Storage)]
+pub enum ComputationSource {
+    OnChain,
+    OffChain,
+    Cached,
+}
+
+#[derive(Debug, Clone, Storage)]
+pub enum RequestStatus {
+    Pending,
+    Completed,
+    Failed,
+    TimedOut,
 }
 
 #[derive(Debug, Clone, Storage)]
@@ -46,6 +87,8 @@ pub struct ProcessingStats {
     total_gas_used: U256,
     avg_processing_time: U256,
     success_rate: U256,
+    cache_hit_rate: U256,
+    off_chain_ratio: U256,
 }
 
 #[stylus_fn]
@@ -56,6 +99,8 @@ impl AIProcessor {
             model_configs: StorageMap::new(),
             inference_results: StorageMap::new(),
             stats: StorageMap::new(),
+            computation_cache: StorageMap::new(),
+            off_chain_requests: StorageMap::new(),
             _phantom: PhantomData,
         }
     }
@@ -68,6 +113,9 @@ impl AIProcessor {
         output_size: U256,
         batch_size: U256,
         compute_units: U256,
+        off_chain_enabled: bool,
+        cache_ttl: U256,
+        max_gas_limit: U256,
     ) -> Result<bool, Vec<u8>> {
         self.ensure_owner()?;
         
@@ -78,6 +126,9 @@ impl AIProcessor {
             batch_size,
             compute_units,
             is_active: true,
+            off_chain_enabled,
+            cache_ttl,
+            max_gas_limit,
         };
         
         self.model_configs.insert(model_id, config);
@@ -96,18 +147,28 @@ impl AIProcessor {
         require!(config.is_active, "Model not active");
         require!(input_data.len() <= config.input_size.as_usize(), "Input too large");
 
+        // Check cache first
+        let input_hash = evm::keccak256(&input_data);
+        if let Some(cached) = self.check_cache(&input_hash.into())? {
+            return Ok(self.create_result_from_cache(cached, input_hash.into()));
+        }
+
+        // Check if should process off-chain
+        if self.should_process_off_chain(&config, &input_data)? {
+            return self.submit_off_chain_request(model_id, input_data);
+        }
+
+        // Process on-chain
         let start_gas = evm::gas_left();
         let start_time = evm::block_timestamp();
 
-        // Procesar inferencia
         let result = self.run_inference(model_id, &input_data)?;
         
-        // Calcular estadísticas
+        // Update stats and cache
         let gas_used = start_gas - evm::gas_left();
         let processing_time = evm::block_timestamp() - start_time;
-
-        // Actualizar estadísticas
         self.update_stats(model_id, gas_used.into(), processing_time.into())?;
+        self.cache_result(input_hash.into(), &result, config.cache_ttl)?;
 
         Ok(result)
     }
@@ -126,9 +187,15 @@ impl AIProcessor {
         let mut results = Vec::with_capacity(inputs.len());
         let start_gas = evm::gas_left();
 
-        for input in inputs {
-            let result = self.process_inference(model_id, input)?;
-            results.push(result);
+        // Parallel processing simulation
+        let chunks = inputs.chunks(4);
+        for chunk in chunks {
+            let mut chunk_results = Vec::with_capacity(chunk.len());
+            for input in chunk {
+                let result = self.process_inference(model_id, input.clone())?;
+                chunk_results.push(result);
+            }
+            results.extend(chunk_results);
         }
 
         let total_gas = start_gas - evm::gas_left();
@@ -141,76 +208,144 @@ impl AIProcessor {
         Ok(results)
     }
 
-    #[stylus_fn(name = "getModelConfig")]
-    pub fn get_model_config(&self, model_id: U256) -> Result<ModelConfig, Vec<u8>> {
-        self.model_configs.get(&model_id)
-            .ok_or_else(|| "Model not found".into())
-    }
-
-    #[stylus_fn(name = "getProcessingStats")]
-    pub fn get_processing_stats(&self, model_id: U256) -> Result<ProcessingStats, Vec<u8>> {
-        self.stats.get(&model_id)
-            .ok_or_else(|| "Stats not found".into())
-    }
-
-    fn run_inference(&mut self, model_id: U256, input: &Bytes) -> Result<InferenceResult, Vec<u8>> {
-        let request_id = self.get_next_request_id();
-        let input_hash = evm::keccak256(input);
-
-        // Simular procesamiento de IA
-        let output = self.simulate_inference(input)?;
-        let confidence = self.calculate_confidence(&output);
-
-        let result = InferenceResult {
+    #[stylus_fn(name = "submitOffChainResult")]
+    pub fn submit_off_chain_result(
+        &mut self,
+        request_id: U256,
+        result: Bytes,
+        confidence: U256,
+    ) -> Result<bool, Vec<u8>> {
+        let request = self.off_chain_requests.get(&request_id)
+            .ok_or("Request not found")?;
+        
+        require!(request.status == RequestStatus::Pending, "Invalid request status");
+        
+        let inference_result = InferenceResult {
             request_id,
-            input_hash: input_hash.into(),
-            output: output.into(),
+            input_hash: evm::keccak256(&request.input_data).into(),
+            output: result.clone(),
             confidence,
             timestamp: evm::block_timestamp().into(),
-            gas_used: evm::gas_left().into(),
+            gas_used: U256::ZERO,
+            computation_source: ComputationSource::OffChain,
         };
 
-        self.inference_results.insert(request_id, result.clone());
-        Ok(result)
+        self.inference_results.insert(request_id, inference_result);
+        
+        // Update request status
+        let mut updated_request = request;
+        updated_request.status = RequestStatus::Completed;
+        self.off_chain_requests.insert(request_id, updated_request);
+
+        // Cache the result
+        let config = self.model_configs.get(&request.model_id)
+            .ok_or("Model not found")?;
+        self.cache_result(
+            evm::keccak256(&request.input_data).into(),
+            &inference_result,
+            config.cache_ttl,
+        )?;
+
+        Ok(true)
     }
 
-    fn simulate_inference(&self, input: &Bytes) -> Result<Vec<u8>, Vec<u8>> {
-        // Implementar lógica real de inferencia aquí
-        let mut output = Vec::with_capacity(input.len());
-        for byte in input.iter() {
-            output.push(byte.rotate_left(2));
+    // Helper functions
+    fn check_cache(&self, input_hash: &FixedBytes<32>) -> Result<Option<CacheEntry>, Vec<u8>> {
+        if let Some(entry) = self.computation_cache.get(input_hash) {
+            if entry.timestamp + entry.ttl > evm::block_timestamp().into() {
+                return Ok(Some(entry));
+            }
         }
-        Ok(output)
+        Ok(None)
     }
 
-    fn calculate_confidence(&self, output: &[u8]) -> U256 {
-        // Implementar cálculo real de confianza aquí
-        let sum: u32 = output.iter().map(|&x| x as u32).sum();
-        U256::from(sum.saturating_mul(100) / (output.len() as u32 * 255))
+    fn cache_result(
+        &mut self,
+        input_hash: FixedBytes<32>,
+        result: &InferenceResult,
+        ttl: U256,
+    ) -> Result<(), Vec<u8>> {
+        let entry = CacheEntry {
+            result: result.output.clone(),
+            timestamp: evm::block_timestamp().into(),
+            ttl,
+            hits: U256::from(1),
+        };
+        self.computation_cache.insert(input_hash, entry);
+        Ok(())
     }
 
-    fn update_stats(
+    fn should_process_off_chain(
+        &self,
+        config: &ModelConfig,
+        input_data: &Bytes,
+    ) -> Result<bool, Vec<u8>> {
+        if !config.off_chain_enabled {
+            return Ok(false);
+        }
+
+        // Estimate gas cost
+        let estimated_gas = self.estimate_computation_gas(input_data)?;
+        Ok(estimated_gas > config.max_gas_limit)
+    }
+
+    fn submit_off_chain_request(
         &mut self,
         model_id: U256,
-        gas_used: U256,
-        processing_time: U256,
-    ) -> Result<(), Vec<u8>> {
-        let mut stats = self.stats.get(&model_id)
-            .unwrap_or_else(|| ProcessingStats {
-                total_requests: U256::ZERO,
-                total_gas_used: U256::ZERO,
-                avg_processing_time: U256::ZERO,
-                success_rate: U256::from(100),
-            });
+        input_data: Bytes,
+    ) -> Result<InferenceResult, Vec<u8>> {
+        let request_id = self.get_next_request_id();
+        let deadline = evm::block_timestamp() + 3600; // 1 hour deadline
 
-        stats.total_requests += U256::from(1);
-        stats.total_gas_used += gas_used;
-        stats.avg_processing_time = (
-            stats.avg_processing_time * (stats.total_requests - U256::from(1)) + processing_time
-        ) / stats.total_requests;
+        let request = OffChainRequest {
+            request_id,
+            model_id,
+            input_data: input_data.clone(),
+            callback_address: msg::sender(),
+            callback_data: Bytes::new(),
+            deadline: deadline.into(),
+            status: RequestStatus::Pending,
+        };
 
-        self.stats.insert(model_id, stats);
-        Ok(())
+        self.off_chain_requests.insert(request_id, request);
+
+        emit!(OffChainRequestSubmitted {
+            request_id,
+            model_id,
+            deadline: deadline as u64,
+        });
+
+        // Return a pending result
+        Ok(InferenceResult {
+            request_id,
+            input_hash: evm::keccak256(&input_data).into(),
+            output: Bytes::new(),
+            confidence: U256::ZERO,
+            timestamp: evm::block_timestamp().into(),
+            gas_used: U256::ZERO,
+            computation_source: ComputationSource::OffChain,
+        })
+    }
+
+    fn estimate_computation_gas(&self, input_data: &Bytes) -> Result<U256, Vec<u8>> {
+        // Implement gas estimation logic
+        Ok(U256::from(input_data.len() * 100_000))
+    }
+
+    fn create_result_from_cache(
+        &self,
+        cache: CacheEntry,
+        input_hash: FixedBytes<32>,
+    ) -> InferenceResult {
+        InferenceResult {
+            request_id: U256::ZERO,
+            input_hash: input_hash.to_vec().into(),
+            output: cache.result,
+            confidence: U256::from(100),
+            timestamp: evm::block_timestamp().into(),
+            gas_used: U256::ZERO,
+            computation_source: ComputationSource::Cached,
+        }
     }
 
     fn get_next_request_id(&self) -> U256 {
@@ -240,8 +375,19 @@ pub struct BatchProcessed {
     gas_used: u64,
 }
 
+#[derive(Debug)]
+pub struct OffChainRequestSubmitted {
+    request_id: U256,
+    model_id: U256,
+    deadline: u64,
+}
+
 impl Event for BatchProcessed {
     const SIGNATURE: [u8; 32] = keccak256!("BatchProcessed(uint256,uint32,uint64)");
+}
+
+impl Event for OffChainRequestSubmitted {
+    const SIGNATURE: [u8; 32] = keccak256!("OffChainRequestSubmitted(uint256,uint256,uint64)");
 }
 
 #[cfg(test)]
@@ -257,6 +403,9 @@ mod tests {
             U256::from(128),
             U256::from(32),
             U256::from(100),
+            true,
+            U256::from(3600),
+            U256::from(1_000_000),
         );
         assert!(result.is_ok());
     }
@@ -270,6 +419,9 @@ mod tests {
             U256::from(128),
             U256::from(32),
             U256::from(100),
+            true,
+            U256::from(3600),
+            U256::from(1_000_000),
         ).unwrap();
 
         let input = vec![1, 2, 3, 4];
@@ -278,7 +430,7 @@ mod tests {
     }
 
     #[test]
-    fn test_batch_process() {
+    fn test_cache_hit() {
         let mut processor = AIProcessor::new();
         processor.register_model(
             U256::from(1),
@@ -286,14 +438,23 @@ mod tests {
             U256::from(128),
             U256::from(32),
             U256::from(100),
+            true,
+            U256::from(3600),
+            U256::from(1_000_000),
         ).unwrap();
 
-        let inputs = vec![
-            vec![1, 2, 3].into(),
-            vec![4, 5, 6].into(),
-        ];
-        let result = processor.batch_process(U256::from(1), inputs);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().len(), 2);
+        let input = vec![1, 2, 3, 4];
+        
+        // First call should process
+        let result1 = processor.process_inference(U256::from(1), input.clone().into());
+        assert!(result1.is_ok());
+        
+        // Second call should hit cache
+        let result2 = processor.process_inference(U256::from(1), input.into());
+        assert!(result2.is_ok());
+        assert_eq!(
+            result2.unwrap().computation_source,
+            ComputationSource::Cached
+        );
     }
 } 

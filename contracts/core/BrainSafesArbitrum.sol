@@ -6,8 +6,11 @@ import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbRetryableTx.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbAddressTable.sol";
+import "@arbitrum/nitro-contracts/src/precompiles/ArbOwner.sol";
+import "@arbitrum/nitro-contracts/src/precompiles/ArbStatistics.sol";
 import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 import "@arbitrum/nitro-contracts/src/node-interface/NodeInterface.sol";
+import "@arbitrum/nitro-contracts/src/libraries/NitroUtils.sol";
 import "../utils/AddressCompressor.sol";
 import "../utils/EnhancedMulticall.sol";
 import "../utils/DistributedCache.sol";
@@ -16,41 +19,72 @@ import "../utils/UserExperience.sol";
 
 /**
  * @title BrainSafesArbitrum
- * @dev Arbitrum-optimized version of BrainSafes with enhanced precompile usage
- * @author BrainSafes Team
+ * @dev Arbitrum 2025-optimized version of BrainSafes with enhanced Nitro features
+ * @custom:security-contact security@brainsafes.com
  */
 contract BrainSafesArbitrum is BrainSafesUpgradeable {
-    // Arbitrum precompiles
+    // Arbitrum precompiles with latest addresses
     ArbSys constant arbsys = ArbSys(address(0x64));
     ArbGasInfo constant arbGasInfo = ArbGasInfo(address(0x6c));
     ArbRetryableTx constant arbRetryableTx = ArbRetryableTx(address(0x6e));
     ArbAddressTable constant arbAddressTable = ArbAddressTable(address(0x66));
+    ArbOwner constant arbOwner = ArbOwner(address(0x70));
+    ArbStatistics constant arbStats = ArbStatistics(address(0x72));
     NodeInterface constant nodeInterface = NodeInterface(address(0xc8));
     
-    // L1 contract address for cross-chain messaging
+    // Cross-chain messaging
     address public l1BrainSafesAddress;
+    mapping(bytes32 => bool) public processedL1Messages;
+    mapping(bytes32 => uint256) public messageTimestamps;
     
-    // Address compression
+    // Batch processing
+    struct BatchOperation {
+        address target;
+        bytes data;
+        uint256 value;
+        bool requireSuccess;
+    }
+    mapping(bytes32 => BatchOperation[]) public pendingBatches;
+    mapping(bytes32 => bool) public batchExecuted;
+    
+    // Optimized storage
     mapping(address => uint256) public compressedAddresses;
-    
-    // Retryable ticket tracking
     mapping(bytes32 => bool) public retryableTickets;
+    mapping(bytes32 => mapping(address => bool)) public batchParticipants;
+    
+    // Gas optimization tracking
+    struct GasOptimization {
+        uint256 originalGas;
+        uint256 optimizedGas;
+        string optimizationType;
+        uint256 timestamp;
+    }
+    mapping(bytes32 => GasOptimization) public gasOptimizations;
     
     // Events
+    event L1MessageProcessed(bytes32 indexed messageId, address indexed sender, uint256 timestamp);
+    event BatchCreated(bytes32 indexed batchId, uint256 operationCount);
+    event BatchExecuted(bytes32 indexed batchId, uint256 gasUsed);
     event AddressCompressed(address indexed original, uint256 indexed compressed);
     event RetryableTicketCreated(bytes32 indexed ticketId, address indexed sender);
     event GasOptimizationApplied(string optimizationType, uint256 gasSaved);
     event NodeInfoUpdated(uint256 blockNumber, uint256 timestamp, uint256 baseFee);
+    event CrossChainMessageSent(bytes32 indexed messageId, address indexed target, uint256 timestamp);
     
-    // Nuevas integraciones
+    // Integrations
     AddressCompressor public addressCompressor;
     EnhancedMulticall public multicall;
     DistributedCache public cache;
     SecurityManager public securityManager;
     UserExperience public userExperience;
     
+    // Constants
+    uint256 private constant MAX_BATCH_SIZE = 100;
+    uint256 private constant MIN_BATCH_GAS = 100000;
+    uint256 private constant CROSS_CHAIN_MESSAGE_TIMEOUT = 24 hours;
+    
     /**
-     * @dev Initialize the contract with L1 contract address
+     * @dev Initialize the contract with enhanced Arbitrum features
      */
     function initialize(
         address _l1BrainSafesAddress,
@@ -61,177 +95,273 @@ contract BrainSafesArbitrum is BrainSafesUpgradeable {
         address _userExperience
     ) public initializer {
         __BrainSafesUpgradeable_init();
-        l1BrainSafesAddress = _l1BrainSafesAddress;
         
+        // Set addresses
+        l1BrainSafesAddress = _l1BrainSafesAddress;
         addressCompressor = AddressCompressor(_addressCompressor);
         multicall = EnhancedMulticall(_multicall);
         cache = DistributedCache(_cache);
         securityManager = SecurityManager(_securityManager);
         userExperience = UserExperience(_userExperience);
         
-        // Registrar direcciones para compresión
+        // Register core addresses for compression
         _registerAddressForCompression(address(this));
         _registerAddressForCompression(l1BrainSafesAddress);
+        
+        // Initialize Nitro features
+        _initializeNitroFeatures();
     }
     
     /**
-     * @dev Register an address for compression
+     * @dev Initialize Nitro-specific features
+     */
+    function _initializeNitroFeatures() private {
+        // Get current node configuration
+        NodeInterface.NodeConfig memory config = nodeInterface.nodeConfig();
+        
+        // Set initial gas parameters
+        uint256 baseGasPrice = arbGasInfo.getL1BaseFeeEstimate();
+        uint256 l2GasPrice = config.priceInWei;
+        
+        // Initialize statistics tracking
+        arbStats.initializeStatsTracking();
+        
+        // Set up cross-chain messaging parameters
+        _setupCrossChainMessaging();
+    }
+    
+    /**
+     * @dev Set up cross-chain messaging configuration
+     */
+    function _setupCrossChainMessaging() private {
+        // Get L1/L2 block numbers for synchronization
+        uint256 l1BlockNumber = arbsys.arbBlockNumber();
+        uint256 l2BlockNumber = block.number;
+        
+        // Store initial synchronization point
+        bytes32 syncPoint = keccak256(abi.encodePacked(l1BlockNumber, l2BlockNumber));
+        messageTimestamps[syncPoint] = block.timestamp;
+    }
+    
+    /**
+     * @dev Create and execute a batch of operations with gas optimization
+     */
+    function createAndExecuteBatch(
+        BatchOperation[] calldata operations,
+        bool executeImmediately
+    ) external returns (bytes32) {
+        require(operations.length <= MAX_BATCH_SIZE, "Batch too large");
+        require(operations.length > 0, "Empty batch");
+        
+        // Create batch ID
+        bytes32 batchId = keccak256(abi.encodePacked(
+            block.timestamp,
+            msg.sender,
+            operations.length
+        ));
+        
+        // Store batch operations
+        for (uint256 i = 0; i < operations.length; i++) {
+            pendingBatches[batchId].push(operations[i]);
+            batchParticipants[batchId][operations[i].target] = true;
+        }
+        
+        emit BatchCreated(batchId, operations.length);
+        
+        // Execute immediately if requested and gas price is favorable
+        if (executeImmediately) {
+            NodeInterface.BlockInfo memory info = nodeInterface.blockInfo();
+            if (info.baseFee <= info.l1BaseFee / 2) {
+                return _executeBatch(batchId);
+            }
+        }
+        
+        return batchId;
+    }
+    
+    /**
+     * @dev Execute a pending batch with gas optimization
+     */
+    function _executeBatch(bytes32 batchId) private returns (bytes32) {
+        require(!batchExecuted[batchId], "Batch already executed");
+        BatchOperation[] storage operations = pendingBatches[batchId];
+        require(operations.length > 0, "No operations in batch");
+        
+        // Estimate total gas needed
+        uint256 totalGasEstimate = 0;
+        for (uint256 i = 0; i < operations.length; i++) {
+            (uint256 gasEstimate,,,) = nodeInterface.gasEstimateComponents(
+                address(this),
+                operations[i].value,
+                operations[i].target,
+                operations[i].data
+            );
+            totalGasEstimate += gasEstimate;
+        }
+        
+        require(totalGasEstimate >= MIN_BATCH_GAS, "Batch gas too low");
+        
+        // Track original gas for optimization metrics
+        uint256 startGas = gasleft();
+        
+        // Execute operations through multicall for gas optimization
+        EnhancedMulticall.Call[] memory calls = new EnhancedMulticall.Call[](operations.length);
+        for (uint256 i = 0; i < operations.length; i++) {
+            calls[i] = EnhancedMulticall.Call({
+                target: operations[i].target,
+                callData: operations[i].data,
+                gasLimit: 0 // Dynamic gas limit
+            });
+        }
+        
+        EnhancedMulticall.Result[] memory results = multicall.aggregate(calls);
+        
+        // Verify results if required
+        for (uint256 i = 0; i < operations.length; i++) {
+            if (operations[i].requireSuccess) {
+                require(results[i].success, "Operation failed");
+            }
+        }
+        
+        // Calculate gas savings
+        uint256 gasUsed = startGas - gasleft();
+        uint256 gasSaved = totalGasEstimate - gasUsed;
+        
+        // Store optimization metrics
+        gasOptimizations[batchId] = GasOptimization({
+            originalGas: totalGasEstimate,
+            optimizedGas: gasUsed,
+            optimizationType: "batch_execution",
+            timestamp: block.timestamp
+        });
+        
+        batchExecuted[batchId] = true;
+        emit BatchExecuted(batchId, gasUsed);
+        emit GasOptimizationApplied("batch_execution", gasSaved);
+        
+        return batchId;
+    }
+    
+    /**
+     * @dev Send message to L1 with optimized cross-chain communication
+     */
+    function sendL1Message(
+        address target,
+        bytes calldata data,
+        uint256 l1CallValue
+    ) external payable returns (bytes32) {
+        // Calculate message ID
+        bytes32 messageId = keccak256(abi.encodePacked(
+            block.timestamp,
+            msg.sender,
+            target,
+            data
+        ));
+        
+        // Get current gas prices for optimization
+        (uint256 l1GasPrice, uint256 l2GasPrice) = _getCurrentGasPrices();
+        
+        // Calculate optimal gas parameters
+        uint256 maxSubmissionCost = l1GasPrice * 40000; // Base cost for L1 submission
+        uint256 maxGas = l2GasPrice * 100000; // Estimated L2 execution gas
+        
+        // Create retryable ticket with optimized parameters
+        bytes32 ticketId = arbRetryableTx.createRetryableTicket{value: msg.value}(
+            target,
+            l1CallValue,
+            maxSubmissionCost,
+            msg.sender,
+            msg.sender,
+            maxGas,
+            l2GasPrice,
+            data
+        );
+        
+        // Track message
+        messageTimestamps[messageId] = block.timestamp;
+        retryableTickets[ticketId] = true;
+        
+        emit CrossChainMessageSent(messageId, target, block.timestamp);
+        emit RetryableTicketCreated(ticketId, msg.sender);
+        
+        return messageId;
+    }
+    
+    /**
+     * @dev Get current L1 and L2 gas prices
+     */
+    function _getCurrentGasPrices() private view returns (uint256 l1GasPrice, uint256 l2GasPrice) {
+        NodeInterface.BlockInfo memory info = nodeInterface.blockInfo();
+        l1GasPrice = info.l1BaseFee;
+        l2GasPrice = info.baseFee;
+    }
+    
+    /**
+     * @dev Register an address for compression with gas optimization
      */
     function _registerAddressForCompression(address addr) internal {
         if (compressedAddresses[addr] == 0) {
+            uint256 startGas = gasleft();
+            
+            // Compress address using ArbAddressTable
             uint256 index = arbAddressTable.register(addr);
             compressedAddresses[addr] = index;
+            
+            // Calculate gas savings
+            uint256 gasUsed = startGas - gasleft();
+            uint256 standardGas = 21000; // Standard address storage gas
+            
             emit AddressCompressed(addr, index);
+            emit GasOptimizationApplied("address_compression", standardGas - gasUsed);
         }
     }
     
     /**
-     * @dev Get node information using NodeInterface
+     * @dev Get comprehensive node and network statistics
      */
-    function getNodeInfo() external view returns (
-        uint256 blockNumber,
-        uint256 timestamp,
-        uint256 baseFee,
-        uint256 l1BaseFee,
-        uint256 chainId
+    function getNetworkStats() external view returns (
+        uint256 l1BlockNumber,
+        uint256 l2BlockNumber,
+        uint256 l1GasPrice,
+        uint256 l2GasPrice,
+        uint256 timesSinceLastL1Block,
+        uint256 pendingL1Messages
     ) {
+        l1BlockNumber = arbsys.arbBlockNumber();
+        l2BlockNumber = block.number;
+        
         NodeInterface.BlockInfo memory info = nodeInterface.blockInfo();
-        return (
-            info.number,
-            info.timestamp,
-            info.baseFee,
-            info.l1BaseFee,
-            info.chainId
-        );
+        l1GasPrice = info.l1BaseFee;
+        l2GasPrice = info.baseFee;
+        
+        timesSinceLastL1Block = arbStats.getTimesSinceLastL1Block();
+        pendingL1Messages = arbStats.getPendingL1MessageCount();
     }
     
     /**
-     * @dev Get estimated gas costs for a transaction
+     * @dev Get batch execution statistics
      */
-    function getEstimatedGasCosts(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external returns (
-        uint256 gasEstimate,
-        uint256 gasEstimateForL1,
-        uint256 baseFee,
-        uint256 l1BaseFee
+    function getBatchStats(bytes32 batchId) external view returns (
+        uint256 operationCount,
+        bool isExecuted,
+        uint256 originalGas,
+        uint256 optimizedGas,
+        string memory optimizationType,
+        uint256 timestamp
     ) {
-        // Get gas estimates using NodeInterface
-        (gasEstimate, gasEstimateForL1, baseFee, l1BaseFee) = nodeInterface.gasEstimateComponents(
-            msg.sender,
-            value,
-            to,
-            data
-        );
+        BatchOperation[] storage operations = pendingBatches[batchId];
+        operationCount = operations.length;
+        isExecuted = batchExecuted[batchId];
         
-        // Apply gas optimizations based on estimates
-        if (gasEstimate > 1000000) {
-            emit GasOptimizationApplied("high_gas_optimization", gasEstimate / 10);
-        }
-        
-        return (gasEstimate, gasEstimateForL1, baseFee, l1BaseFee);
+        GasOptimization storage optimization = gasOptimizations[batchId];
+        originalGas = optimization.originalGas;
+        optimizedGas = optimization.optimizedGas;
+        optimizationType = optimization.optimizationType;
+        timestamp = optimization.timestamp;
     }
     
     /**
-     * @dev Get aggregator information
-     */
-    function getAggregatorInfo() external view returns (
-        address aggregator,
-        bool isActive,
-        uint256 minTxGasLimit,
-        uint256 maxTxGasLimit,
-        uint256 maxTxGasPerBlock
-    ) {
-        NodeInterface.AggregatorInfo memory info = nodeInterface.aggregatorInfo();
-        return (
-            info.aggregator,
-            info.isActive,
-            info.minTxGasLimit,
-            info.maxTxGasLimit,
-            info.maxTxGasPerBlock
-        );
-    }
-    
-    /**
-     * @dev Create a retryable ticket with optimized gas estimation
-     */
-    function createRetryableTicket(
-        address to,
-        uint256 l2CallValue,
-        uint256 maxSubmissionCost,
-        address excessFeeRefundAddress,
-        address callValueRefundAddress,
-        uint256 gasLimit,
-        uint256 maxFeePerGas,
-        bytes calldata data
-    ) external payable returns (bytes32) {
-        // Get gas estimates for the retryable ticket
-        (uint256 gasEstimate, uint256 gasEstimateForL1,,) = nodeInterface.gasEstimateComponents(
-            msg.sender,
-            l2CallValue,
-            to,
-            data
-        );
-        
-        // Adjust gas limit based on estimates
-        uint256 adjustedGasLimit = gasEstimate + gasEstimateForL1;
-        require(adjustedGasLimit <= gasLimit, "Gas limit too low");
-        
-        bytes32 ticketId = arbRetryableTx.createRetryableTicket{value: msg.value}(
-            to,
-            l2CallValue,
-            maxSubmissionCost,
-            excessFeeRefundAddress,
-            callValueRefundAddress,
-            adjustedGasLimit,
-            maxFeePerGas,
-            data
-        );
-        
-        retryableTickets[ticketId] = true;
-        emit RetryableTicketCreated(ticketId, msg.sender);
-        return ticketId;
-    }
-    
-    /**
-     * @dev Redeem a retryable ticket with gas optimization
-     */
-    function redeemRetryableTicket(bytes32 ticketId) external {
-        require(retryableTickets[ticketId], "Invalid ticket");
-        
-        // Get current gas prices
-        NodeInterface.BlockInfo memory info = nodeInterface.blockInfo();
-        
-        // Check if gas prices are favorable
-        if (info.baseFee <= info.l1BaseFee / 10) {
-            arbRetryableTx.redeem(ticketId);
-        } else {
-            revert("Unfavorable gas prices for redemption");
-        }
-    }
-    
-    /**
-     * @dev Get node configuration
-     */
-    function getNodeConfig() external view returns (
-        uint256 priceInWei,
-        uint256 speedLimitPerSecond,
-        uint256 maxExecutionSteps,
-        uint256 averageBlockTime
-    ) {
-        NodeInterface.NodeConfig memory config = nodeInterface.nodeConfig();
-        return (
-            config.priceInWei,
-            config.speedLimitPerSecond,
-            config.maxExecutionSteps,
-            config.averageBlockTime
-        );
-    }
-    
-    /**
-     * @dev Override to optimize gas usage for certificate creation with NodeInterface
+     * @dev Override to use optimized certificate creation
      */
     function _beforeCertificateCreation(
         address user,
@@ -239,48 +369,49 @@ contract BrainSafesArbitrum is BrainSafesUpgradeable {
     ) internal virtual override {
         super._beforeCertificateCreation(user, certId);
         
-        // Comprimir dirección del usuario
-        uint256 compressedUser = addressCompressor.compressAddress(user);
+        // Compress user address
+        _registerAddressForCompression(user);
         
-        // Obtener información del nodo para optimización
+        // Get node info for optimization
         NodeInterface.BlockInfo memory info = nodeInterface.blockInfo();
         
-        // Verificar seguridad
+        // Security check
         require(securityManager.isSecure(user), "User not secure");
         
         emit NodeInfoUpdated(info.number, info.timestamp, info.baseFee);
-        emit GasOptimizationApplied("certificate_creation_compressed", 20000);
     }
 
-    // Nuevo método para transacciones optimizadas
+    /**
+     * @dev Execute optimized transaction with caching
+     */
     function optimizedTransaction(
         address target,
         bytes calldata data,
         bytes32 cacheKey
     ) external returns (bytes memory) {
-        // Verificar seguridad
+        // Security check
         require(securityManager.isSecure(msg.sender), "Sender not secure");
         
-        // Intentar obtener del cache
+        // Try cache first
         bytes memory cachedResult = cache.get(cacheKey);
         if (cachedResult.length > 0) {
             return cachedResult;
         }
 
-        // Comprimir dirección
-        address compressedTarget = address(uint160(addressCompressor.compressAddress(target)));
+        // Compress target address
+        _registerAddressForCompression(target);
 
-        // Ejecutar a través de multicall
+        // Execute through multicall
         EnhancedMulticall.Call[] memory calls = new EnhancedMulticall.Call[](1);
         calls[0] = EnhancedMulticall.Call({
-            target: compressedTarget,
+            target: target,
             callData: data,
             gasLimit: gasleft() - 5000
         });
 
         EnhancedMulticall.Result[] memory results = multicall.aggregate(calls);
 
-        // Guardar en cache si fue exitoso
+        // Cache successful results
         if (results[0].success) {
             cache.set(cacheKey, results[0].returnData, block.timestamp + 1 hours);
         }
@@ -288,119 +419,42 @@ contract BrainSafesArbitrum is BrainSafesUpgradeable {
         return results[0].returnData;
     }
 
-    // Método para estimar costos de gas
+    /**
+     * @dev Estimate transaction costs with L1/L2 breakdown
+     */
     function estimateTransactionCosts(
         address target,
         bytes calldata data
     ) external returns (
-        uint256 gasEstimate,
-        uint256 gasEstimateForL1,
-        uint256 baseFee,
-        uint256 l1BaseFee
+        uint256 l1GasEstimate,
+        uint256 l2GasEstimate,
+        uint256 totalCost,
+        uint256 potentialSavings
     ) {
-        return userExperience.estimateTransactionCosts(target, data, 0);
+        // Get gas estimates
+        (uint256 gasEstimate, uint256 gasEstimateForL1, uint256 baseFee, uint256 l1BaseFee) = 
+            nodeInterface.gasEstimateComponents(
+                msg.sender,
+                0,
+                target,
+                data
+            );
+        
+        l1GasEstimate = gasEstimateForL1;
+        l2GasEstimate = gasEstimate;
+        
+        // Calculate costs
+        totalCost = (l1GasEstimate * l1BaseFee) + (l2GasEstimate * baseFee);
+        
+        // Calculate potential savings with batching
+        potentialSavings = (l1GasEstimate * l1BaseFee) / 10; // Approximate 10% savings
     }
 
-    // Override para usar seguridad mejorada
+    /**
+     * @dev Override for secure upgrades
+     */
     function _authorizeUpgrade(address newImplementation) internal override {
         super._authorizeUpgrade(newImplementation);
         require(securityManager.isSecure(newImplementation), "Implementation not secure");
-    }
-    
-    /**
-     * @notice Ejecuta un multicall usando el módulo EnhancedMulticall
-     */
-    function batchExecute(EnhancedMulticall.Call[] calldata calls) external returns (EnhancedMulticall.Result[] memory) {
-        require(securityManager.isSecure(msg.sender), "Sender not secure");
-        return multicall.aggregate(calls);
-    }
-
-    /**
-     * @notice Usa el cache distribuido para obtener/guardar resultados costosos
-     */
-    function getCached(bytes32 key) external view returns (bytes memory) {
-        return cache.get(key);
-    }
-    function setCached(bytes32 key, bytes calldata data, uint256 expiresAt) external {
-        cache.set(key, data, expiresAt);
-    }
-
-    /**
-     * @notice Permite a los usuarios enviar feedback de UX
-     */
-    function submitUXFeedback(string calldata message) external {
-        userExperience.submitFeedback(message);
-    }
-    function getUXFeedback(uint256 index) external view returns (address, string memory, uint256) {
-        return userExperience.getFeedback(index);
-    }
-    function getUXOptimizationTips() external pure returns (string[] memory) {
-        return userExperience.getOptimizationTips();
-    }
-    function estimateGasUX(address target, bytes calldata data, uint256 value) external view returns (uint256) {
-        return userExperience.estimateTransactionCosts(target, data, value);
-    }
-
-    /**
-     * @notice Comprime y descomprime direcciones usando AddressCompressor
-     */
-    function compressAddress(address addr) external view returns (uint256) {
-        return addressCompressor.compressAddress(addr);
-    }
-    function decompressAddress(uint256 index) external view returns (address) {
-        return addressCompressor.decompressAddress(index);
-    }
-
-    /**
-     * @notice Validación de seguridad para upgrades y llamadas críticas
-     */
-    function isAddressSecure(address addr) external view returns (bool) {
-        return securityManager.isSecure(addr);
-    }
-    function isContractSecure(address contractAddr) external view returns (bool) {
-        return securityManager.isContractSecure(contractAddr);
-    }
-    
-    /**
-     * @dev Get the current gas prices with NodeInterface
-     */
-    function getCurrentGasPrices() external view returns (
-        uint256 l1BaseFee,
-        uint256 l1GasPrice,
-        uint256 l2GasPrice
-    ) {
-        NodeInterface.BlockInfo memory info = nodeInterface.blockInfo();
-        l1BaseFee = info.l1BaseFee;
-        l2GasPrice = info.baseFee;
-        l1GasPrice = arbGasInfo.getL1GasPriceEstimate();
-        return (l1BaseFee, l1GasPrice, l2GasPrice);
-    }
-    
-    /**
-     * @dev Get the compressed address index
-     */
-    function getCompressedAddress(address addr) external view returns (uint256) {
-        return compressedAddresses[addr];
-    }
-    
-    /**
-     * @dev Check if a retryable ticket exists
-     */
-    function isRetryableTicket(bytes32 ticketId) external view returns (bool) {
-        return retryableTickets[ticketId];
-    }
-    
-    /**
-     * @dev Get the lifetime of a retryable ticket
-     */
-    function getRetryableLifetime() external view returns (uint256) {
-        return arbRetryableTx.getLifetime();
-    }
-    
-    /**
-     * @dev Get the timeout of a retryable ticket
-     */
-    function getRetryableTimeout() external view returns (uint256) {
-        return arbRetryableTx.getTimeout();
     }
 } 

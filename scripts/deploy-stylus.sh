@@ -1,92 +1,43 @@
 #!/bin/bash
 
-# Colores para output
-RED='\033[0;31m'
+# Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}Iniciando despliegue de contratos Stylus...${NC}"
+echo -e "${GREEN}Starting Stylus contracts deployment...${NC}"
 
-# Verificar requisitos
-if ! command -v cargo &> /dev/null; then
-    echo -e "${RED}Error: Cargo no está instalado${NC}"
-    exit 1
-fi
-
-if ! command -v rustc &> /dev/null; then
-    echo -e "${RED}Error: Rust no está instalado${NC}"
-    exit 1
-fi
-
-if ! command -v cargo-stylus &> /dev/null; then
-    echo -e "${YELLOW}Instalando cargo-stylus...${NC}"
-    cargo install --force cargo-stylus
-fi
-
-# Configurar toolchain de Rust
-echo -e "${YELLOW}Configurando toolchain de Rust...${NC}"
-rustup default 1.70.0
-rustup target add wasm32-unknown-unknown
-
-# Compilar contrato
-echo -e "${YELLOW}Compilando contrato AIProcessor...${NC}"
+# Build Rust contracts
+echo -e "${YELLOW}Building Rust contracts...${NC}"
 cd contracts/ai
-cargo build --target wasm32-unknown-unknown --release
-
-# Verificar compilación
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: Falló la compilación${NC}"
-    exit 1
-fi
-
-# Verificar contrato
-echo -e "${YELLOW}Verificando contrato...${NC}"
+cargo build --release
 cargo stylus check
 
-# Exportar ABI
-echo -e "${YELLOW}Exportando ABI...${NC}"
-cargo stylus export-abi > ../../artifacts/AIProcessor.json
+# Optimize WASM output
+echo -e "${YELLOW}Optimizing WASM binaries...${NC}"
+wasm-opt -O4 -o target/wasm32-unknown-unknown/release/ai_processor_opt.wasm target/wasm32-unknown-unknown/release/ai_processor.wasm
+wasm-opt -O4 -o target/wasm32-unknown-unknown/release/off_chain_compute_opt.wasm target/wasm32-unknown-unknown/release/off_chain_compute.wasm
 
-# Estimar gas
-echo -e "${YELLOW}Estimando gas de despliegue...${NC}"
-ESTIMATED_GAS=$(cargo stylus deploy --dry-run | grep "Estimated gas:" | cut -d':' -f2)
-echo -e "Gas estimado: ${ESTIMATED_GAS}"
+# Deploy to Arbitrum Stylus
+echo -e "${YELLOW}Deploying to Arbitrum Stylus...${NC}"
+cargo stylus deploy \
+    --private-key=$PRIVATE_KEY \
+    --constructor-args="0x1234...5678" \
+    target/wasm32-unknown-unknown/release/ai_processor_opt.wasm
 
-# Desplegar contrato
-echo -e "${YELLOW}Desplegando contrato...${NC}"
-cargo stylus deploy --private-key $PRIVATE_KEY
+cargo stylus deploy \
+    --private-key=$PRIVATE_KEY \
+    --constructor-args="0x1234...5678" \
+    target/wasm32-unknown-unknown/release/off_chain_compute_opt.wasm
 
-# Verificar despliegue
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: Falló el despliegue${NC}"
-    exit 1
-fi
+# Verify contracts
+echo -e "${YELLOW}Verifying contracts...${NC}"
+cargo stylus verify \
+    --address=$(cat .deployment/ai_processor_address.txt) \
+    target/wasm32-unknown-unknown/release/ai_processor_opt.wasm
 
-# Obtener dirección del contrato
-CONTRACT_ADDRESS=$(cargo stylus info | grep "Contract address:" | cut -d':' -f2)
-echo -e "${GREEN}Contrato desplegado en: ${CONTRACT_ADDRESS}${NC}"
+cargo stylus verify \
+    --address=$(cat .deployment/off_chain_compute_address.txt) \
+    target/wasm32-unknown-unknown/release/off_chain_compute_opt.wasm
 
-# Verificar contrato en Arbiscan
-echo -e "${YELLOW}Verificando contrato en Arbiscan...${NC}"
-cargo stylus verify --address $CONTRACT_ADDRESS
-
-echo -e "${GREEN}¡Despliegue completado exitosamente!${NC}"
-
-# Guardar información del despliegue
-echo -e "${YELLOW}Guardando información del despliegue...${NC}"
-cat > ../../deployments/stylus.json << EOF
-{
-    "network": "arbitrum",
-    "contracts": {
-        "AIProcessor": {
-            "address": "${CONTRACT_ADDRESS}",
-            "deployedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-            "version": "$(cargo pkgid | cut -d'#' -f2)",
-            "compiler": "$(rustc --version)"
-        }
-    }
-}
-EOF
-
-echo -e "${GREEN}Información del despliegue guardada en deployments/stylus.json${NC}" 
+echo -e "${GREEN}Deployment completed successfully!${NC}" 

@@ -1,463 +1,358 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 /**
- * @title DistributedCache
- * @dev Sistema de caché distribuido optimizado para Arbitrum
+ * @title BrainSafes Distributed Cache
+ * @dev Implements a distributed caching system with intelligent TTL and compression
+ * @custom:security-contact security@brainsafes.com
  */
-contract DistributedCache is AccessControl, ReentrancyGuard, Pausable {
-    bytes32 public constant CACHE_MANAGER_ROLE = keccak256("CACHE_MANAGER_ROLE");
-    
-    // Precompilados de Arbitrum
-    ArbGasInfo constant arbGasInfo = ArbGasInfo(address(0x6c));
-    
-    // Estructuras
+contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
+    // Roles
+    bytes32 public constant CACHE_ADMIN = keccak256("CACHE_ADMIN");
+    bytes32 public constant CACHE_WRITER = keccak256("CACHE_WRITER");
+
+    // Structs
     struct CacheEntry {
         bytes data;
         uint256 timestamp;
-        uint256 expiresAt;
-        address owner;
-        bool isCompressed;
+        uint256 expiryTime;
         uint256 accessCount;
-        uint256 size;
+        uint256 lastAccess;
+        bool isCompressed;
+        address owner;
     }
 
     struct CacheStats {
         uint256 hits;
         uint256 misses;
         uint256 totalSize;
-        uint256 entryCount;
-        uint256 lastCleanup;
+        uint256 compressedSize;
+        uint256 savingsPercent;
     }
 
     struct CacheConfig {
-        uint256 maxEntrySize;
-        uint256 maxTotalSize;
+        uint256 maxSize;
         uint256 defaultTTL;
-        uint256 cleanupThreshold;
+        uint256 minAccessCount;
         uint256 compressionThreshold;
+        bool autoCompress;
+        mapping(address => bool) trustedSources;
     }
 
-    // Mappings
-    mapping(bytes32 => CacheEntry) public entries;
-    mapping(address => uint256) public userStorage;
-    mapping(address => bytes32[]) public userKeys;
-    mapping(bytes32 => bool) public isEvicted;
-
-    // Configuración
+    // Storage
+    mapping(bytes32 => CacheEntry) public cache;
+    mapping(address => CacheStats) public stats;
+    mapping(bytes32 => mapping(uint256 => bytes)) public versionHistory;
+    
+    // Configuration
     CacheConfig public config;
-    CacheStats public stats;
+    uint256 public currentSize;
+    uint256 public evictionCount;
 
-    // Eventos
-    event CacheSet(bytes32 indexed key, address indexed owner, uint256 size, uint256 expiresAt);
-    event CacheGet(bytes32 indexed key, address indexed requester, bool hit);
-    event CacheEvict(bytes32 indexed key, string reason);
-    event CacheCleanup(uint256 entriesRemoved, uint256 bytesFreed);
-    event ConfigUpdated(string parameter, uint256 value);
-    event StatsReset();
+    // Events
+    event CacheSet(bytes32 indexed key, uint256 size, uint256 ttl);
+    event CacheEvicted(bytes32 indexed key, uint256 size);
+    event CacheHit(bytes32 indexed key, address indexed user);
+    event CacheMiss(bytes32 indexed key, address indexed user);
+    event CacheCompressed(bytes32 indexed key, uint256 savingsPercent);
+    event ConfigUpdated(uint256 maxSize, uint256 defaultTTL);
 
-    constructor() {
+    /**
+     * @dev Initialize the contract
+     */
+    function initialize() public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __Pausable_init();
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(CACHE_MANAGER_ROLE, msg.sender);
+        _grantRole(CACHE_ADMIN, msg.sender);
 
-        // Configuración inicial
-        config = CacheConfig({
-            maxEntrySize: 100 * 1024, // 100KB
-            maxTotalSize: 10 * 1024 * 1024, // 10MB
-            defaultTTL: 1 hours,
-            cleanupThreshold: 80, // 80% de uso
-            compressionThreshold: 1024 // 1KB
-        });
-
-        // Estadísticas iniciales
-        stats = CacheStats({
-            hits: 0,
-            misses: 0,
-            totalSize: 0,
-            entryCount: 0,
-            lastCleanup: block.timestamp
-        });
+        // Initialize default configuration
+        config.maxSize = 1000000; // 1MB
+        config.defaultTTL = 1 hours;
+        config.minAccessCount = 5;
+        config.compressionThreshold = 1000; // 1KB
+        config.autoCompress = true;
     }
 
     /**
-     * @dev Almacena datos en caché
+     * @dev Set a value in the cache
      */
     function set(
         bytes32 key,
         bytes calldata data,
         uint256 ttl
-    ) external nonReentrant whenNotPaused returns (bool) {
+    ) external whenNotPaused onlyRole(CACHE_WRITER) returns (bool) {
         require(data.length > 0, "Empty data");
-        require(data.length <= config.maxEntrySize, "Data too large");
-        require(!isEvicted[key], "Key evicted");
+        require(ttl > 0, "Invalid TTL");
 
-        // Limpiar entrada anterior si existe
-        if (entries[key].size > 0) {
-            stats.totalSize -= entries[key].size;
-            stats.entryCount--;
+        // Check size limits
+        require(
+            currentSize + data.length <= config.maxSize,
+            "Cache size limit exceeded"
+        );
+
+        // Store version history
+        versionHistory[key][block.timestamp] = data;
+
+        // Compress if needed
+        bytes memory cachedData = data;
+        bool isCompressed = false;
+
+        if (config.autoCompress && data.length > config.compressionThreshold) {
+            cachedData = _compressData(data);
+            isCompressed = true;
         }
 
-        // Verificar espacio disponible
-        require(stats.totalSize + data.length <= config.maxTotalSize, "Cache full");
+        // Update cache entry
+        CacheEntry storage entry = cache[key];
+        entry.data = cachedData;
+        entry.timestamp = block.timestamp;
+        entry.expiryTime = block.timestamp + ttl;
+        entry.accessCount = 0;
+        entry.lastAccess = block.timestamp;
+        entry.isCompressed = isCompressed;
+        entry.owner = msg.sender;
 
-        // Comprimir si es necesario
-        bool shouldCompress = data.length >= config.compressionThreshold;
-        bytes memory processedData = shouldCompress ? _compress(data) : data;
+        // Update stats
+        currentSize = currentSize + cachedData.length;
+        _updateStats(msg.sender, 0, 0, cachedData.length, data.length);
 
-        // Almacenar entrada
-        entries[key] = CacheEntry({
-            data: processedData,
-            timestamp: block.timestamp,
-            expiresAt: block.timestamp + (ttl > 0 ? ttl : config.defaultTTL),
-            owner: msg.sender,
-            isCompressed: shouldCompress,
-            accessCount: 0,
-            size: processedData.length
-        });
-
-        // Actualizar estadísticas
-        stats.totalSize += processedData.length;
-        stats.entryCount++;
-        userStorage[msg.sender] += processedData.length;
-        userKeys[msg.sender].push(key);
-
-        // Ejecutar limpieza si es necesario
-        if (_shouldCleanup()) {
-            _cleanup();
-        }
-
-        emit CacheSet(key, msg.sender, processedData.length, entries[key].expiresAt);
+        emit CacheSet(key, cachedData.length, ttl);
         return true;
     }
 
     /**
-     * @dev Recupera datos de caché
+     * @dev Get a value from the cache
      */
-    function get(bytes32 key) external view returns (
-        bytes memory data,
-        bool exists,
-        bool expired
-    ) {
-        CacheEntry storage entry = entries[key];
-        
-        if (entry.size == 0 || isEvicted[key]) {
-            stats.misses++;
-            return (new bytes(0), false, false);
-        }
+    function get(bytes32 key) external view whenNotPaused returns (bytes memory, bool) {
+        CacheEntry storage entry = cache[key];
 
-        bool isExpired = block.timestamp >= entry.expiresAt;
-        if (isExpired) {
-            stats.misses++;
-            return (new bytes(0), true, true);
-        }
+        if (_isValidEntry(entry)) {
+            // Update stats
+            stats[msg.sender].hits++;
+            emit CacheHit(key, msg.sender);
 
-        stats.hits++;
-        entry.accessCount++;
-
-        return (
-            entry.isCompressed ? _decompress(entry.data) : entry.data,
-            true,
-            false
-        );
-    }
-
-    /**
-     * @dev Almacena múltiples entradas en batch
-     */
-    function setBatch(
-        bytes32[] calldata keys,
-        bytes[] calldata dataArray,
-        uint256[] calldata ttls
-    ) external nonReentrant whenNotPaused returns (bool[] memory) {
-        require(
-            keys.length == dataArray.length && keys.length == ttls.length,
-            "Array length mismatch"
-        );
-
-        bool[] memory results = new bool[](keys.length);
-        for (uint256 i = 0; i < keys.length; i++) {
-            try this.set(keys[i], dataArray[i], ttls[i]) returns (bool success) {
-                results[i] = success;
-            } catch {
-                results[i] = false;
+            // Return decompressed data if needed
+            if (entry.isCompressed) {
+                return (_decompressData(entry.data), true);
             }
+            return (entry.data, true);
         }
 
-        return results;
+        stats[msg.sender].misses++;
+        emit CacheMiss(key, msg.sender);
+        return (new bytes(0), false);
     }
 
     /**
-     * @dev Recupera múltiples entradas en batch
+     * @dev Get cache entry details
      */
-    function getBatch(
-        bytes32[] calldata keys
+    function getEntryDetails(
+        bytes32 key
     ) external view returns (
-        bytes[] memory dataArray,
-        bool[] memory exists,
-        bool[] memory expired
+        uint256 size,
+        uint256 timestamp,
+        uint256 expiryTime,
+        uint256 accessCount,
+        bool isCompressed,
+        address owner
     ) {
-        dataArray = new bytes[](keys.length);
-        exists = new bool[](keys.length);
-        expired = new bool[](keys.length);
-
-        for (uint256 i = 0; i < keys.length; i++) {
-            (dataArray[i], exists[i], expired[i]) = this.get(keys[i]);
-        }
-
-        return (dataArray, exists, expired);
-    }
-
-    /**
-     * @dev Elimina una entrada de caché
-     */
-    function evict(bytes32 key) external {
-        require(
-            entries[key].owner == msg.sender || hasRole(CACHE_MANAGER_ROLE, msg.sender),
-            "Not authorized"
+        CacheEntry storage entry = cache[key];
+        return (
+            entry.data.length,
+            entry.timestamp,
+            entry.expiryTime,
+            entry.accessCount,
+            entry.isCompressed,
+            entry.owner
         );
-
-        _evict(key, "Manual eviction");
     }
 
     /**
-     * @dev Elimina múltiples entradas en batch
+     * @dev Update cache configuration
      */
-    function evictBatch(bytes32[] calldata keys) external {
-        for (uint256 i = 0; i < keys.length; i++) {
-            if (entries[keys[i]].owner == msg.sender || hasRole(CACHE_MANAGER_ROLE, msg.sender)) {
-                _evict(keys[i], "Batch eviction");
+    function updateConfig(
+        uint256 maxSize,
+        uint256 defaultTTL,
+        uint256 minAccessCount,
+        uint256 compressionThreshold,
+        bool autoCompress
+    ) external onlyRole(CACHE_ADMIN) {
+        require(maxSize > 0, "Invalid max size");
+        require(defaultTTL > 0, "Invalid TTL");
+
+        config.maxSize = maxSize;
+        config.defaultTTL = defaultTTL;
+        config.minAccessCount = minAccessCount;
+        config.compressionThreshold = compressionThreshold;
+        config.autoCompress = autoCompress;
+
+        emit ConfigUpdated(maxSize, defaultTTL);
+    }
+
+    /**
+     * @dev Add trusted source
+     */
+    function addTrustedSource(address source) external onlyRole(CACHE_ADMIN) {
+        config.trustedSources[source] = true;
+    }
+
+    /**
+     * @dev Remove trusted source
+     */
+    function removeTrustedSource(address source) external onlyRole(CACHE_ADMIN) {
+        config.trustedSources[source] = false;
+    }
+
+    /**
+     * @dev Clear expired entries
+     */
+    function clearExpired() external onlyRole(CACHE_ADMIN) returns (uint256) {
+        uint256 cleared = 0;
+        bytes32[] memory keys = _getAllKeys();
+
+        for (uint i = 0; i < keys.length; i++) {
+            CacheEntry storage entry = cache[keys[i]];
+            if (block.timestamp > entry.expiryTime) {
+                cleared += entry.data.length;
+                currentSize -= entry.data.length;
+                delete cache[keys[i]];
+                evictionCount++;
             }
         }
+
+        return cleared;
     }
 
     /**
-     * @dev Limpia entradas expiradas
+     * @dev Get cache statistics
      */
-    function cleanup() external onlyRole(CACHE_MANAGER_ROLE) {
-        _cleanup();
+    function getStats(
+        address user
+    ) external view returns (
+        uint256 hits,
+        uint256 misses,
+        uint256 totalSize,
+        uint256 compressedSize,
+        uint256 savingsPercent
+    ) {
+        CacheStats storage userStats = stats[user];
+        return (
+            userStats.hits,
+            userStats.misses,
+            userStats.totalSize,
+            userStats.compressedSize,
+            userStats.savingsPercent
+        );
     }
 
     /**
-     * @dev Función interna para limpieza
+     * @dev Check if cache entry is valid
      */
-    function _cleanup() internal {
-        uint256 entriesRemoved = 0;
-        uint256 bytesFreed = 0;
-
-        // Primero eliminar entradas expiradas
-        bytes32[] memory allKeys = _getAllKeys();
-        for (uint256 i = 0; i < allKeys.length; i++) {
-            CacheEntry storage entry = entries[allKeys[i]];
-            if (block.timestamp >= entry.expiresAt) {
-                bytesFreed += entry.size;
-                _evict(allKeys[i], "Expired");
-                entriesRemoved++;
-            }
-        }
-
-        // Si aún necesitamos espacio, eliminar por LRU
-        if (_shouldCleanup()) {
-            bytes32[] memory lruKeys = _getLRUKeys(20); // Eliminar 20 entradas menos usadas
-            for (uint256 i = 0; i < lruKeys.length && _shouldCleanup(); i++) {
-                bytesFreed += entries[lruKeys[i]].size;
-                _evict(lruKeys[i], "LRU");
-                entriesRemoved++;
-            }
-        }
-
-        stats.lastCleanup = block.timestamp;
-        emit CacheCleanup(entriesRemoved, bytesFreed);
+    function _isValidEntry(CacheEntry storage entry) internal view returns (bool) {
+        return
+            entry.data.length > 0 &&
+            block.timestamp <= entry.expiryTime;
     }
 
     /**
-     * @dev Elimina una entrada
+     * @dev Update cache statistics
      */
-    function _evict(bytes32 key, string memory reason) internal {
-        CacheEntry storage entry = entries[key];
-        if (entry.size > 0) {
-            stats.totalSize -= entry.size;
-            stats.entryCount--;
-            userStorage[entry.owner] -= entry.size;
-            isEvicted[key] = true;
-            delete entries[key];
-            emit CacheEvict(key, reason);
-        }
-    }
-
-    /**
-     * @dev Verifica si se necesita limpieza
-     */
-    function _shouldCleanup() internal view returns (bool) {
-        return (stats.totalSize * 100) / config.maxTotalSize >= config.cleanupThreshold;
-    }
-
-    /**
-     * @dev Obtiene todas las claves
-     */
-    function _getAllKeys() internal view returns (bytes32[] memory) {
-        bytes32[] memory keys = new bytes32[](stats.entryCount);
-        uint256 index = 0;
+    function _updateStats(
+        address user,
+        uint256 hits,
+        uint256 misses,
+        uint256 compressedSize,
+        uint256 originalSize
+    ) internal {
+        CacheStats storage userStats = stats[user];
+        userStats.hits += hits;
+        userStats.misses += misses;
+        userStats.totalSize += originalSize;
+        userStats.compressedSize += compressedSize;
         
-        address[] memory users = _getAllUsers();
-        for (uint256 i = 0; i < users.length; i++) {
-            bytes32[] storage userKeyList = userKeys[users[i]];
-            for (uint256 j = 0; j < userKeyList.length; j++) {
-                if (!isEvicted[userKeyList[j]] && entries[userKeyList[j]].size > 0) {
-                    keys[index++] = userKeyList[j];
-                }
-            }
+        if (originalSize > 0) {
+            userStats.savingsPercent = 
+                ((originalSize - compressedSize) * 100) / originalSize;
         }
-
-        return keys;
     }
 
     /**
-     * @dev Obtiene claves menos usadas
+     * @dev Get all cache keys
      */
-    function _getLRUKeys(uint256 count) internal view returns (bytes32[] memory) {
-        bytes32[] memory allKeys = _getAllKeys();
-        bytes32[] memory lruKeys = new bytes32[](count);
-        uint256[] memory accessCounts = new uint256[](allKeys.length);
-
-        // Obtener conteos de acceso
-        for (uint256 i = 0; i < allKeys.length; i++) {
-            accessCounts[i] = entries[allKeys[i]].accessCount;
-        }
-
-        // Ordenar por conteo de acceso (bubble sort simplificado)
-        for (uint256 i = 0; i < count && i < allKeys.length; i++) {
-            uint256 minIndex = i;
-            for (uint256 j = i + 1; j < allKeys.length; j++) {
-                if (accessCounts[j] < accessCounts[minIndex]) {
-                    minIndex = j;
-                }
-            }
-            if (minIndex != i) {
-                (allKeys[i], allKeys[minIndex]) = (allKeys[minIndex], allKeys[i]);
-                (accessCounts[i], accessCounts[minIndex]) = (accessCounts[minIndex], accessCounts[i]);
-            }
-            lruKeys[i] = allKeys[i];
-        }
-
-        return lruKeys;
+    function _getAllKeys() internal pure returns (bytes32[] memory) {
+        // Implementation would depend on how we want to track keys
+        // This is a placeholder
+        return new bytes32[](0);
     }
 
     /**
-     * @dev Obtiene todos los usuarios
+     * @dev Compress data using RLE algorithm
      */
-    function _getAllUsers() internal view returns (address[] memory) {
-        address[] memory users = new address[](stats.entryCount);
-        uint256 count = 0;
-        
-        bytes32[] memory allKeys = _getAllKeys();
-        for (uint256 i = 0; i < allKeys.length; i++) {
-            address owner = entries[allKeys[i]].owner;
-            bool found = false;
-            for (uint256 j = 0; j < count; j++) {
-                if (users[j] == owner) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                users[count++] = owner;
+    function _compressData(bytes memory data) internal pure returns (bytes memory) {
+        if (data.length < 3) return data;
+
+        bytes memory compressed = new bytes(data.length * 2); // Worst case
+        uint256 compressedLength = 0;
+        uint8 count = 1;
+
+        for (uint i = 1; i < data.length; i++) {
+            if (data[i] == data[i-1] && count < 255) {
+                count++;
+            } else {
+                compressed[compressedLength++] = data[i-1];
+                compressed[compressedLength++] = bytes1(count);
+                count = 1;
             }
         }
 
-        // Reducir array al tamaño real
-        address[] memory result = new address[](count);
-        for (uint256 i = 0; i < count; i++) {
-            result[i] = users[i];
+        // Handle last sequence
+        compressed[compressedLength++] = data[data.length-1];
+        compressed[compressedLength++] = bytes1(count);
+
+        // Create correctly sized array
+        bytes memory result = new bytes(compressedLength);
+        for (uint i = 0; i < compressedLength; i++) {
+            result[i] = compressed[i];
         }
 
         return result;
     }
 
     /**
-     * @dev Comprime datos (mock - en producción usar una librería real)
+     * @dev Decompress RLE encoded data
      */
-    function _compress(bytes memory data) internal pure returns (bytes memory) {
-        // Mock compression - en producción usar zlib o similar
-        return data;
+    function _decompressData(bytes memory compressed) internal pure returns (bytes memory) {
+        if (compressed.length < 2) return compressed;
+
+        // Calculate decompressed size
+        uint256 decompressedLength = 0;
+        for (uint i = 1; i < compressed.length; i += 2) {
+            decompressedLength += uint8(compressed[i]);
+        }
+
+        bytes memory decompressed = new bytes(decompressedLength);
+        uint256 pos = 0;
+
+        // Decompress
+        for (uint i = 0; i < compressed.length; i += 2) {
+            uint8 count = uint8(compressed[i + 1]);
+            for (uint j = 0; j < count; j++) {
+                decompressed[pos++] = compressed[i];
+            }
+        }
+
+        return decompressed;
     }
 
     /**
-     * @dev Descomprime datos (mock - en producción usar una librería real)
+     * @dev Required by UUPS
      */
-    function _decompress(bytes memory data) internal pure returns (bytes memory) {
-        // Mock decompression - en producción usar zlib o similar
-        return data;
-    }
-
-    /**
-     * @dev Actualiza configuración
-     */
-    function updateConfig(
-        uint256 _maxEntrySize,
-        uint256 _maxTotalSize,
-        uint256 _defaultTTL,
-        uint256 _cleanupThreshold,
-        uint256 _compressionThreshold
-    ) external onlyRole(CACHE_MANAGER_ROLE) {
-        require(_maxEntrySize > 0, "Invalid max entry size");
-        require(_maxTotalSize > _maxEntrySize, "Invalid max total size");
-        require(_cleanupThreshold <= 100, "Invalid cleanup threshold");
-
-        config.maxEntrySize = _maxEntrySize;
-        config.maxTotalSize = _maxTotalSize;
-        config.defaultTTL = _defaultTTL;
-        config.cleanupThreshold = _cleanupThreshold;
-        config.compressionThreshold = _compressionThreshold;
-
-        emit ConfigUpdated("maxEntrySize", _maxEntrySize);
-        emit ConfigUpdated("maxTotalSize", _maxTotalSize);
-        emit ConfigUpdated("defaultTTL", _defaultTTL);
-        emit ConfigUpdated("cleanupThreshold", _cleanupThreshold);
-        emit ConfigUpdated("compressionThreshold", _compressionThreshold);
-    }
-
-    /**
-     * @dev Resetea estadísticas
-     */
-    function resetStats() external onlyRole(CACHE_MANAGER_ROLE) {
-        stats.hits = 0;
-        stats.misses = 0;
-        emit StatsReset();
-    }
-
-    /**
-     * @dev Obtiene estadísticas de usuario
-     */
-    function getUserStats(
-        address user
-    ) external view returns (
-        uint256 storageUsed,
-        uint256 keyCount,
-        bytes32[] memory keys
-    ) {
-        return (
-            userStorage[user],
-            userKeys[user].length,
-            userKeys[user]
-        );
-    }
-
-    /**
-     * @dev Pausa el contrato
-     */
-    function pause() external onlyRole(CACHE_MANAGER_ROLE) {
-        _pause();
-    }
-
-    /**
-     * @dev Despausa el contrato
-     */
-    function unpause() external onlyRole(CACHE_MANAGER_ROLE) {
-        _unpause();
-    }
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 
