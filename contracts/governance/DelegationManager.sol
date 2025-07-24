@@ -2,535 +2,100 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title DelegationManager
- * @notice Delegation management contract for BrainSafes governance
- * @dev Handles delegation of voting power and tracking
- * @author BrainSafes Team
+ * @dev Sistema avanzado de delegación para BrainSafes Governance
+ * @notice Permite delegación flexible, multi-nivel, con historial, límites y revocación
+ * @custom:security-contact security@brainsafes.com
  */
-contract DelegationManager is AccessControl, ReentrancyGuard, Pausable {
-    using Counters for Counters.Counter;
-
-    // Roles
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
-
-    // Estructuras
-    struct Delegate {
-        address delegateAddress;
-        string name;
-        string description;
-        uint256 reputation;
-        uint256 totalDelegations;
-        uint256 proposalsVoted;
-        uint256 votingWeight;
-        uint256 startTimestamp;
-        bool isActive;
-        mapping(ProposalType => bool) allowedTypes;
-        mapping(address => uint256) delegatorWeights;
-    }
+contract DelegationManager is AccessControl, Pausable, ReentrancyGuard {
+    bytes32 public constant DELEGATION_ADMIN = keccak256("DELEGATION_ADMIN");
+    bytes32 public constant DELEGATE_ROLE = keccak256("DELEGATE_ROLE");
 
     struct Delegation {
         address delegator;
-        address delegate;
-        uint256 weight;
-        uint256 startTime;
-        uint256 endTime;
-        ProposalType[] allowedTypes;
+        address delegatee;
+        uint256 since;
+        uint256 until;
         uint256 level;
-        bool isActive;
+        bool active;
     }
 
-    struct DelegationHistory {
-        address delegator;
-        address oldDelegate;
-        address newDelegate;
-        uint256 timestamp;
-        string reason;
-    }
-
-    struct DelegateMetrics {
-        uint256 totalVotingPower;
-        uint256 activeProposals;
-        uint256 proposalsCreated;
-        uint256 votingParticipation;
-        uint256 delegatorCount;
-        uint256 averageVotingWeight;
-        uint256 reputationScore;
-        uint256 lastUpdateBlock;
-    }
-
-    // Enums
-    enum ProposalType {
-        GENERAL,
-        TECHNICAL,
-        FINANCIAL,
-        SECURITY,
-        COMMUNITY,
-        EMERGENCY
-    }
-
-    // Eventos
-    event DelegateRegistered(
-        address indexed delegate,
-        string name,
-        uint256 timestamp
-    );
-
-    event DelegationCreated(
-        address indexed delegator,
-        address indexed delegate,
-        uint256 weight,
-        uint256 startTime,
-        uint256 endTime
-    );
-
-    event DelegationModified(
-        address indexed delegator,
-        address indexed oldDelegate,
-        address indexed newDelegate,
-        uint256 timestamp
-    );
-
-    event DelegationRevoked(
-        address indexed delegator,
-        address indexed delegate,
-        uint256 timestamp,
-        string reason
-    );
-
-    event DelegateReputationUpdated(
-        address indexed delegate,
-        uint256 oldReputation,
-        uint256 newReputation,
-        string reason
-    );
-
-    event VotingWeightUpdated(
-        address indexed delegate,
-        uint256 oldWeight,
-        uint256 newWeight
-    );
-
-    // Variables de estado
-    mapping(address => Delegate) public delegates;
+    // delegator => delegatee => Delegation
     mapping(address => mapping(address => Delegation)) public delegations;
-    mapping(address => DelegateMetrics) public delegateMetrics;
-    mapping(address => DelegationHistory[]) public delegationHistory;
-    mapping(address => address[]) public activeDelegators;
-    mapping(address => address[]) public subdelegates;
+    // delegator => historial
+    mapping(address => Delegation[]) public delegationHistory;
+    // delegatee => número de delegaciones activas
+    mapping(address => uint256) public activeDelegations;
+    // Límite de niveles de delegación
+    uint256 public maxDelegationLevel = 3;
+    // Límite de delegaciones por usuario
+    uint256 public maxDelegationsPerUser = 5;
 
-    // Configuración
-    uint256 public constant MAX_DELEGATION_LEVELS = 3;
-    uint256 public constant MIN_REPUTATION_THRESHOLD = 100;
-    uint256 public constant MAX_TOTAL_WEIGHT = 10000; // 100%
-    uint256 public constant REPUTATION_MULTIPLIER = 100;
-    uint256 public constant MIN_DELEGATION_PERIOD = 1 days;
-    uint256 public constant MAX_DELEGATION_PERIOD = 365 days;
-
-    // Contadores
-    Counters.Counter private _totalDelegates;
-    Counters.Counter private _activeDelegations;
+    event Delegated(address indexed delegator, address indexed delegatee, uint256 level, uint256 since, uint256 until);
+    event Revoked(address indexed delegator, address indexed delegatee, uint256 level, uint256 revokedAt);
+    event DelegationLevelChanged(uint256 newLevel);
+    event DelegationLimitChanged(uint256 newLimit);
 
     constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(GOVERNANCE_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(DELEGATION_ADMIN, msg.sender);
     }
 
-    /**
-     * @dev Registra un nuevo delegado
-     */
-    function registerDelegate(
-        string memory name,
-        string memory description,
-        ProposalType[] memory allowedProposalTypes
-    ) external whenNotPaused {
-        require(bytes(name).length > 0, "Name required");
-        require(delegates[msg.sender].delegateAddress == address(0), "Already registered");
-
-        Delegate storage newDelegate = delegates[msg.sender];
-        newDelegate.delegateAddress = msg.sender;
-        newDelegate.name = name;
-        newDelegate.description = description;
-        newDelegate.reputation = MIN_REPUTATION_THRESHOLD;
-        newDelegate.startTimestamp = block.timestamp;
-        newDelegate.isActive = true;
-
-        // Configurar tipos permitidos
-        for (uint256 i = 0; i < allowedProposalTypes.length; i++) {
-            newDelegate.allowedTypes[allowedProposalTypes[i]] = true;
-        }
-
-        // Inicializar métricas
-        delegateMetrics[msg.sender] = DelegateMetrics({
-            totalVotingPower: 0,
-            activeProposals: 0,
-            proposalsCreated: 0,
-            votingParticipation: 0,
-            delegatorCount: 0,
-            averageVotingWeight: 0,
-            reputationScore: MIN_REPUTATION_THRESHOLD,
-            lastUpdateBlock: block.number
-        });
-
-        _totalDelegates.increment();
-
-        emit DelegateRegistered(msg.sender, name, block.timestamp);
+    function delegate(address delegatee, uint256 until, uint256 level) external whenNotPaused {
+        require(delegatee != address(0), "Invalid delegatee");
+        require(level > 0 && level <= maxDelegationLevel, "Invalid level");
+        require(activeDelegations[msg.sender] < maxDelegationsPerUser, "Delegation limit reached");
+        require(until > block.timestamp, "Invalid until");
+        Delegation storage d = delegations[msg.sender][delegatee];
+        require(!d.active, "Already delegated");
+        d.delegator = msg.sender;
+        d.delegatee = delegatee;
+        d.since = block.timestamp;
+        d.until = until;
+        d.level = level;
+        d.active = true;
+        delegationHistory[msg.sender].push(d);
+        activeDelegations[msg.sender]++;
+        _grantRole(DELEGATE_ROLE, delegatee);
+        emit Delegated(msg.sender, delegatee, level, block.timestamp, until);
     }
 
-    /**
-     * @dev Crea una nueva delegación
-     */
-    function delegate(
-        address delegateAddress,
-        uint256 weight,
-        uint256 duration,
-        ProposalType[] memory allowedTypes
-    ) external whenNotPaused nonReentrant {
-        require(delegateAddress != address(0), "Invalid delegate");
-        require(delegateAddress != msg.sender, "Cannot self delegate");
-        require(weight > 0 && weight <= MAX_TOTAL_WEIGHT, "Invalid weight");
-        require(duration >= MIN_DELEGATION_PERIOD, "Duration too short");
-        require(duration <= MAX_DELEGATION_PERIOD, "Duration too long");
-        require(delegates[delegateAddress].isActive, "Delegate not active");
-
-        // Verificar delegación existente
-        Delegation storage existingDelegation = delegations[msg.sender][delegateAddress];
-        require(!existingDelegation.isActive, "Active delegation exists");
-
-        // Verificar peso total
-        uint256 totalWeight = _calculateTotalWeight(msg.sender);
-        require(totalWeight + weight <= MAX_TOTAL_WEIGHT, "Exceeds max weight");
-
-        // Verificar nivel de delegación
-        uint256 delegationLevel = _getDelegationLevel(delegateAddress);
-        require(delegationLevel < MAX_DELEGATION_LEVELS, "Max level reached");
-
-        // Crear delegación
-        delegations[msg.sender][delegateAddress] = Delegation({
-            delegator: msg.sender,
-            delegate: delegateAddress,
-            weight: weight,
-            startTime: block.timestamp,
-            endTime: block.timestamp + duration,
-            allowedTypes: allowedTypes,
-            level: delegationLevel + 1,
-            isActive: true
-        });
-
-        // Actualizar métricas
-        delegates[delegateAddress].totalDelegations++;
-        delegates[delegateAddress].delegatorWeights[msg.sender] = weight;
-        activeDelegators[delegateAddress].push(msg.sender);
-        _activeDelegations.increment();
-
-        // Actualizar historial
-        delegationHistory[msg.sender].push(DelegationHistory({
-            delegator: msg.sender,
-            oldDelegate: address(0),
-            newDelegate: delegateAddress,
-            timestamp: block.timestamp,
-            reason: "New delegation"
-        }));
-
-        emit DelegationCreated(
-            msg.sender,
-            delegateAddress,
-            weight,
-            block.timestamp,
-            block.timestamp + duration
-        );
-
-        // Actualizar poder de voto
-        _updateVotingPower(delegateAddress);
+    function revoke(address delegatee) external whenNotPaused {
+        Delegation storage d = delegations[msg.sender][delegatee];
+        require(d.active, "No active delegation");
+        d.active = false;
+        activeDelegations[msg.sender]--;
+        emit Revoked(msg.sender, delegatee, d.level, block.timestamp);
     }
 
-    /**
-     * @dev Modifica una delegación existente
-     */
-    function modifyDelegation(
-        address currentDelegate,
-        address newDelegate,
-        uint256 newWeight,
-        uint256 duration,
-        ProposalType[] memory allowedTypes
-    ) external whenNotPaused nonReentrant {
-        require(newDelegate != address(0), "Invalid delegate");
-        require(delegates[newDelegate].isActive, "New delegate not active");
-        
-        Delegation storage currentDelegation = delegations[msg.sender][currentDelegate];
-        require(currentDelegation.isActive, "No active delegation");
-
-        // Revocar delegación actual
-        _revokeDelegation(currentDelegate, "Modified to new delegate");
-
-        // Crear nueva delegación
-        delegate(newDelegate, newWeight, duration, allowedTypes);
-
-        emit DelegationModified(
-            msg.sender,
-            currentDelegate,
-            newDelegate,
-            block.timestamp
-        );
+    function getDelegation(address delegator, address delegatee) external view returns (Delegation memory) {
+        return delegations[delegator][delegatee];
     }
 
-    /**
-     * @dev Revoca una delegación
-     */
-    function revokeDelegation(
-        address delegateAddress,
-        string memory reason
-    ) external whenNotPaused {
-        _revokeDelegation(delegateAddress, reason);
-    }
-
-    /**
-     * @dev Revoca delegación (interna)
-     */
-    function _revokeDelegation(
-        address delegateAddress,
-        string memory reason
-    ) internal {
-        Delegation storage delegation = delegations[msg.sender][delegateAddress];
-        require(delegation.isActive, "No active delegation");
-
-        delegation.isActive = false;
-        delegates[delegateAddress].totalDelegations--;
-        delegates[delegateAddress].delegatorWeights[msg.sender] = 0;
-        _activeDelegations.decrement();
-
-        // Actualizar historial
-        delegationHistory[msg.sender].push(DelegationHistory({
-            delegator: msg.sender,
-            oldDelegate: delegateAddress,
-            newDelegate: address(0),
-            timestamp: block.timestamp,
-            reason: reason
-        }));
-
-        // Remover de delegadores activos
-        _removeActiveDelegator(delegateAddress, msg.sender);
-
-        emit DelegationRevoked(
-            msg.sender,
-            delegateAddress,
-            block.timestamp,
-            reason
-        );
-
-        // Actualizar poder de voto
-        _updateVotingPower(delegateAddress);
-    }
-
-    /**
-     * @dev Actualiza reputación del delegado
-     */
-    function updateDelegateReputation(
-        address delegateAddress,
-        uint256 reputationChange,
-        bool isIncrease,
-        string memory reason
-    ) external onlyRole(GOVERNANCE_ROLE) {
-        Delegate storage delegate = delegates[delegateAddress];
-        require(delegate.isActive, "Delegate not active");
-
-        uint256 oldReputation = delegate.reputation;
-        
-        if (isIncrease) {
-            delegate.reputation = delegate.reputation + reputationChange;
-        } else {
-            delegate.reputation = delegate.reputation > reputationChange ?
-                delegate.reputation - reputationChange : MIN_REPUTATION_THRESHOLD;
-        }
-
-        emit DelegateReputationUpdated(
-            delegateAddress,
-            oldReputation,
-            delegate.reputation,
-            reason
-        );
-
-        // Actualizar poder de voto
-        _updateVotingPower(delegateAddress);
-    }
-
-    /**
-     * @dev Actualiza poder de voto
-     */
-    function _updateVotingPower(address delegateAddress) internal {
-        Delegate storage delegate = delegates[delegateAddress];
-        uint256 oldWeight = delegate.votingWeight;
-
-        // Base: reputación
-        uint256 newWeight = delegate.reputation * REPUTATION_MULTIPLIER;
-
-        // Añadir peso de delegadores
-        address[] memory delegators = activeDelegators[delegateAddress];
-        for (uint256 i = 0; i < delegators.length; i++) {
-            newWeight += delegate.delegatorWeights[delegators[i]];
-        }
-
-        delegate.votingWeight = newWeight;
-
-        emit VotingWeightUpdated(
-            delegateAddress,
-            oldWeight,
-            newWeight
-        );
-    }
-
-    /**
-     * @dev Calcula nivel de delegación
-     */
-    function _getDelegationLevel(address delegateAddress) internal view returns (uint256) {
-        uint256 level = 0;
-        address current = delegateAddress;
-
-        while (level < MAX_DELEGATION_LEVELS) {
-            bool hasHigherDelegate = false;
-            address[] memory delegators = activeDelegators[current];
-
-            for (uint256 i = 0; i < delegators.length; i++) {
-                if (delegates[delegators[i]].isActive) {
-                    current = delegators[i];
-                    hasHigherDelegate = true;
-                    level++;
-                    break;
-                }
-            }
-
-            if (!hasHigherDelegate) break;
-        }
-
-        return level;
-    }
-
-    /**
-     * @dev Calcula peso total de delegación
-     */
-    function _calculateTotalWeight(address delegator) internal view returns (uint256) {
-        uint256 totalWeight = 0;
-        address[] memory activeDels = _getActiveDelegatesForDelegator(delegator);
-
-        for (uint256 i = 0; i < activeDels.length; i++) {
-            Delegation storage delegation = delegations[delegator][activeDels[i]];
-            if (delegation.isActive) {
-                totalWeight += delegation.weight;
-            }
-        }
-
-        return totalWeight;
-    }
-
-    /**
-     * @dev Remueve delegador activo
-     */
-    function _removeActiveDelegator(address delegateAddress, address delegator) internal {
-        address[] storage delegators = activeDelegators[delegateAddress];
-        for (uint256 i = 0; i < delegators.length; i++) {
-            if (delegators[i] == delegator) {
-                delegators[i] = delegators[delegators.length - 1];
-                delegators.pop();
-                break;
-            }
-        }
-    }
-
-    // Getters
-    function getDelegateInfo(address delegateAddress) external view returns (
-        string memory name,
-        string memory description,
-        uint256 reputation,
-        uint256 totalDelegations,
-        uint256 votingWeight,
-        bool isActive
-    ) {
-        Delegate storage delegate = delegates[delegateAddress];
-        return (
-            delegate.name,
-            delegate.description,
-            delegate.reputation,
-            delegate.totalDelegations,
-            delegate.votingWeight,
-            delegate.isActive
-        );
-    }
-
-    function getDelegation(address delegator, address delegateAddress) external view returns (
-        uint256 weight,
-        uint256 startTime,
-        uint256 endTime,
-        ProposalType[] memory allowedTypes,
-        uint256 level,
-        bool isActive
-    ) {
-        Delegation storage delegation = delegations[delegator][delegateAddress];
-        return (
-            delegation.weight,
-            delegation.startTime,
-            delegation.endTime,
-            delegation.allowedTypes,
-            delegation.level,
-            delegation.isActive
-        );
-    }
-
-    function getDelegateMetrics(address delegateAddress) external view returns (DelegateMetrics memory) {
-        return delegateMetrics[delegateAddress];
-    }
-
-    function getDelegationHistory(address delegator) external view returns (DelegationHistory[] memory) {
+    function getDelegationHistory(address delegator) external view returns (Delegation[] memory) {
         return delegationHistory[delegator];
     }
 
-    function _getActiveDelegatesForDelegator(address delegator) internal view returns (address[] memory) {
-        uint256 count = 0;
-        address[] memory allDelegates = new address[](_totalDelegates.current());
-
-        for (uint256 i = 0; i < _totalDelegates.current(); i++) {
-            address delegateAddress = address(uint160(i + 1)); // Simplificado
-            if (delegations[delegator][delegateAddress].isActive) {
-                allDelegates[count] = delegateAddress;
-                count++;
-            }
-        }
-
-        address[] memory activeDelegates = new address[](count);
-        for (uint256 i = 0; i < count; i++) {
-            activeDelegates[i] = allDelegates[i];
-        }
-
-        return activeDelegates;
+    function setMaxDelegationLevel(uint256 newLevel) external onlyRole(DELEGATION_ADMIN) {
+        require(newLevel > 0, "Invalid level");
+        maxDelegationLevel = newLevel;
+        emit DelegationLevelChanged(newLevel);
     }
 
-    function getActiveDelegators(address delegateAddress) external view returns (address[] memory) {
-        return activeDelegators[delegateAddress];
+    function setMaxDelegationsPerUser(uint256 newLimit) external onlyRole(DELEGATION_ADMIN) {
+        require(newLimit > 0, "Invalid limit");
+        maxDelegationsPerUser = newLimit;
+        emit DelegationLimitChanged(newLimit);
     }
 
-    function getTotalDelegates() external view returns (uint256) {
-        return _totalDelegates.current();
-    }
-
-    function getActiveDelegations() external view returns (uint256) {
-        return _activeDelegations.current();
-    }
-
-    /**
-     * @dev Pausa el contrato
-     */
-    function pause() external onlyRole(ADMIN_ROLE) {
+    function pause() external onlyRole(DELEGATION_ADMIN) {
         _pause();
     }
-
-    /**
-     * @dev Despausa el contrato
-     */
-    function unpause() external onlyRole(ADMIN_ROLE) {
+    function unpause() external onlyRole(DELEGATION_ADMIN) {
         _unpause();
     }
 } 

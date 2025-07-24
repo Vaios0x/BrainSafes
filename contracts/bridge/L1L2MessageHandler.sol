@@ -6,6 +6,7 @@ import "@arbitrum/nitro-contracts/src/precompiles/NodeInterface.sol";
 import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 import "../optimizations/AddressCompressor.sol";
 import "../cache/DistributedCache.sol";
+import "./MessageRecoverySystem.sol";
 
 /**
  * @title L1L2MessageHandler
@@ -19,6 +20,7 @@ contract L1L2MessageHandler {
 
     AddressCompressor public addressCompressor;
     DistributedCache public cache;
+    MessageRecoverySystem public messageRecovery;
 
     struct L1L2Message {
         bytes32 messageId;
@@ -197,22 +199,20 @@ contract L1L2MessageHandler {
         require(messageStatus[messageId].exists, "Message does not exist");
         require(!messageStatus[messageId].isProcessed, "Message already processed");
         require(messages[messageId].isRetryable, "Message not retryable");
-
         MessageStatus storage status = messageStatus[messageId];
         require(
             block.timestamp >= status.lastRetryTime + _getRetryDelay(status.retryCount),
             "Retry too soon"
         );
-
         status.retryCount++;
         status.lastRetryTime = block.timestamp;
-
         bool success = _processMessage(messageId);
         emit MessageRetried(messageId, status.retryCount);
-
         if (success) {
             status.isProcessed = true;
             messages[messageId].isProcessed = true;
+        } else {
+            messageRecovery.initiateRecovery(messageId, "Retry failed");
         }
     }
 
@@ -265,6 +265,11 @@ contract L1L2MessageHandler {
         if (retryCount == 2) return 15 minutes;
         if (retryCount == 3) return 30 minutes;
         return 1 hours;
+    }
+
+    function setMessageRecovery(address _recovery) external {
+        require(_recovery != address(0), "Invalid address");
+        messageRecovery = MessageRecoverySystem(_recovery);
     }
 
     // Funciones de consulta

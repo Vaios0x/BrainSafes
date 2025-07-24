@@ -73,12 +73,18 @@ contract OracleManager is UUPSUpgradeable, AccessControlUpgradeable, PausableUpg
     IApi3ServerV1 public api3Server;
     mapping(bytes32 => bytes32) public dataFeedIds;
     
+    // Nuevos módulos de optimización
+    AdvancedBatchProcessor public batchProcessor;
+    DistributedCacheV2 public distributedCache;
+
     // Events
     event OracleRegistered(bytes32 indexed oracleId, string name, OracleType oracleType);
     event DataSourceAdded(bytes32 indexed sourceId, string name, DataSourceType sourceType);
     event DataUpdated(bytes32 indexed sourceId, bytes32 indexed dataType, bytes data);
     event CredentialVerified(bytes32 indexed credentialHash, address issuer, bool isValid);
     event EndorsementAdded(bytes32 indexed credentialHash, address endorser);
+    event BatchProcessorSet(address indexed processor);
+    event DistributedCacheSet(address indexed cache);
 
     /**
      * @dev Initialize the contract
@@ -255,6 +261,49 @@ contract OracleManager is UUPSUpgradeable, AccessControlUpgradeable, PausableUpg
             credential.expiryDate,
             0 // Implement endorsement count tracking if needed
         );
+    }
+
+    /**
+     * @dev Setea el procesador batch
+     */
+    function setBatchProcessor(address _processor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_processor != address(0), "Invalid address");
+        batchProcessor = AdvancedBatchProcessor(_processor);
+        emit BatchProcessorSet(_processor);
+    }
+    /**
+     * @dev Setea el cache distribuido
+     */
+    function setDistributedCache(address _cache) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_cache != address(0), "Invalid address");
+        distributedCache = DistributedCacheV2(_cache);
+        emit DistributedCacheSet(_cache);
+    }
+    /**
+     * @dev Ejemplo: Batch de registro de oráculos
+     */
+    function batchRegisterOracles(bytes[] calldata oracleDatas) external returns (bool[] memory results) {
+        require(address(batchProcessor) != address(0), "BatchProcessor not set");
+        AdvancedBatchProcessor.Call[] memory calls = new AdvancedBatchProcessor.Call[](oracleDatas.length);
+        for (uint256 i = 0; i < oracleDatas.length; i++) {
+            calls[i] = AdvancedBatchProcessor.Call({
+                target: address(this),
+                value: 0,
+                data: abi.encodeWithSignature("registerOracle(bytes)", oracleDatas[i])
+            });
+        }
+        AdvancedBatchProcessor.CallResult[] memory callResults = batchProcessor.executeBatch(calls, false);
+        results = new bool[](oracleDatas.length);
+        for (uint256 i = 0; i < callResults.length; i++) {
+            results[i] = callResults[i].success;
+        }
+    }
+    /**
+     * @dev Ejemplo: Guardar configuración/resultados en cache distribuido
+     */
+    function cacheOracleConfig(bytes32 key, bytes memory config, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(address(distributedCache) != address(0), "Cache not set");
+        distributedCache.set(key, config, expiresAt);
     }
 
     /**

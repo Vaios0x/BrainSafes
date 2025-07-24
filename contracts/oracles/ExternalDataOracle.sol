@@ -117,6 +117,13 @@ contract ExternalDataOracle is AccessControl, ReentrancyGuard, Pausable {
     uint256 public constant MIN_UPDATE_INTERVAL = 1 minutes;
     uint256 public constant MAX_UPDATE_INTERVAL = 24 hours;
 
+    // Nuevos módulos de optimización
+    AdvancedBatchProcessor public batchProcessor;
+    DistributedCacheV2 public distributedCache;
+
+    event BatchProcessorSet(address indexed processor);
+    event DistributedCacheSet(address indexed cache);
+
     constructor(
         uint256 _maxDeviation,
         uint256 _minConfidence,
@@ -514,5 +521,48 @@ contract ExternalDataOracle is AccessControl, ReentrancyGuard, Pausable {
      */
     function unpause() external onlyRole(ORACLE_ADMIN_ROLE) {
         _unpause();
+    }
+
+    /**
+     * @dev Setea el procesador batch
+     */
+    function setBatchProcessor(address _processor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_processor != address(0), "Invalid address");
+        batchProcessor = AdvancedBatchProcessor(_processor);
+        emit BatchProcessorSet(_processor);
+    }
+    /**
+     * @dev Setea el cache distribuido
+     */
+    function setDistributedCache(address _cache) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_cache != address(0), "Invalid address");
+        distributedCache = DistributedCacheV2(_cache);
+        emit DistributedCacheSet(_cache);
+    }
+    /**
+     * @dev Ejemplo: Batch de consultas externas
+     */
+    function batchRequestData(bytes[] calldata reqDatas) external returns (bytes[] memory results) {
+        require(address(batchProcessor) != address(0), "BatchProcessor not set");
+        AdvancedBatchProcessor.Call[] memory calls = new AdvancedBatchProcessor.Call[](reqDatas.length);
+        for (uint256 i = 0; i < reqDatas.length; i++) {
+            calls[i] = AdvancedBatchProcessor.Call({
+                target: address(this),
+                value: 0,
+                data: abi.encodeWithSignature("requestData(bytes)", reqDatas[i])
+            });
+        }
+        AdvancedBatchProcessor.CallResult[] memory callResults = batchProcessor.executeBatch(calls, false);
+        results = new bytes[](reqDatas.length);
+        for (uint256 i = 0; i < callResults.length; i++) {
+            results[i] = callResults[i].result;
+        }
+    }
+    /**
+     * @dev Ejemplo: Guardar resultado externo en cache distribuido
+     */
+    function cacheExternalResult(bytes32 key, bytes memory result, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(address(distributedCache) != address(0), "Cache not set");
+        distributedCache.set(key, result, expiresAt);
     }
 } 

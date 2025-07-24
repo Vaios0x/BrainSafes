@@ -8,6 +8,8 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@api3/contracts/v0.8/interfaces/IApi3Oracle.sol";
 import "./interfaces/ISupraOracle.sol";
 import "./interfaces/IChronicleOracle.sol";
+import "./AdvancedBatchProcessor.sol";
+import "./DistributedCacheV2.sol";
 
 /**
  * @title MultiOracle
@@ -23,6 +25,10 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     IApi3Oracle public api3Oracle;
     ISupraOracle public supraOracle;
     IChronicleOracle public chronicleOracle;
+
+    // Nuevos módulos de optimización
+    AdvancedBatchProcessor public batchProcessor;
+    DistributedCacheV2 public distributedCache;
 
     // Configuración
     uint256 public constant MIN_RESPONSES = 2;
@@ -51,6 +57,8 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
     event OracleResponseReceived(address oracle, bytes32 dataKey, uint256 value);
     event DataAggregated(bytes32 dataKey, uint256 value, uint256 numResponses);
     event OracleAuthorized(address oracle, bool authorized);
+    event BatchProcessorSet(address indexed processor);
+    event DistributedCacheSet(address indexed cache);
 
     constructor(
         address _chainlinkOracle,
@@ -248,6 +256,49 @@ contract MultiOracle is AccessControl, ReentrancyGuard, Pausable {
 
         authorizedOracles[newAddress] = true;
         emit OracleAuthorized(newAddress, true);
+    }
+
+    /**
+     * @dev Setea el procesador batch
+     */
+    function setBatchProcessor(address _processor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_processor != address(0), "Invalid address");
+        batchProcessor = AdvancedBatchProcessor(_processor);
+        emit BatchProcessorSet(_processor);
+    }
+    /**
+     * @dev Setea el cache distribuido
+     */
+    function setDistributedCache(address _cache) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_cache != address(0), "Invalid address");
+        distributedCache = DistributedCacheV2(_cache);
+        emit DistributedCacheSet(_cache);
+    }
+    /**
+     * @dev Ejemplo: Batch de consultas a oráculos
+     */
+    function batchQueryOracles(bytes[] calldata queryDatas) external returns (bytes[] memory results) {
+        require(address(batchProcessor) != address(0), "BatchProcessor not set");
+        AdvancedBatchProcessor.Call[] memory calls = new AdvancedBatchProcessor.Call[](queryDatas.length);
+        for (uint256 i = 0; i < queryDatas.length; i++) {
+            calls[i] = AdvancedBatchProcessor.Call({
+                target: address(this),
+                value: 0,
+                data: abi.encodeWithSignature("queryOracle(bytes)", queryDatas[i])
+            });
+        }
+        AdvancedBatchProcessor.CallResult[] memory callResults = batchProcessor.executeBatch(calls, false);
+        results = new bytes[](queryDatas.length);
+        for (uint256 i = 0; i < callResults.length; i++) {
+            results[i] = callResults[i].result;
+        }
+    }
+    /**
+     * @dev Ejemplo: Guardar resultado agregado en cache distribuido
+     */
+    function cacheAggregatedResult(bytes32 key, bytes memory aggResult, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(address(distributedCache) != address(0), "Cache not set");
+        distributedCache.set(key, aggResult, expiresAt);
     }
 
     /**

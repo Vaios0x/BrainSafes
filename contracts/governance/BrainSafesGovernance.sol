@@ -124,6 +124,13 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
     address[] public securityCouncilMembers;
     bool public emergencyMode;
 
+    // Módulos de gobernanza avanzada
+    DelegationManager public delegationManager;
+    AutomatedProposals public automatedProposals;
+
+    event DelegationManagerSet(address indexed manager);
+    event AutomatedProposalsSet(address indexed proposals);
+
     // Eventos
     event ProposalCreated(
         uint256 indexed proposalId,
@@ -623,5 +630,36 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
      */
     function getUserVotes(address user) external view returns (uint256[] memory) {
         return userVotes[user];
+    }
+
+    /**
+     * @dev Setea el DelegationManager
+     */
+    function setDelegationManager(address _manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_manager != address(0), "Invalid address");
+        delegationManager = DelegationManager(_manager);
+        emit DelegationManagerSet(_manager);
+    }
+    /**
+     * @dev Setea el AutomatedProposals
+     */
+    function setAutomatedProposals(address _proposals) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_proposals != address(0), "Invalid address");
+        automatedProposals = AutomatedProposals(_proposals);
+        emit AutomatedProposalsSet(_proposals);
+    }
+    /**
+     * @dev Ejemplo: Delegar voto a otro usuario
+     */
+    function delegateVote(address delegatee, uint256 until, uint256 level) external {
+        require(address(delegationManager) != address(0), "DelegationManager not set");
+        delegationManager.delegate(delegatee, until, level);
+    }
+    /**
+     * @dev Ejemplo: Ejecutar propuesta automática
+     */
+    function executeAutomatedProposal(uint256 proposalId) external {
+        require(address(automatedProposals) != address(0), "AutomatedProposals not set");
+        automatedProposals.executeProposal(proposalId);
     }
 } 

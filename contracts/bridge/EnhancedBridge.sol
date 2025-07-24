@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbRetryableTx.sol";
 import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
+import "./CrossChainValidation.sol";
+import "./MessageRecoverySystem.sol";
 
 /**
  * @title EnhancedBridge
@@ -84,6 +86,10 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
     address public l2Token;
     address public l1Gateway;
     address public l2Gateway;
+
+    // Validación y recuperación
+    CrossChainValidation public crossChainValidation;
+    MessageRecoverySystem public messageRecovery;
 
     // Eventos
     event OperationInitiated(
@@ -323,14 +329,23 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
     function processMessage(
         bytes32 messageId,
         address sender,
-        bytes calldata data
+        bytes calldata data,
+        bytes32[] calldata proof,
+        bytes calldata signature,
+        bytes32 nonce,
+        address expectedSigner
     ) external onlyRole(RELAYER_ROLE) nonReentrant {
         require(!processedMessages[messageId], "Message already processed");
         require(
             sender == l1Gateway || sender == l2Gateway,
             "Invalid message sender"
         );
-
+        // Validación cross-chain
+        bool valid = crossChainValidation.validateMessage(messageId, proof, signature, nonce, expectedSigner);
+        if (!valid) {
+            messageRecovery.initiateRecovery(messageId, "Cross-chain validation failed");
+            revert("Cross-chain validation failed");
+        }
         processedMessages[messageId] = true;
         emit MessageProcessed(messageId, sender, data);
 
@@ -433,5 +448,14 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
      */
     function unpause() external onlyRole(BRIDGE_OPERATOR_ROLE) {
         _unpause();
+    }
+
+    /**
+     * @dev Establece contratos de validación y recuperación
+     */
+    function setValidationAndRecovery(address _validation, address _recovery) external onlyRole(BRIDGE_OPERATOR_ROLE) {
+        require(_validation != address(0) && _recovery != address(0), "Invalid address");
+        crossChainValidation = CrossChainValidation(_validation);
+        messageRecovery = MessageRecoverySystem(_recovery);
     }
 } 

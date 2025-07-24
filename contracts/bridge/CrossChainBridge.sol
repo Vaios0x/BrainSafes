@@ -7,6 +7,8 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "@arbitrum/nitro-contracts/src/bridge/IBridge.sol";
 import "@arbitrum/nitro-contracts/src/bridge/ISequencerInbox.sol";
+import "./CrossChainValidation.sol";
+import "./MessageRecoverySystem.sol";
 
 /**
  * @title BrainSafes Cross-Chain Bridge
@@ -73,6 +75,9 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
     event MessageSent(bytes32 indexed messageId, uint256 sourceChain, uint256 targetChain);
     event MessageReceived(bytes32 indexed messageId, uint256 sourceChain, bytes data);
     event ProofSubmitted(bytes32 indexed messageId, uint256 blockNumber);
+
+    CrossChainValidation public crossChainValidation;
+    MessageRecoverySystem public messageRecovery;
 
     /**
      * @dev Initialize the contract
@@ -195,23 +200,24 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         uint256 sourceChain,
         bytes32 messageId,
         bytes calldata message,
-        bytes32[] calldata proof
+        bytes32[] calldata proof,
+        bytes calldata signature,
+        bytes32 nonce,
+        address expectedSigner
     ) external whenNotPaused onlyRole(RELAYER) {
         require(chains[sourceChain].isActive, "Source chain not supported");
         require(
             block.timestamp >= messageProofs[messageId].timestamp + chains[sourceChain].minDelay,
             "Message delay not met"
         );
-
-        // Verify message proof
-        require(
-            _verifyMessageProof(messageId, message, proof),
-            "Invalid message proof"
-        );
-
+        // Validación cross-chain
+        bool valid = crossChainValidation.validateMessage(messageId, proof, signature, nonce, expectedSigner);
+        if (!valid) {
+            messageRecovery.initiateRecovery(messageId, "Cross-chain validation failed");
+            revert("Cross-chain validation failed");
+        }
         // Mark message as processed
         chains[sourceChain].processedMessages[messageId] = true;
-
         emit MessageReceived(messageId, sourceChain, message);
     }
 
@@ -355,4 +361,10 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
      * @dev Required by UUPS
      */
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    function setValidationAndRecovery(address _validation, address _recovery) external onlyRole(BRIDGE_ADMIN) {
+        require(_validation != address(0) && _recovery != address(0), "Invalid address");
+        crossChainValidation = CrossChainValidation(_validation);
+        messageRecovery = MessageRecoverySystem(_recovery);
+    }
 } 

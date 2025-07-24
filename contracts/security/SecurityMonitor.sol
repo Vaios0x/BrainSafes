@@ -97,6 +97,13 @@ contract SecurityMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
     // Price feeds for manipulation detection
     mapping(address => AggregatorV3Interface) public priceFeeds;
 
+    // Nuevos módulos de optimización
+    AdvancedBatchProcessor public batchProcessor;
+    DistributedCacheV2 public distributedCache;
+
+    event BatchProcessorSet(address indexed processor);
+    event DistributedCacheSet(address indexed cache);
+
     // Events
     event SecurityAlertRaised(
         bytes32 indexed alertId,
@@ -371,6 +378,49 @@ contract SecurityMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
 
         emit SecurityAlertRaised(alertId, alertType, threatLevel, source);
         return alertId;
+    }
+
+    /**
+     * @dev Setea el procesador batch
+     */
+    function setBatchProcessor(address _processor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_processor != address(0), "Invalid address");
+        batchProcessor = AdvancedBatchProcessor(_processor);
+        emit BatchProcessorSet(_processor);
+    }
+    /**
+     * @dev Setea el cache distribuido
+     */
+    function setDistributedCache(address _cache) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_cache != address(0), "Invalid address");
+        distributedCache = DistributedCacheV2(_cache);
+        emit DistributedCacheSet(_cache);
+    }
+    /**
+     * @dev Ejemplo: Batch de reportes de incidentes
+     */
+    function batchReportIncidents(bytes[] calldata incidentDatas) external returns (bool[] memory results) {
+        require(address(batchProcessor) != address(0), "BatchProcessor not set");
+        AdvancedBatchProcessor.Call[] memory calls = new AdvancedBatchProcessor.Call[](incidentDatas.length);
+        for (uint256 i = 0; i < incidentDatas.length; i++) {
+            calls[i] = AdvancedBatchProcessor.Call({
+                target: address(this),
+                value: 0,
+                data: abi.encodeWithSignature("reportIncident(bytes)", incidentDatas[i])
+            });
+        }
+        AdvancedBatchProcessor.CallResult[] memory callResults = batchProcessor.executeBatch(calls, false);
+        results = new bool[](incidentDatas.length);
+        for (uint256 i = 0; i < callResults.length; i++) {
+            results[i] = callResults[i].success;
+        }
+    }
+    /**
+     * @dev Ejemplo: Guardar incidentes en cache distribuido
+     */
+    function cacheIncident(bytes32 key, bytes memory incident, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(address(distributedCache) != address(0), "Cache not set");
+        distributedCache.set(key, incident, expiresAt);
     }
 
     /**

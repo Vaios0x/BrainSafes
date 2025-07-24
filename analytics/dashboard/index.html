@@ -6,268 +6,253 @@
     <title>BrainSafes Analytics Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
 </head>
 <body class="bg-gray-100">
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <img class="h-8 w-auto" src="logo.png" alt="BrainSafes">
-                        <span class="ml-2 text-xl font-bold">BrainSafes Analytics</span>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <button id="connectWallet" class="bg-blue-500 text-white px-4 py-2 rounded-md">
-                        Connect Wallet
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">BrainSafes Analytics Dashboard</h1>
+            <p class="text-gray-600">Arbitrum Network Metrics and Platform Statistics</p>
+        </header>
 
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Time Range Selector -->
-        <div class="mb-6 bg-white rounded-lg shadow p-4">
-            <div class="flex items-center justify-between">
-                <div class="flex space-x-4">
-                    <button class="time-range active px-4 py-2 rounded-md bg-blue-500 text-white" data-range="daily">
-                        Daily
-                    </button>
-                    <button class="time-range px-4 py-2 rounded-md hover:bg-blue-100" data-range="weekly">
-                        Weekly
-                    </button>
-                    <button class="time-range px-4 py-2 rounded-md hover:bg-blue-100" data-range="monthly">
-                        Monthly
-                    </button>
-                </div>
-                <div class="flex items-center">
-                    <span class="text-gray-600 mr-2">Last Updated:</span>
-                    <span id="lastUpdate" class="font-medium"></span>
-                </div>
+        <!-- Network Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">L1 Gas Price</h3>
+                <p class="text-2xl font-bold text-blue-600" id="l1GasPrice">Loading...</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">L2 Gas Price</h3>
+                <p class="text-2xl font-bold text-green-600" id="l2GasPrice">Loading...</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">Batch Size</h3>
+                <p class="text-2xl font-bold text-purple-600" id="batchSize">Loading...</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">State Size</h3>
+                <p class="text-2xl font-bold text-red-600" id="stateSize">Loading...</p>
             </div>
         </div>
 
-        <!-- Platform Overview -->
-        <div class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                                <dd id="totalUsers" class="text-lg font-medium text-gray-900">Loading...</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
+        <!-- Platform Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">User Statistics</h3>
+                <canvas id="userStatsChart"></canvas>
             </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Platform Health</dt>
-                                <dd id="platformHealth" class="text-lg font-medium text-gray-900">Loading...</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Course Performance</h3>
+                <canvas id="courseStatsChart"></canvas>
             </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Gas Efficiency</dt>
-                                <dd id="gasEfficiency" class="text-lg font-medium text-gray-900">Loading...</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                                <dd id="totalRevenue" class="text-lg font-medium text-gray-900">Loading...</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Revenue Trends</h3>
+                <canvas id="revenueChart"></canvas>
             </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <!-- Usage Metrics -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Usage Metrics</h3>
-                    <div class="mt-4">
-                        <canvas id="usageChart"></canvas>
-                    </div>
-                </div>
+        <!-- AI Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">AI Performance</h3>
+                <canvas id="aiPerformanceChart"></canvas>
             </div>
-
-            <!-- Performance Metrics -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Performance Metrics</h3>
-                    <div class="mt-4">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Governance Metrics -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Governance Metrics</h3>
-                    <div class="mt-4">
-                        <canvas id="governanceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Admin Metrics -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Admin Metrics</h3>
-                    <div class="mt-4">
-                        <canvas id="adminChart"></canvas>
-                    </div>
-                </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Gas Optimizations</h3>
+                <canvas id="gasOptimizationsChart"></canvas>
             </div>
         </div>
-    </main>
+
+        <!-- Detailed Metrics Table -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Detailed Metrics</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metricsTable">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Contract ABI and address
-        const ANALYTICS_ABI = [/* Add contract ABI here */];
-        const ANALYTICS_ADDRESS = "YOUR_CONTRACT_ADDRESS";
+        // Contract addresses and ABI
+        const ANALYTICS_MANAGER_ADDRESS = "YOUR_CONTRACT_ADDRESS";
+        const ANALYTICS_MANAGER_ABI = [/* Your contract ABI */];
 
+        // Initialize ethers provider
         let provider;
-        let contract;
-        let signer;
+        let analyticsManager;
 
-        // Initialize Web3 and contract
-        async function initWeb3() {
-            if (typeof window.ethereum !== 'undefined') {
+        async function initializeWeb3() {
+            try {
+                // Connect to Arbitrum network
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                contract = new ethers.Contract(ANALYTICS_ADDRESS, ANALYTICS_ABI, signer);
-                updateUI();
+                
+                analyticsManager = new ethers.Contract(
+                    ANALYTICS_MANAGER_ADDRESS,
+                    ANALYTICS_MANAGER_ABI,
+                    provider.getSigner()
+                );
+
+                // Start updating metrics
+                updateMetrics();
+                setInterval(updateMetrics, 30000); // Update every 30 seconds
+            } catch (error) {
+                console.error("Failed to initialize Web3:", error);
             }
         }
 
-        // Update UI with contract data
-        async function updateUI() {
-            const health = await contract.getPlatformHealth();
-            document.getElementById('platformHealth').textContent = `${health.systemHealth}%`;
-            document.getElementById('gasEfficiency').textContent = `${health.gasEfficiency}%`;
-            
-            updateCharts();
-            updateLastUpdate();
-        }
+        async function updateMetrics() {
+            try {
+                // Get network metrics
+                const networkMetrics = await analyticsManager.getNetworkMetrics(Math.floor(Date.now() / 3600000));
+                updateNetworkStats(networkMetrics);
 
-        // Update charts with new data
-        async function updateCharts() {
-            const timeWindow = getSelectedTimeWindow();
-            
-            // Fetch and update each chart
-            await Promise.all([
-                updateUsageChart(timeWindow),
-                updatePerformanceChart(timeWindow),
-                updateGovernanceChart(timeWindow),
-                updateAdminChart(timeWindow)
-            ]);
-        }
+                // Get system metrics
+                const systemMetrics = await analyticsManager.getLatestSystemMetrics();
+                updateSystemStats(systemMetrics);
 
-        // Helper functions for chart updates
-        async function updateUsageChart(timeWindow) {
-            const data = await contract.generateReport(
-                ethers.utils.formatBytes32String("USAGE"),
-                timeWindow
-            );
-            // Update chart with data
-        }
+                // Get AI metrics
+                const aiMetrics = await analyticsManager.getAIMetrics(Math.floor(Date.now() / 86400000));
+                updateAIStats(aiMetrics);
 
-        async function updatePerformanceChart(timeWindow) {
-            const data = await contract.generateReport(
-                ethers.utils.formatBytes32String("PERFORMANCE"),
-                timeWindow
-            );
-            // Update chart with data
-        }
-
-        async function updateGovernanceChart(timeWindow) {
-            const data = await contract.generateReport(
-                ethers.utils.formatBytes32String("GOVERNANCE"),
-                timeWindow
-            );
-            // Update chart with data
-        }
-
-        async function updateAdminChart(timeWindow) {
-            const data = await contract.generateReport(
-                ethers.utils.formatBytes32String("ADMIN"),
-                timeWindow
-            );
-            // Update chart with data
-        }
-
-        // UI Helper functions
-        function getSelectedTimeWindow() {
-            const activeButton = document.querySelector('.time-range.active');
-            return activeButton.dataset.range;
-        }
-
-        function updateLastUpdate() {
-            const now = new Date();
-            document.getElementById('lastUpdate').textContent = now.toLocaleString();
-        }
-
-        // Event Listeners
-        document.getElementById('connectWallet').addEventListener('click', initWeb3);
-
-        document.querySelectorAll('.time-range').forEach(button => {
-            button.addEventListener('click', (e) => {
-                document.querySelectorAll('.time-range').forEach(b => b.classList.remove('active', 'bg-blue-500', 'text-white'));
-                e.target.classList.add('active', 'bg-blue-500', 'text-white');
+                // Update charts
                 updateCharts();
-            });
-        });
+            } catch (error) {
+                console.error("Failed to update metrics:", error);
+            }
+        }
 
-        // Auto-refresh every 5 minutes
-        setInterval(updateUI, 300000);
+        function updateNetworkStats(metrics) {
+            document.getElementById("l1GasPrice").textContent = `${ethers.utils.formatUnits(metrics.l1GasPrice, "gwei")} Gwei`;
+            document.getElementById("l2GasPrice").textContent = `${ethers.utils.formatUnits(metrics.l2GasPrice, "gwei")} Gwei`;
+            document.getElementById("batchSize").textContent = metrics.batchSize.toString();
+            document.getElementById("stateSize").textContent = `${(metrics.stateSize / 1e9).toFixed(2)} GB`;
+        }
+
+        function updateSystemStats(metrics) {
+            const table = document.getElementById("metricsTable");
+            table.innerHTML = ""; // Clear existing rows
+
+            const addRow = (metric, value, change, updated) => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${metric}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${value}</td>
+                    <td class="px-6 py-4 whitespace-nowrap ${change >= 0 ? 'text-green-600' : 'text-red-600'}">${change}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${new Date(updated * 1000).toLocaleString()}</td>
+                `;
+            };
+
+            addRow("Total Users", metrics.totalUsers.toString(), 0, metrics.timestamp);
+            addRow("Active Users (24h)", metrics.activeUsers24h.toString(), 0, metrics.timestamp);
+            addRow("Total Courses", metrics.totalCourses.toString(), 0, metrics.timestamp);
+            addRow("Completion Rate", `${metrics.completionRate}%`, 0, metrics.timestamp);
+            addRow("Average Score", metrics.averageScore.toString(), 0, metrics.timestamp);
+            addRow("Total Revenue", ethers.utils.formatEther(metrics.platformRevenue), 0, metrics.timestamp);
+        }
+
+        function updateAIStats(metrics) {
+            // Update AI metrics visualization
+            const accuracy = (metrics.predictionsAccurate * 100 / metrics.predictionsTotal) || 0;
+            const fraudRate = (metrics.fraudDetections * 100 / metrics.predictionsTotal) || 0;
+            
+            // Update charts
+            updateAIPerformanceChart(accuracy, fraudRate);
+            updateGasOptimizationsChart(metrics.gasOptimizations);
+        }
+
+        function updateCharts() {
+            // User Statistics Chart
+            const userStatsChart = new Chart(document.getElementById("userStatsChart"), {
+                type: "line",
+                data: {
+                    labels: ["Last 7 Days"],
+                    datasets: [{
+                        label: "Active Users",
+                        data: [/* Your data */],
+                        borderColor: "rgb(59, 130, 246)",
+                        tension: 0.1
+                    }]
+                }
+            });
+
+            // Course Performance Chart
+            const courseStatsChart = new Chart(document.getElementById("courseStatsChart"), {
+                type: "bar",
+                data: {
+                    labels: ["Completion Rate", "Avg Score", "Satisfaction"],
+                    datasets: [{
+                        label: "Course Metrics",
+                        data: [/* Your data */],
+                        backgroundColor: [
+                            "rgba(59, 130, 246, 0.5)",
+                            "rgba(16, 185, 129, 0.5)",
+                            "rgba(139, 92, 246, 0.5)"
+                        ]
+                    }]
+                }
+            });
+
+            // Revenue Chart
+            const revenueChart = new Chart(document.getElementById("revenueChart"), {
+                type: "line",
+                data: {
+                    labels: ["Last 30 Days"],
+                    datasets: [{
+                        label: "Platform Revenue",
+                        data: [/* Your data */],
+                        borderColor: "rgb(16, 185, 129)",
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+
+        function updateAIPerformanceChart(accuracy, fraudRate) {
+            const aiPerformanceChart = new Chart(document.getElementById("aiPerformanceChart"), {
+                type: "doughnut",
+                data: {
+                    labels: ["Accurate Predictions", "Fraud Detections", "Other"],
+                    datasets: [{
+                        data: [accuracy, fraudRate, 100 - accuracy - fraudRate],
+                        backgroundColor: [
+                            "rgba(16, 185, 129, 0.5)",
+                            "rgba(239, 68, 68, 0.5)",
+                            "rgba(209, 213, 219, 0.5)"
+                        ]
+                    }]
+                }
+            });
+        }
+
+        function updateGasOptimizationsChart(optimizations) {
+            const gasOptimizationsChart = new Chart(document.getElementById("gasOptimizationsChart"), {
+                type: "bar",
+                data: {
+                    labels: ["Gas Savings"],
+                    datasets: [{
+                        label: "Gas Optimizations",
+                        data: [optimizations],
+                        backgroundColor: "rgba(139, 92, 246, 0.5)"
+                    }]
+                }
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener("load", initializeWeb3);
     </script>
 </body>
 </html> 

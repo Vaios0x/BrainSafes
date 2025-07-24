@@ -74,6 +74,10 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
     mapping(bytes32 => ProposalVote) public proposalVotes;
     mapping(bytes32 => mapping(address => VoteReceipt)) public voteReceipts;
     
+    // Módulos de gobernanza avanzada
+    DelegationManager public delegationManager;
+    AutomatedProposals public automatedProposals;
+
     // Events
     event ChainVotingConfigured(uint256 indexed chainId, address votingToken);
     event ProposalCreated(
@@ -97,6 +101,8 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
     event VotingPeriodSet(uint256 oldVotingPeriod, uint256 newVotingPeriod);
     event ProposalThresholdSet(uint256 oldProposalThreshold, uint256 newProposalThreshold);
     event QuorumNumeratorUpdated(uint256 oldQuorumNumerator, uint256 newQuorumNumerator);
+    event DelegationManagerSet(address indexed manager);
+    event AutomatedProposalsSet(address indexed proposals);
 
     /**
      * @dev Initialize the contract
@@ -358,6 +364,37 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
     function _voteSucceeded(bytes32 proposalId) internal view returns (bool) {
         ProposalVote storage votes = proposalVotes[proposalId];
         return votes.forVotes > votes.againstVotes;
+    }
+
+    /**
+     * @dev Setea el DelegationManager
+     */
+    function setDelegationManager(address _manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_manager != address(0), "Invalid address");
+        delegationManager = DelegationManager(_manager);
+        emit DelegationManagerSet(_manager);
+    }
+    /**
+     * @dev Setea el AutomatedProposals
+     */
+    function setAutomatedProposals(address _proposals) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_proposals != address(0), "Invalid address");
+        automatedProposals = AutomatedProposals(_proposals);
+        emit AutomatedProposalsSet(_proposals);
+    }
+    /**
+     * @dev Ejemplo: Delegar voto a otro usuario
+     */
+    function delegateVote(address delegatee, uint256 until, uint256 level) external {
+        require(address(delegationManager) != address(0), "DelegationManager not set");
+        delegationManager.delegate(delegatee, until, level);
+    }
+    /**
+     * @dev Ejemplo: Ejecutar propuesta automática
+     */
+    function executeAutomatedProposal(uint256 proposalId) external {
+        require(address(automatedProposals) != address(0), "AutomatedProposals not set");
+        automatedProposals.executeProposal(proposalId);
     }
 
     /**

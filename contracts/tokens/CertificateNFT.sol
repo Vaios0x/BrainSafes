@@ -32,6 +32,7 @@ contract CertificateNFT is
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant VERIFIER_ROLE = keccak256("VERIFIER_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant ONRAMP_MINTER_ROLE = keccak256("ONRAMP_MINTER_ROLE");
 
     // ========== CONSTANTS ==========
     string public constant CERTIFICATE_TYPE_HASH = "Certificate(address recipient,uint256 courseId,string courseName,uint256 score,uint256 completionDate,address instructor,string skills)";
@@ -119,6 +120,8 @@ contract CertificateNFT is
     mapping(uint256 => uint256[]) public courseCertificates;
     mapping(address => uint256[]) public instructorCertificates;
     mapping(string => uint256[]) public skillCertificates;
+    mapping(string => bool) public processedOnRampTx;
+    mapping(string => uint256) public onRampTxToTokenId;
 
     // Contract configuration
     bool public transfersEnabled = false; // Certificates should not be transferable by default
@@ -161,6 +164,8 @@ contract CertificateNFT is
         string newMetadataURI
     );
 
+    event OnRampNFTMinted(address indexed to, uint256 tokenId, string txHash, string provider);
+
     // ========== MODIFIERS ==========
     /**
      * @dev Ensures the certificate exists and is active
@@ -199,6 +204,7 @@ contract CertificateNFT is
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(VERIFIER_ROLE, msg.sender);
+        _grantRole(ONRAMP_MINTER_ROLE, msg.sender);
         
         institutionName = _institutionName;
         institutionLogo = _institutionLogo;
@@ -320,6 +326,22 @@ contract CertificateNFT is
             instructor,
             keccak256(abi.encodePacked(skills))
         ));
+    }
+
+    /**
+     * @dev Emite un NFT tras compra on-ramp (solo backend autorizado)
+     * @param to Dirección del usuario
+     * @param txHash Hash de la transacción cripto
+     * @param provider Nombre del proveedor (moonpay, transak, etc.)
+     */
+    function mintOnRamp(address to, string memory txHash, string memory provider) public onlyRole(ONRAMP_MINTER_ROLE) returns (uint256) {
+        require(!processedOnRampTx[txHash], "On-ramp ya procesado");
+        require(to != address(0), "Dirección inválida");
+        processedOnRampTx[txHash] = true;
+        uint256 tokenId = _mintNFT(to, provider, txHash); // Asume que tienes una función interna _mintNFT
+        onRampTxToTokenId[txHash] = tokenId;
+        emit OnRampNFTMinted(to, tokenId, txHash, provider);
+        return tokenId;
     }
 
     // ========== VERIFICATION FUNCTIONS ==========

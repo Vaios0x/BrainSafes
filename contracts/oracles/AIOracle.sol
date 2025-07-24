@@ -187,4 +187,54 @@ contract AIOracle is AccessControl, ReentrancyGuard, Pausable {
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }
+
+    // Nuevos módulos de optimización
+    AdvancedBatchProcessor public batchProcessor;
+    DistributedCacheV2 public distributedCache;
+
+    event BatchProcessorSet(address indexed processor);
+    event DistributedCacheSet(address indexed cache);
+
+    /**
+     * @dev Setea el procesador batch
+     */
+    function setBatchProcessor(address _processor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_processor != address(0), "Invalid address");
+        batchProcessor = AdvancedBatchProcessor(_processor);
+        emit BatchProcessorSet(_processor);
+    }
+    /**
+     * @dev Setea el cache distribuido
+     */
+    function setDistributedCache(address _cache) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_cache != address(0), "Invalid address");
+        distributedCache = DistributedCacheV2(_cache);
+        emit DistributedCacheSet(_cache);
+    }
+    /**
+     * @dev Ejemplo: Procesar batch de inferencias IA
+     */
+    function batchInfer(bytes[] calldata inputs) external returns (bytes[] memory results) {
+        require(address(batchProcessor) != address(0), "BatchProcessor not set");
+        AdvancedBatchProcessor.Call[] memory calls = new AdvancedBatchProcessor.Call[](inputs.length);
+        for (uint256 i = 0; i < inputs.length; i++) {
+            calls[i] = AdvancedBatchProcessor.Call({
+                target: address(this),
+                value: 0,
+                data: abi.encodeWithSignature("infer(bytes)", inputs[i])
+            });
+        }
+        AdvancedBatchProcessor.CallResult[] memory callResults = batchProcessor.executeBatch(calls, false);
+        results = new bytes[](inputs.length);
+        for (uint256 i = 0; i < callResults.length; i++) {
+            results[i] = callResults[i].result;
+        }
+    }
+    /**
+     * @dev Ejemplo: Guardar resultado IA en cache distribuido
+     */
+    function cacheInference(bytes32 key, bytes memory result, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(address(distributedCache) != address(0), "Cache not set");
+        distributedCache.set(key, result, expiresAt);
+    }
 } 

@@ -279,6 +279,13 @@ contract JobMarketplace is AccessControl, ReentrancyGuard, Pausable {
     uint256 public successfulMatches;
     uint256 public totalEscrowAmount;
 
+    // Nuevos módulos de optimización
+    AdvancedBatchProcessor public batchProcessor;
+    DistributedCacheV2 public distributedCache;
+
+    event BatchProcessorSet(address indexed processor);
+    event DistributedCacheSet(address indexed cache);
+
     // ========== EVENTS ==========
     event JobPosted(
         uint256 indexed jobId,
@@ -1029,5 +1036,48 @@ contract JobMarketplace is AccessControl, ReentrancyGuard, Pausable {
     function getJobMatch(uint256 jobId, address candidate) external view returns (JobMatch memory) {
         bytes32 matchKey = keccak256(abi.encodePacked(jobId, candidate));
         return jobMatches[matchKey];
+    }
+
+    /**
+     * @dev Setea el procesador batch
+     */
+    function setBatchProcessor(address _processor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_processor != address(0), "Invalid address");
+        batchProcessor = AdvancedBatchProcessor(_processor);
+        emit BatchProcessorSet(_processor);
+    }
+    /**
+     * @dev Setea el cache distribuido
+     */
+    function setDistributedCache(address _cache) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_cache != address(0), "Invalid address");
+        distributedCache = DistributedCacheV2(_cache);
+        emit DistributedCacheSet(_cache);
+    }
+    /**
+     * @dev Ejemplo: Batch de publicación de ofertas de trabajo
+     */
+    function batchPostJobs(bytes[] calldata jobDatas) external returns (bool[] memory results) {
+        require(address(batchProcessor) != address(0), "BatchProcessor not set");
+        AdvancedBatchProcessor.Call[] memory calls = new AdvancedBatchProcessor.Call[](jobDatas.length);
+        for (uint256 i = 0; i < jobDatas.length; i++) {
+            calls[i] = AdvancedBatchProcessor.Call({
+                target: address(this),
+                value: 0,
+                data: abi.encodeWithSignature("postJob(bytes)", jobDatas[i])
+            });
+        }
+        AdvancedBatchProcessor.CallResult[] memory callResults = batchProcessor.executeBatch(calls, false);
+        results = new bool[](jobDatas.length);
+        for (uint256 i = 0; i < callResults.length; i++) {
+            results[i] = callResults[i].success;
+        }
+    }
+    /**
+     * @dev Ejemplo: Guardar matching en cache distribuido
+     */
+    function cacheMatching(bytes32 key, bytes memory matchData, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(address(distributedCache) != address(0), "Cache not set");
+        distributedCache.set(key, matchData, expiresAt);
     }
 } 

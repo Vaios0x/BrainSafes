@@ -40,6 +40,9 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant STAKING_ROLE = keccak256("STAKING_ROLE");
     bytes32 public constant BRIDGE_ROLE = keccak256("BRIDGE_ROLE");
+    bytes32 public constant FIAT_MINTER_ROLE = keccak256("FIAT_MINTER_ROLE");
+    mapping(string => bool) public processedFiatPayments;
+    event FiatUserMinted(address indexed to, uint256 amount, string paymentId);
 
     // ========== CONSTANTS ==========
     uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18; // 1 billion tokens
@@ -103,6 +106,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     event UserBlacklisted(address indexed user, bool blacklisted);
     event TokensBridged(address indexed from, address indexed to, uint256 amount, uint256 chainId);
     event TokensReceived(address indexed to, uint256 amount, uint256 fromChainId);
+    event FiatUserMinted(address indexed to, uint256 amount, string paymentId);
 
     // ========== MODIFIERS ==========
     /**
@@ -141,6 +145,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(STAKING_ROLE, msg.sender);
         _grantRole(BRIDGE_ROLE, msg.sender);
+        _grantRole(FIAT_MINTER_ROLE, msg.sender);
 
         // Initial reward configuration
         rewardConfig = RewardConfig({
@@ -734,5 +739,20 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
      */
     function version() external pure returns (string memory) {
         return "2.0.0";
+    }
+
+    /**
+     * @dev Emite tokens a un usuario tras pago fiat confirmado (solo backend autorizado)
+     * @param to Dirección del usuario
+     * @param amount Cantidad de tokens a emitir
+     * @param paymentId ID único del pago fiat (Stripe)
+     */
+    function mintFiatUser(address to, uint256 amount, string memory paymentId) public onlyRole(FIAT_MINTER_ROLE) {
+        require(!processedFiatPayments[paymentId], "Pago fiat ya procesado");
+        require(to != address(0), "Dirección inválida");
+        require(amount > 0, "Cantidad inválida");
+        processedFiatPayments[paymentId] = true;
+        _mint(to, amount);
+        emit FiatUserMinted(to, amount, paymentId);
     }
 } 
