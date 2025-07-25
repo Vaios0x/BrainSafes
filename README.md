@@ -186,3 +186,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 Made with ❤️ by the BrainSafes Team
 </div> 
+
+# Limitaciones de cobertura y estrategia de testing en contratos inteligentes
+
+## Limitación técnica
+
+El contrato principal `BrainSafes.sol` y otros contratos grandes del proyecto no pueden ser instrumentados por `solidity-coverage` debido a su tamaño y complejidad. Esto es una limitación conocida de la herramienta en el ecosistema Solidity, y afecta a proyectos monolíticos o con lógica avanzada/herencia múltiple.
+
+- La compilación y los tests unitarios/integración funcionan correctamente.
+- La cobertura automática no puede calcularse para estos contratos mientras estén en la carpeta `contracts/`.
+
+## Estrategia profesional recomendada
+
+- **Cobertura en módulos auxiliares:** Ejecuta y exige cobertura en contratos pequeños y modulares (utils, mocks, SecurityManager, etc.).
+- **Tests unitarios e integración:** Refuerza los tests exhaustivos con `npx hardhat test` para todos los flujos críticos, especialmente roles y permisos.
+- **Análisis estático:** Usa herramientas como Slither, MythX, Securify para detectar vulnerabilidades y reforzar la seguridad.
+- **Modularización progresiva:** Si se requiere cobertura total en el futuro, divide los contratos grandes en módulos más pequeños y delega la lógica.
+- **Documentación y auditoría:** Documenta esta limitación y la estrategia adoptada. Prioriza auditorías manuales y revisiones de código en los módulos críticos.
+
+## Referencias
+- [solidity-coverage issues](https://github.com/sc-forks/solidity-coverage/issues)
+- [Slither](https://github.com/crytic/slither)
+- [MythX](https://mythx.io/)
+
+---
+
+**Esta estrategia está alineada con las mejores prácticas de la industria blockchain y garantiza seguridad, mantenibilidad y transparencia en el desarrollo del proyecto.** 

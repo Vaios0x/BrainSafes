@@ -1,0 +1,10 @@
+<svg width="220" height="160" viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Ilustración de seguridad y descentralización" role="img">
+  <ellipse cx="110" cy="140" rx="90" ry="18" fill="#e3f2fd"/>
+  <ellipse cx="110" cy="80" rx="70" ry="60" fill="#1976d2" fill-opacity="0.12"/>
+  <ellipse cx="110" cy="80" rx="50" ry="40" fill="#1976d2" fill-opacity="0.18"/>
+  <circle cx="110" cy="80" r="38" fill="#fff" stroke="#1976d2" stroke-width="3"/>
+  <path d="M80 80 Q90 60 110 60 Q130 60 140 80 Q130 100 110 100 Q90 100 80 80 Z" fill="#1976d2"/>
+  <circle cx="98" cy="80" r="5" fill="#fff"/>
+  <circle cx="122" cy="80" r="5" fill="#fff"/>
+  <ellipse cx="110" cy="95" rx="12" ry="5" fill="#fff"/>
+</svg> 

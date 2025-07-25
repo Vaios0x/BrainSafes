@@ -6,12 +6,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-/**
- * @title BrainSafes
- * @notice Core contract for the BrainSafes e-learning and credential ecosystem
- * @dev Handles user management, course lifecycle, achievements, AI integration, and external modules
- * @author BrainSafes Team
- */
+/// @title BrainSafes - Sistema centralizado de gestión de permisos y roles
+/// @author Equipo BrainSafes
+/// @notice Este contrato gestiona los roles admin, issuer y validator on-chain
+/// @dev Ejemplo de documentación NatSpec para funciones principales
 contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
 
@@ -786,5 +784,38 @@ contract BrainSafes is AccessControl, ReentrancyGuard, Pausable {
     function cacheGlobalData(bytes32 key, bytes memory data, uint256 expiresAt) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(address(distributedCache) != address(0), "Cache not set");
         distributedCache.set(key, data, expiresAt);
+    }
+
+    /// @notice Verifica si una dirección es admin
+    /// @param account Dirección a consultar
+    /// @return true si la dirección es admin
+    function isAdmin(address account) public view returns (bool) {
+        return hasRole(ADMIN_ROLE, account);
+    }
+
+    /// @notice Verifica si una dirección es issuer
+    /// @param account Dirección a consultar
+    /// @return true si la dirección es issuer
+    function isIssuer(address account) public view returns (bool) {
+        return hasRole(INSTRUCTOR_ROLE, account);
+    }
+
+    /// @notice Verifica si una dirección es validator
+    /// @param account Dirección a consultar
+    /// @return true si la dirección es validator
+    function isValidator(address account) public view returns (bool) {
+        return hasRole(STUDENT_ROLE, account);
+    }
+
+    /// @notice Asigna el rol admin a una dirección
+    /// @param account Dirección a la que se le asigna el rol
+    function grantAdmin(address account) public {
+        _grantRole(ADMIN_ROLE, account);
+    }
+
+    /// @notice Revoca el rol admin de una dirección
+    /// @param account Dirección a la que se le revoca el rol
+    function revokeAdmin(address account) public {
+        _revokeRole(ADMIN_ROLE, account);
     }
 } 

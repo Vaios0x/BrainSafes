@@ -37,4 +37,13 @@ async function mintFiatUser(userAddress, amount, paymentId) {
   }
 }
 
-module.exports = { mintFiatUser }; 
+function verifySignature(address, signature, message) {
+  try {
+    const signer = ethers.utils.verifyMessage(message, signature);
+    return signer.toLowerCase() === address.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+module.exports = { mintFiatUser, verifySignature }; 

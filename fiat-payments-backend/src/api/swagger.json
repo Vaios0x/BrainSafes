@@ -1,0 +1,120 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "BrainSafes API",
+    "version": "1.0.0",
+    "description": "Documentación OpenAPI de los endpoints principales del backend BrainSafes."
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Registro de usuario",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Usuario registrado" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login tradicional",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login exitoso" },
+          "401": { "description": "Credenciales inválidas" }
+        }
+      }
+    },
+    "/api/auth/login-wallet": {
+      "post": {
+        "summary": "Login con wallet Web3",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": { "type": "string" },
+                  "signature": { "type": "string" },
+                  "message": { "type": "string" }
+                },
+                "required": ["address", "signature", "message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login exitoso" },
+          "401": { "description": "Firma inválida" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Obtener perfil del usuario autenticado",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Perfil de usuario" },
+          "401": { "description": "No autenticado" }
+        }
+      }
+    },
+    "/api/roles/onchain/{address}": {
+      "get": {
+        "summary": "Consultar roles on-chain de un address",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Roles on-chain" },
+          "500": { "description": "Error consultando roles" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Introduce tu token JWT aquí. Ejemplo: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      }
+    }
+  }
+} 

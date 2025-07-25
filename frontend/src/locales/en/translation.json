@@ -1,0 +1,55 @@
+{
+  "navbar": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "certificates": "Certificates",
+    "courses": "Courses",
+    "badges": "Badges",
+    "community": "Community",
+    "mentoring": "Mentoring",
+    "loans": "Loans",
+    "profile": "Profile",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "landing": {
+    "title": "Welcome to BrainSafes",
+    "subtitle": "Your secure platform for learning and blockchain credentials"
+  },
+  "dashboard": {
+    "main": "Main dashboard",
+    "metrics": {
+      "users": "Users",
+      "transactions": "Transactions",
+      "activeContracts": "Active contracts",
+      "balance": "Balance"
+    },
+    "filters": {
+      "date": "Date",
+      "eventType": "Event type",
+      "user": "User",
+      "all": "All",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alerts": {
+      "title": "Alerts and notifications"
+    },
+    "quickLinks": {
+      "governance": "Governance",
+      "marketplace": "Marketplace",
+      "education": "Education",
+      "security": "Security"
+    }
+  },
+  "profile": {
+    "user": "User",
+    "roles": "Roles"
+  },
+  "admin": {
+    "panel": "Admin Panel",
+    "access": "Access for administrators only"
+  }
+} 

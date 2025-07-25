@@ -3,6 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./api/swagger.json');
+const Sentry = require('@sentry/node');
+const prometheusMiddleware = require('express-prometheus-middleware');
+const winston = require('winston');
+const expressWinston = require('express-winston');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -50,10 +56,41 @@ app.use('/api/nft', nftRoutes);
 const notificationsRoutes = require('./routes/notifications');
 app.use('/api/notifications', notificationsRoutes);
 
+const rolesRoutes = require('./routes/roles');
+app.use('/api/roles', rolesRoutes);
+
+app.use(Sentry.Handlers.requestHandler());
+app.use(prometheusMiddleware({
+  metricsPath: '/metrics',
+  collectDefaultMetrics: true,
+}));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' })
+  ],
+});
+
+app.use(expressWinston.logger({
+  winstonInstance: logger,
+  meta: true,
+  msg: "HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms",
+  colorize: false,
+}));
+
 // Manejo de errores global
+app.use(expressWinston.errorLogger({ winstonInstance: logger }));
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal Server Error' });
+  logger.error(err);
+  res.status(500).json({ error: 'Error interno del servidor' });
 });
 
 app.listen(PORT, () => {
