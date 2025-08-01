@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
-import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +8,6 @@ function copyABIsPlugin() {
   return {
     name: 'copy-abis',
     buildStart() {
-      // Puedes agregar más ABIs aquí si lo necesitas
       const abis = [
         {
           src: path.resolve(__dirname, '../contracts/finance/LoanManager.sol'),
@@ -27,45 +25,11 @@ function copyABIsPlugin() {
   };
 }
 
-// https://vitejs.dev/config/
+// Configuración de producción sin PWA para evitar errores de tamaño
 export default defineConfig({
   plugins: [
     react(),
     svgr(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      workbox: {
-        // Aumentar el límite de tamaño para archivos grandes
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        // Configuración para manejar archivos grandes
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.js$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'js-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 días
-              },
-            },
-          },
-        ],
-      },
-      manifest: {
-        name: 'BrainSafes',
-        short_name: 'BrainSafes',
-        description: 'Gestión segura y descentralizada de credenciales',
-        theme_color: '#1976d2',
-        icons: [
-          {
-            src: '/brain.svg',
-            sizes: '120x120',
-            type: 'image/svg+xml'
-          }
-        ]
-      }
-    }),
     copyABIsPlugin()
   ],
   test: {
@@ -86,8 +50,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
-    // Optimización del bundle
+    sourcemap: false, // Deshabilitar sourcemaps en producción
     rollupOptions: {
       output: {
         // Separar Reown AppKit en su propio chunk
@@ -114,13 +77,14 @@ export default defineConfig({
       }
     },
     // Aumentar el límite de advertencia de tamaño
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
     // Optimizaciones adicionales
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
       },
     },
   },
@@ -138,6 +102,6 @@ export default defineConfig({
       'viem',
       '@tanstack/react-query'
     ],
-    exclude: ['@reown/appkit/networks'] // Excluir para evitar problemas de build
+    exclude: ['@reown/appkit/networks']
   }
 }) 
