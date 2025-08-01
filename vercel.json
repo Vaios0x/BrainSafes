@@ -1,13 +1,8 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "installCommand": "npm install",
-  "functions": {
-    "frontend/dist/**/*.js": {
-      "maxDuration": 30
-    }
-  },
+  "installCommand": "cd frontend && npm install",
   "headers": [
     {
       "source": "/assets/(.*)",
