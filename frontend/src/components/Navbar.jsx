@@ -92,7 +92,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
               listStyle: 'none',
               margin: 0,
               padding: 0,
-              transition: 'max-height 0.3s cubic-bezier(.4,0,.2,1)',
+              transition: 'none',
               overflow: 'hidden',
               width: '100%',
             }}
@@ -108,7 +108,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
                     position: 'relative',
                     padding: isMobile ? '4px 8px' : '4px 16px',
                     borderBottom: location.pathname === to ? `2px solid ${theme.palette.primary.main}` : '2px solid transparent',
-                    transition: 'border-bottom 0.2s',
+                    transition: 'none',
                     fontSize: 16,
                     width: '100%',
                     display: 'inline-block',
