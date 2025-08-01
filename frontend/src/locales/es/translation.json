@@ -11,7 +11,10 @@
     "profile": "Perfil",
     "admin": "Administración",
     "login": "Iniciar sesión",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "connectWallet": "Conectar Wallet",
+    "walletConnected": "Wallet Conectada",
+    "disconnectWallet": "Desconectar Wallet"
   },
   "landing": {
     "title": "Bienvenido a BrainSafes",

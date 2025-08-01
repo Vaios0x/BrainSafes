@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { Box, TextField, MenuItem, Select, InputLabel, FormControl, useTheme, useMediaQuery, Tooltip, InputAdornment, Fade, IconButton } from '@mui/material';
+import { 
+  Box, 
+  TextField, 
+  MenuItem, 
+  Select, 
+  InputLabel, 
+  FormControl, 
+  useTheme, 
+  useMediaQuery, 
+  Tooltip, 
+  InputAdornment, 
+  Fade, 
+  IconButton 
+} from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SearchIcon from '@mui/icons-material/Search';
 import StarIcon from '@mui/icons-material/Star';
@@ -12,6 +25,7 @@ const rarezas = [
   { value: 'Raro', label: 'Raro' },
   { value: 'Común', label: 'Común' },
 ];
+
 const estados = [
   { value: 'all', label: 'Todos' },
   { value: 'en venta', label: 'En venta' },
@@ -64,11 +78,11 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 style: { outline: 'none' },
               },
             }}
-            inputProps={{ tabIndex: 0, 'aria-label': 'Buscar NFT por nombre', style: { outline: 'none' } }}
             autoComplete="off"
             role="searchbox"
           />
         </Tooltip>
+        
         <Tooltip title="Filtrar por rareza" arrow enterDelay={300} leaveDelay={100} describeChild>
           <FormControl sx={{ minWidth: isMobile ? 120 : 160 }} size={isMobile ? 'small' : 'medium'}>
             <InputLabel id="rareza-label">Rareza</InputLabel>
@@ -83,7 +97,12 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                   <StarIcon color="primary" />
                 </InputAdornment>
               }
-              inputProps={{ tabIndex: 0, 'aria-label': 'Filtrar por rareza', style: { outline: 'none' }, role: 'combobox' }}
+              inputProps={{ 
+                tabIndex: 0, 
+                'aria-label': 'Filtrar por rareza', 
+                style: { outline: 'none' }, 
+                role: 'combobox' 
+              }}
               role="combobox"
             >
               {rarezas.map((r) => (
@@ -94,6 +113,7 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
             </Select>
           </FormControl>
         </Tooltip>
+        
         <Tooltip title="Filtrar por estado" arrow enterDelay={300} leaveDelay={100} describeChild>
           <FormControl sx={{ minWidth: isMobile ? 120 : 160 }} size={isMobile ? 'small' : 'medium'}>
             <InputLabel id="estado-label">Estado</InputLabel>
@@ -108,7 +128,12 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                   <LocalOfferIcon color="primary" />
                 </InputAdornment>
               }
-              inputProps={{ tabIndex: 0, 'aria-label': 'Filtrar por estado', style: { outline: 'none' }, role: 'combobox' }}
+              inputProps={{ 
+                tabIndex: 0, 
+                'aria-label': 'Filtrar por estado', 
+                style: { outline: 'none' }, 
+                role: 'combobox' 
+              }}
               role="combobox"
             >
               {estados.map((e) => (
@@ -119,6 +144,7 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
             </Select>
           </FormControl>
         </Tooltip>
+        
         <Tooltip title={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'} arrow enterDelay={300} leaveDelay={100} describeChild>
           <span>
             <IconButton
@@ -128,7 +154,9 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
               aria-label={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
               tabIndex={0}
               role="button"
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowFilters(f => !f); }}
+              onKeyDown={e => { 
+                if (e.key === 'Enter' || e.key === ' ') setShowFilters(f => !f); 
+              }}
             >
               <TuneIcon />
             </IconButton>

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Logo from '../assets/Logo.svg?react';
 import { Switch, FormControlLabel, MenuItem, Select, IconButton, Drawer, List, ListItem, ListItemText, useTheme, useMediaQuery } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import ReownWalletConnect from './ReownWalletConnect';
 
 export default function Navbar({ themeMode, setThemeMode }) {
   const { user, login, loginWallet, logout, error, loading } = useAuthContext();
@@ -121,6 +122,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
           </ul>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ReownWalletConnect />
           <Select
             value={i18n.language}
             onChange={e => i18n.changeLanguage(e.target.value)}

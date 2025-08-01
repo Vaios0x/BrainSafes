@@ -11,7 +11,10 @@
     "profile": "Profile",
     "admin": "Admin",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "connectWallet": "Connect Wallet",
+    "walletConnected": "Wallet Connected",
+    "disconnectWallet": "Disconnect Wallet"
   },
   "landing": {
     "title": "Welcome to BrainSafes",
