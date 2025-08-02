@@ -36,23 +36,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 año
-              },
-              cacheKeyWillBeUsed: async ({ request }) => {
-                return `${request.url}?v=1`;
-              }
-            }
-          }
-        ]
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}']
       },
       manifest: {
         name: 'BrainSafes',
@@ -96,8 +80,7 @@ export default defineConfig({
           ui: ['@mui/material', '@mui/icons-material'],
           wallet: ['@reown/appkit/react', '@reown/appkit-adapter-wagmi', 'wagmi', 'viem'],
           utils: ['@tanstack/react-query', 'react-router-dom', 'react-i18next']
-        },
-        chunkSizeWarningLimit: 1000 // Aumentar el límite de advertencia
+        }
       }
     },
     chunkSizeWarningLimit: 1000
@@ -105,4 +88,4 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', '@mui/material', '@mui/icons-material']
   }
-}) 
+})
