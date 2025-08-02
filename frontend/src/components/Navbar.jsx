@@ -255,7 +255,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
               right: 0,
               height: '100vh',
               zIndex: 1200,
-              overflow: 'hidden',
+              overflow: 'auto',
               display: 'flex',
               flexDirection: 'column'
             }
@@ -296,7 +296,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
           </Box>
           
           {/* Navigation List */}
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <Box sx={{ flex: 1 }}>
             <List sx={{ pt: 1, pb: 1 }}>
               {mobileNavLinks.map(({ to, label, icon, isWallet }) => (
                 <ListItem 
