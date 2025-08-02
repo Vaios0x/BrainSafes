@@ -6,7 +6,7 @@ export default function BadgeCard({ badge }) {
   return (
     <div style={{
       background: theme.palette.background.paper,
-      borderRadius: theme.shape.borderRadius,
+      borderRadius: 8,
       boxShadow: theme.shadows[2],
       padding: 18,
       minWidth: 120,

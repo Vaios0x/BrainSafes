@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import NFTGallery from './NFTGallery';
 import MarketplaceFilters from './MarketplaceFilters';
-import { Container, useTheme, useMediaQuery } from '@mui/material';
+import { 
+  Container, 
+  useTheme, 
+  useMediaQuery, 
+  Box, 
+  Typography, 
+  Paper,
+  Fade,
+  Grid
+} from '@mui/material';
 
 // NFTs simulados
 const nftsEjemplo = [
@@ -52,6 +61,7 @@ export default function MarketplacePanel() {
   const [filtros, setFiltros] = useState(filtrosIniciales);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   // Filtrado de NFTs
   const filteredNFTs = nfts.filter(nft => {
@@ -62,18 +72,129 @@ export default function MarketplacePanel() {
   });
 
   return (
-    <Container
-      maxWidth="lg"
-      disableGutters={isMobile}
-      style={{
-        padding: isMobile ? '1rem 0.5rem' : '2.5rem 2rem',
+    <Box
+      sx={{
         background: theme.palette.background.default,
         minHeight: '100vh',
+        py: { xs: 2, sm: 3, md: 4 },
+        px: { xs: 1, sm: 2, md: 3 }
       }}
     >
-      <h2 style={{ fontWeight: 700, fontSize: isMobile ? 22 : 28, marginBottom: isMobile ? 16 : 24, color: theme.palette.text.primary }}>Marketplace de NFTs</h2>
-      <MarketplaceFilters filtros={filtros} setFiltros={setFiltros} />
-      <NFTGallery nfts={filteredNFTs} isMobile={isMobile} />
-    </Container>
+      <Container 
+        maxWidth="xl" 
+        disableGutters={isMobile}
+        sx={{
+          px: { xs: 1, sm: 2, md: 3 }
+        }}
+      >
+        {/* Header */}
+        <Fade in timeout={600}>
+          <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
+            <Typography 
+              variant="h1" 
+              component="h1"
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
+                mb: { xs: 1, sm: 2 },
+                color: theme.palette.text.primary,
+                textAlign: { xs: 'center', sm: 'left' }
+              }}
+            >
+              Marketplace de NFTs
+            </Typography>
+            <Typography 
+              variant="body1"
+              sx={{
+                color: theme.palette.text.secondary,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                textAlign: { xs: 'center', sm: 'left' },
+                opacity: 0.8
+              }}
+            >
+              Descubre, compra y vende NFTs únicos de la colección BrainSafes
+            </Typography>
+          </Box>
+        </Fade>
+
+        {/* Filters */}
+        <Fade in timeout={800}>
+          <Paper 
+            elevation={0}
+            sx={{
+              mb: { xs: 2, sm: 3 },
+              borderRadius: 3,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              overflow: 'hidden'
+            }}
+          >
+            <MarketplaceFilters filtros={filtros} setFiltros={setFiltros} />
+          </Paper>
+        </Fade>
+
+        {/* Gallery */}
+        <Fade in timeout={1000}>
+          <Paper 
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              overflow: 'hidden',
+              minHeight: { xs: 400, sm: 500, md: 600 }
+            }}
+          >
+            <NFTGallery nfts={filteredNFTs} isMobile={isMobile} />
+          </Paper>
+        </Fade>
+
+        {/* Mobile Stats */}
+        {isMobile && (
+          <Fade in timeout={1200}>
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: theme.palette.text.secondary,
+                  opacity: 0.7
+                }}
+              >
+                {filteredNFTs.length} NFTs encontrados
+              </Typography>
+            </Box>
+          </Fade>
+        )}
+
+        {/* Tablet/Desktop Stats */}
+        {!isMobile && (
+          <Fade in timeout={1200}>
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: theme.palette.text.secondary,
+                  opacity: 0.7
+                }}
+              >
+                {filteredNFTs.length} NFTs encontrados
+              </Typography>
+              
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: theme.palette.text.secondary,
+                    opacity: 0.7
+                  }}
+                >
+                  Precio total: {filteredNFTs.reduce((sum, nft) => sum + nft.price, 0).toFixed(2)} ETH
+                </Typography>
+              </Box>
+            </Box>
+          </Fade>
+        )}
+      </Container>
+    </Box>
   );
 } 

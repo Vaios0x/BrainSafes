@@ -77,7 +77,7 @@ const MetricsSummary = () => {
               border: `2px solid ${theme.palette.primary.main}`,
               color: theme.palette.text.primary,
               cursor: 'pointer',
-              borderRadius: theme.shape.borderRadius,
+              borderRadius: 8,
               marginBottom: 0,
               fontSize: isMobile ? 15 : 18,
               flex: 1,

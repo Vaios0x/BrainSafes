@@ -44,7 +44,7 @@ const QuickLinks = () => {
               style={{
                 fontSize: isMobile ? 15 : 17,
                 padding: isMobile ? '10px 0' : '10px 24px',
-                borderRadius: theme.shape.borderRadius,
+                borderRadius: 8,
                 width: isMobile ? '100%' : 'auto',
                 boxShadow: theme.shadows[2],
                 transition: 'box-shadow 0.3s, transform 0.2s',

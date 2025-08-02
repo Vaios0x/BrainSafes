@@ -5,7 +5,7 @@ export default function CertificateCard({ cert }) {
   const theme = useTheme();
   const cardStyle = {
     background: theme.palette.background.paper,
-    borderRadius: theme.shape.borderRadius,
+    borderRadius: 8,
     boxShadow: theme.shadows[2],
     padding: 28,
     minWidth: 220,

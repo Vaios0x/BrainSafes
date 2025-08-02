@@ -4,7 +4,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
 
-export default function ReownWalletConnect() {
+export default function ReownWalletConnect({ onConnect }) {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { open } = useAppKit();
@@ -17,6 +17,10 @@ export default function ReownWalletConnect() {
     } else {
       // Open Reown AppKit modal
       open();
+      // Call the callback if provided
+      if (onConnect) {
+        onConnect();
+      }
     }
   };
 

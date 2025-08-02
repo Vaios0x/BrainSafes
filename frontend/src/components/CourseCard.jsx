@@ -5,7 +5,7 @@ export default function CourseCard({ course }) {
   const theme = useTheme();
   const cardStyle = {
     background: theme.palette.background.paper,
-    borderRadius: theme.shape.borderRadius,
+    borderRadius: 8,
     boxShadow: theme.shadows[2],
     padding: 20,
     minWidth: 220,

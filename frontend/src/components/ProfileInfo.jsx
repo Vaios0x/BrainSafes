@@ -25,7 +25,7 @@ export default function ProfileInfo({ user, t, onEdit }) {
   };
 
   return (
-    <section style={{ background: theme.palette.background.paper, borderRadius: theme.shape.borderRadius, boxShadow: theme.shadows[2], padding: isMobile ? 18 : 32, marginBottom: isMobile ? 18 : 32 }}>
+    <section style={{ background: theme.palette.background.paper, borderRadius: 8, boxShadow: theme.shadows[2], padding: isMobile ? 18 : 32, marginBottom: isMobile ? 18 : 32 }}>
       <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 14 : 24, flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
         <Fade in timeout={600}>
           <div style={{ position: 'relative', marginBottom: isMobile ? 10 : 0 }}>
@@ -86,7 +86,7 @@ export default function ProfileInfo({ user, t, onEdit }) {
             variant="contained"
             color="primary"
             startIcon={<EditIcon />}
-            style={{ borderRadius: theme.shape.borderRadius, fontWeight: 700, fontSize: isMobile ? 14 : 16, boxShadow: theme.shadows[2], transition: 'box-shadow 0.3s, transform 0.2s' }}
+            style={{ borderRadius: 8, fontWeight: 700, fontSize: isMobile ? 14 : 16, boxShadow: theme.shadows[2], transition: 'box-shadow 0.3s, transform 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = theme.shadows[6]}
             onMouseLeave={e => e.currentTarget.style.boxShadow = theme.shadows[2]}
             onFocus={e => e.currentTarget.style.boxShadow = theme.shadows[6]}

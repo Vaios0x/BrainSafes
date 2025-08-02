@@ -12,7 +12,7 @@ export default function DashboardCards() {
   const theme = useTheme();
   const cardStyle = {
     background: theme.palette.background.paper,
-    borderRadius: theme.shape.borderRadius,
+    borderRadius: 8,
     boxShadow: theme.shadows[2],
     padding: 32,
     minWidth: 180,

@@ -101,7 +101,7 @@ export default function NFTGallery({ nfts, isMobile: isMobileProp }) {
                     cursor: 'pointer',
                     border: selected && selected.id === nft.id ? `2px solid ${theme.palette.primary.main}` : undefined,
                     background: theme.palette.background.paper,
-                    borderRadius: theme.shape.borderRadius,
+                    borderRadius: 8,
                     boxShadow: hovered === idx ? theme.shadows[6] : theme.shadows[2],
                     padding: isMobile ? 6 : 12,
                     transition: 'box-shadow 0.3s, transform 0.2s',
@@ -147,7 +147,7 @@ export default function NFTGallery({ nfts, isMobile: isMobileProp }) {
                     height={isMobile ? 140 : 200}
                     image={nft.image}
                     alt={nft.name}
-                    style={{ objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
+                    style={{ objectFit: 'cover', borderRadius: 8 }}
                   />
                   <CardContent style={{ padding: isMobile ? 8 : 16 }}>
                     <Typography variant="h6" gutterBottom style={{ color: theme.palette.text.primary, fontSize: isMobile ? 15 : 18 }}>
