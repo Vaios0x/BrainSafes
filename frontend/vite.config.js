@@ -34,23 +34,6 @@ export default defineConfig({
     svgr(),
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 año
-              }
-            }
-          }
-        ]
-      },
       manifest: {
         name: 'BrainSafes',
         short_name: 'BrainSafes',
@@ -85,42 +68,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false, // Deshabilitar sourcemaps en producción
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Separar vendor chunks
-          'react-vendor': ['react', 'react-dom'],
-          'mui-vendor': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          'wagmi-vendor': ['wagmi', 'viem'],
-          'reown-vendor': ['@reown/appkit', '@reown/appkit-adapter-wagmi'],
-          'utils-vendor': ['@tanstack/react-query', 'react-router-dom']
-        },
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
-      }
-    },
-    chunkSizeWarningLimit: 1000, // Aumentar el límite de advertencia
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    }
-  },
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      '@mui/material',
-      '@mui/icons-material',
-      'wagmi',
-      'viem',
-      '@reown/appkit',
-      '@reown/appkit-adapter-wagmi',
-      '@tanstack/react-query'
-    ]
+    sourcemap: true,
   }
 }) 

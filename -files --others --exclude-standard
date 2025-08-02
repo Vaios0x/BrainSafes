@@ -1,0 +1,5 @@
+[33m8c5d340[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Optimize build configuration for Vercel deployment
+[33m9919f41[m feat: Integrate Reown AppKit for wallet connection
+[33m2a0129e[m fix: Corregido outputDirectory para que Vercel encuentre el directorio dist - Cambiado de frontend/dist a dist - El build se ejecuta desde frontend/ pero Vercel busca dist/ en el root - Solucionado error final de deploy
+[33mcdb011a[m fix: Ajustada configuración de Vercel para usar script del root - Cambiado buildCommand a npm run build (usa script del root) - Cambiado outputDirectory de vuelta a frontend/dist - El script del root maneja cd frontend && npm install && npm run build
+[33me7b8ddd[m fix: Corregida configuración de Vercel para encontrar directorio dist - Cambiado buildCommand a cd frontend && npm install && npm run build - Cambiado outputDirectory de frontend/dist a dist - Solucionado error No Output Directory named dist found
