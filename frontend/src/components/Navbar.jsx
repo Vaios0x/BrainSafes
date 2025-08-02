@@ -256,8 +256,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
               height: '100vh',
               zIndex: 1200,
               overflow: 'auto',
-              display: 'flex',
-              flexDirection: 'column'
+              display: 'block'
             }
           }}
           sx={{
@@ -275,7 +274,10 @@ export default function Navbar({ themeMode, setThemeMode }) {
               justifyContent: 'space-between', 
               alignItems: 'center',
               borderBottom: `1px solid ${theme.palette.divider}`,
-              backgroundColor: themeMode === 'dark' ? '#1a1a2e' : '#f8f9fa'
+              backgroundColor: themeMode === 'dark' ? '#1a1a2e' : '#f8f9fa',
+              position: 'sticky',
+              top: 0,
+              zIndex: 1
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -296,7 +298,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
           </Box>
           
           {/* Navigation List */}
-          <Box sx={{ flex: 1 }}>
+          <Box>
             <List sx={{ pt: 1, pb: 1 }}>
               {mobileNavLinks.map(({ to, label, icon, isWallet }) => (
                 <ListItem 
@@ -393,6 +395,9 @@ export default function Navbar({ themeMode, setThemeMode }) {
               />
             </Box>
           </Box>
+          
+          {/* Espacio adicional al final para asegurar scroll */}
+          <Box sx={{ height: 20 }} />
         </Drawer>
       </Toolbar>
     </AppBar>

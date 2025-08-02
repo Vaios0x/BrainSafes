@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Landing from './components/Landing';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminPanel from './components/AdminPanel';
@@ -51,30 +52,39 @@ export default function App() {
         <CssBaseline />
         <ToastProvider>
           <Router>
-            <Navbar themeMode={themeMode} setThemeMode={setThemeMode} />
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/dashboard" element={<Suspense fallback={<div>Cargando...</div>}><Dashboard /></Suspense>} />
-              <Route path="/certificates" element={<Suspense fallback={<div>Cargando...</div>}><Certificates /></Suspense>} />
-              <Route path="/courses" element={<Suspense fallback={<div>Cargando...</div>}><Courses /></Suspense>} />
-              <Route path="/badges" element={<Suspense fallback={<div>Cargando...</div>}><BadgeGallery /></Suspense>} />
-              <Route path="/community" element={<CommunityPage />} />
-              <Route path="/mentoring" element={<Suspense fallback={<div>Cargando...</div>}><MentorshipPanel /></Suspense>} />
-              <Route path="/loans" element={<Suspense fallback={<div>Cargando...</div>}><LoanManagerDashboard /></Suspense>} />
-              <Route path="/marketplace" element={<Suspense fallback={<div>Cargando...</div>}><MarketplacePanel /></Suspense>} />
-              <Route path="/profile" element={<Suspense fallback={<div>Cargando...</div>}><Profile /></Suspense>} />
-              <Route path="/security" element={<Suspense fallback={<div>Cargando...</div>}><SecurityPanel /></Suspense>} />
-              <Route path="/learning" element={<Suspense fallback={<div>Cargando...</div>}><LearningPanel /></Suspense>} />
-              <Route path="/support" element={<Suspense fallback={<div>Cargando...</div>}><SupportPanel /></Suspense>} />
-              <Route path="/admin" element={
-                <ProtectedRoute role="admin">
-                  <AdminPanel />
-                </ProtectedRoute>
-              } />
-            </Routes>
-            <div style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 2000 }}>
-              <AIChatWidget />
-            </div>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              minHeight: '100vh' 
+            }}>
+              <Navbar themeMode={themeMode} setThemeMode={setThemeMode} />
+              <Box sx={{ flex: 1 }}>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/dashboard" element={<Suspense fallback={<div>Cargando...</div>}><Dashboard /></Suspense>} />
+                  <Route path="/certificates" element={<Suspense fallback={<div>Cargando...</div>}><Certificates /></Suspense>} />
+                  <Route path="/courses" element={<Suspense fallback={<div>Cargando...</div>}><Courses /></Suspense>} />
+                  <Route path="/badges" element={<Suspense fallback={<div>Cargando...</div>}><BadgeGallery /></Suspense>} />
+                  <Route path="/community" element={<CommunityPage />} />
+                  <Route path="/mentoring" element={<Suspense fallback={<div>Cargando...</div>}><MentorshipPanel /></Suspense>} />
+                  <Route path="/loans" element={<Suspense fallback={<div>Cargando...</div>}><LoanManagerDashboard /></Suspense>} />
+                  <Route path="/marketplace" element={<Suspense fallback={<div>Cargando...</div>}><MarketplacePanel /></Suspense>} />
+                  <Route path="/profile" element={<Suspense fallback={<div>Cargando...</div>}><Profile /></Suspense>} />
+                  <Route path="/security" element={<Suspense fallback={<div>Cargando...</div>}><SecurityPanel /></Suspense>} />
+                  <Route path="/learning" element={<Suspense fallback={<div>Cargando...</div>}><LearningPanel /></Suspense>} />
+                  <Route path="/support" element={<Suspense fallback={<div>Cargando...</div>}><SupportPanel /></Suspense>} />
+                  <Route path="/admin" element={
+                    <ProtectedRoute role="admin">
+                      <AdminPanel />
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+              </Box>
+              <Footer />
+              <div style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 2000 }}>
+                <AIChatWidget />
+              </div>
+            </Box>
           </Router>
         </ToastProvider>
       </ThemeProvider>
