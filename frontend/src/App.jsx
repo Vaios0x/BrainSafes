@@ -9,7 +9,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import { Tabs, Tab, Box, Button, Fade, ThemeProvider, CssBaseline } from '@mui/material';
 import AIChatWidget from './components/AIChatWidget';
 import { lightTheme, darkTheme } from './theme';
-import { AppKitProvider } from './config/reown-lazy.jsx';
+import { AppKitProvider } from './config/reown.jsx';
 
 const Profile = lazy(() => import('./components/Profile'));
 const Certificates = lazy(() => import('./components/Certificates'));

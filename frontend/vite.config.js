@@ -34,24 +34,6 @@ export default defineConfig({
     svgr(),
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: {
-        // Aumentar el límite de tamaño para archivos grandes
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        // Configuración para manejar archivos grandes
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.js$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'js-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 días
-              },
-            },
-          },
-        ],
-      },
       manifest: {
         name: 'BrainSafes',
         short_name: 'BrainSafes',
@@ -87,57 +69,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // Optimización del bundle
-    rollupOptions: {
-      output: {
-        // Separar Reown AppKit en su propio chunk
-        manualChunks: {
-          'reown-appkit': ['@reown/appkit/react', '@reown/appkit-adapter-wagmi'],
-          'wagmi': ['wagmi', 'viem'],
-          'react-query': ['@tanstack/react-query'],
-          'mui': ['@mui/material', '@mui/icons-material'],
-          'vendor': ['react', 'react-dom', 'react-router-dom']
-        },
-        // Configuración para chunks más pequeños
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
-          return `js/${facadeModuleId}-[hash].js`;
-        },
-        assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.');
-          const ext = info[info.length - 1];
-          if (/\.(css)$/.test(assetInfo.name)) {
-            return `css/[name]-[hash].${ext}`;
-          }
-          return `assets/[name]-[hash].${ext}`;
-        }
-      }
-    },
-    // Aumentar el límite de advertencia de tamaño
-    chunkSizeWarningLimit: 1000,
-    // Optimizaciones adicionales
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
-  },
-  // Optimización de dependencias
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@mui/material',
-      '@mui/icons-material',
-      '@reown/appkit/react',
-      '@reown/appkit-adapter-wagmi',
-      'wagmi',
-      'viem',
-      '@tanstack/react-query'
-    ],
-    exclude: ['@reown/appkit/networks'] // Excluir para evitar problemas de build
   }
 }) 
