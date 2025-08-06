@@ -1,9 +1,6 @@
 import React from "react";
-import { Box, TextField, MenuItem, Select, InputLabel, FormControl, useTheme, useMediaQuery, Tooltip, InputAdornment } from "@mui/material";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import EventIcon from '@mui/icons-material/Event';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import PersonIcon from '@mui/icons-material/Person';
 
 const usuariosSimulados = [
   { id: "all", nombre: "Todos" },
@@ -14,95 +11,138 @@ const usuariosSimulados = [
 
 const FiltersBar = ({ filtros, setFiltros }) => {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const tiposEvento = [
-    { value: "all", label: t('dashboard.filters.all') },
-    { value: "error", label: t('dashboard.filters.error') },
-    { value: "warning", label: t('dashboard.filters.warning') },
-    { value: "info", label: t('dashboard.filters.info') },
+    { value: "all", label: "Todos" },
+    { value: "error", label: "Errores" },
+    { value: "warning", label: "Advertencias" },
+    { value: "info", label: "Información" },
   ];
-  const usuarios = usuariosSimulados.map(u => ({ ...u, nombre: u.id === "all" ? t('dashboard.filters.all') : u.nombre }));
+
+  const usuarios = usuariosSimulados.map(u => ({ 
+    ...u, 
+    nombre: u.id === "all" ? "Todos" : u.nombre 
+  }));
 
   const handleChange = (e) => {
     setFiltros({ ...filtros, [e.target.name]: e.target.value });
   };
 
   return (
-    <Box
-      display="flex"
-      flexDirection={isMobile ? 'column' : 'row'}
-      gap={isMobile ? 2 : 3}
-      mb={isMobile ? 2 : 3}
-      alignItems={isMobile ? 'stretch' : 'center'}
-      aria-label="Barra de filtros"
-      width="100%"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="w-full"
     >
-      <Tooltip title={t('Filtrar por fecha de evento.')} arrow>
-        <TextField
-          label={t('dashboard.filters.date')}
-          type="date"
-          name="fecha"
-          value={filtros.fecha}
-          onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
-          inputProps={{ 'aria-label': t('dashboard.filters.date') }}
-          size={isMobile ? 'small' : 'medium'}
-          sx={{ minWidth: isMobile ? 120 : 160 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <EventIcon color="primary" />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Tooltip>
-      <Tooltip title={t('Filtrar por tipo de evento.')} arrow>
-        <FormControl sx={{ minWidth: isMobile ? 120 : 160 }} size={isMobile ? 'small' : 'medium'}>
-          <InputLabel id="tipo-evento-label">{t('dashboard.filters.eventType')}</InputLabel>
-          <Select
-            labelId="tipo-evento-label"
-            name="tipoEvento"
-            value={filtros.tipoEvento}
-            label={t('dashboard.filters.eventType')}
-            onChange={handleChange}
-            inputProps={{ 'aria-label': t('dashboard.filters.eventType') }}
-            startAdornment={
-              <InputAdornment position="start">
-                <FilterListIcon color="primary" />
-              </InputAdornment>
-            }
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+        {/* Filtro de Fecha */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex-1"
+        >
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Fecha
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-primary-500">📅</span>
+            </div>
+            <input
+              type="date"
+              name="fecha"
+              value={filtros.fecha}
+              onChange={handleChange}
+              className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+              placeholder="dd/mm/aaaa"
+            />
+          </div>
+        </motion.div>
+
+        {/* Filtro de Tipo de Evento */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex-1"
+        >
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Tipo
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-primary-500">🔍</span>
+            </div>
+            <select
+              name="tipoEvento"
+              value={filtros.tipoEvento}
+              onChange={handleChange}
+              className="w-full pl-10 pr-10 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 appearance-none"
+            >
+              {tiposEvento.map((tipo) => (
+                <option key={tipo.value} value={tipo.value}>
+                  {tipo.label}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">▼</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Filtro de Usuario */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex-1"
+        >
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Usuario
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-primary-500">👤</span>
+            </div>
+            <select
+              name="usuario"
+              value={filtros.usuario}
+              onChange={handleChange}
+              className="w-full pl-10 pr-10 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 appearance-none"
+            >
+              {usuarios.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nombre}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">▼</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Botón de Limpiar Filtros */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex items-end"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setFiltros({ fecha: "", tipoEvento: "all", usuario: "all" })}
+            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 font-medium"
           >
-            {tiposEvento.map((tipo) => (
-              <MenuItem key={tipo.value} value={tipo.value}>{tipo.label}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Tooltip>
-      <Tooltip title={t('Filtrar por usuario.')} arrow>
-        <FormControl sx={{ minWidth: isMobile ? 120 : 160 }} size={isMobile ? 'small' : 'medium'}>
-          <InputLabel id="usuario-label">{t('dashboard.filters.user')}</InputLabel>
-          <Select
-            labelId="usuario-label"
-            name="usuario"
-            value={filtros.usuario}
-            label={t('dashboard.filters.user')}
-            onChange={handleChange}
-            inputProps={{ 'aria-label': t('dashboard.filters.user') }}
-            startAdornment={
-              <InputAdornment position="start">
-                <PersonIcon color="primary" />
-              </InputAdornment>
-            }
-          >
-            {usuarios.map((u) => (
-              <MenuItem key={u.id} value={u.id}>{u.nombre}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Tooltip>
-    </Box>
+            Limpiar
+          </motion.button>
+        </motion.div>
+      </div>
+    </motion.div>
   );
 };
 

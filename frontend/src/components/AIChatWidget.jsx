@@ -6,7 +6,7 @@ const AIChatPanel = lazy(() => import('./AIChatPanel'));
 export default function AIChatWidget() {
   const [open, setOpen] = useState(false);
   return (
-    <>
+    <div className="relative">
       <Button
         variant="contained"
         color="primary"
@@ -17,12 +17,12 @@ export default function AIChatWidget() {
         {open ? '×' : '🤖'}
       </Button>
       <Fade in={open} unmountOnExit>
-        <div style={{ position: 'absolute', bottom: 72, right: 0, width: 380, maxWidth: '90vw' }}>
+        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] z-50">
           <Suspense fallback={null}>
             <AIChatPanel />
           </Suspense>
         </div>
       </Fade>
-    </>
+    </div>
   );
 } 

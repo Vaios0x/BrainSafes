@@ -1,33 +1,15 @@
 import React, { useState } from 'react';
-import { Card, CardMedia, CardContent, Typography, Grid, Chip, Button, Fade, useTheme, useMediaQuery, Tooltip, IconButton, Snackbar, Alert, CircularProgress, Skeleton, Box } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import StarIcon from '@mui/icons-material/Star';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function NFTGallery({ nfts, isMobile: isMobileProp }) {
+export default function NFTGallery({ nfts, viewMode = 'grid', isLoading = false }) {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
   const [hovered, setHovered] = useState(-1);
-  const [nftsLoading, setNftsLoading] = useState(false); // Simulación de carga
   const [favorites, setFavorites] = useState([]);
-  const [favLoading, setFavLoading] = useState(null); // id del NFT en loading
-  const theme = useTheme();
-  const isMobile = isMobileProp ?? useMediaQuery(theme.breakpoints.down('sm'));
-
-  // Simular carga de NFTs
-  React.useEffect(() => {
-    setNftsLoading(true);
-    const timer = setTimeout(() => setNftsLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  const [favLoading, setFavLoading] = useState(null);
 
   const handleViewDetail = (nft) => {
     setLoading(true);
@@ -39,9 +21,9 @@ export default function NFTGallery({ nfts, isMobile: isMobileProp }) {
       setTimeout(() => setSuccess(false), 2000);
     }, 800);
   };
+
   const handleBuy = (nft) => {
     setLoading(true);
-    // Simular error aleatorio
     const fail = Math.random() < 0.2;
     setTimeout(() => {
       setLoading(false);
@@ -56,9 +38,9 @@ export default function NFTGallery({ nfts, isMobile: isMobileProp }) {
       }
     }, 1200);
   };
+
   const handleFavorite = (nft) => {
     setFavLoading(nft.id);
-    // Simular error aleatorio
     const fail = Math.random() < 0.15;
     setTimeout(() => {
       setFavLoading(null);
@@ -75,156 +57,254 @@ export default function NFTGallery({ nfts, isMobile: isMobileProp }) {
     }, 900);
   };
 
-  if (!nftsLoading && nfts.length === 0) {
+  if (isLoading) {
     return (
-      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight={220} width="100%" mt={4}>
-        <SentimentDissatisfiedIcon color="disabled" sx={{ fontSize: 56, mb: 1 }} />
-        <Typography variant="h6" color="textSecondary">No se encontraron NFTs con los filtros seleccionados.</Typography>
-      </Box>
+      <div className="p-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: i * 0.1 }}
+              className="animate-pulse"
+            >
+              <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-2xl mb-4"></div>
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (nfts.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center min-h-[400px] w-full p-8"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-6xl mb-4"
+        >
+          😔
+        </motion.div>
+        <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
+          No se encontraron NFTs
+        </h3>
+        <p className="text-gray-500 dark:text-gray-500 text-center">
+          No se encontraron NFTs con los filtros seleccionados.
+        </p>
+      </motion.div>
     );
   }
 
   return (
-    <Grid container spacing={isMobile ? 2 : 3}>
-      {nftsLoading
-        ? Array.from({ length: 3 }).map((_, i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton variant="rectangular" height={isMobile ? 180 : 260} animation="wave" style={{ borderRadius: 16 }} aria-busy="true" aria-label="Cargando NFT" />
-            </Grid>
-          ))
-        : nfts.map((nft, idx) => (
-            <Grid item xs={12} sm={6} md={4} key={nft.id}>
-              <Fade in timeout={500}>
-                <Card
-                  onClick={() => handleViewDetail(nft)}
-                  style={{
-                    cursor: 'pointer',
-                    border: selected && selected.id === nft.id ? `2px solid ${theme.palette.primary.main}` : undefined,
-                    background: theme.palette.background.paper,
-                    borderRadius: 8,
-                    boxShadow: hovered === idx ? theme.shadows[6] : theme.shadows[2],
-                    padding: isMobile ? 6 : 12,
-                    transition: 'box-shadow 0.3s, transform 0.2s',
-                    transform: hovered === idx ? 'scale(1.04)' : 'scale(1)',
-                    position: 'relative',
-                    outline: hovered === idx ? `2px solid ${theme.palette.primary.main}` : 'none',
+    <div className="space-y-6">
+      {/* NFT Grid/List */}
+      <div className={`${
+        viewMode === 'grid' 
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+          : 'space-y-4'
+      }`}>
+        <AnimatePresence>
+          {nfts.map((nft, idx) => (
+            <motion.div
+              key={nft.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className={`group relative bg-white dark:bg-gray-800 rounded-2xl shadow-soft border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-large ${
+                hovered === idx ? 'scale-105 shadow-large' : ''
+              } ${
+                viewMode === 'list' ? 'flex' : ''
+              }`}
+              onMouseEnter={() => setHovered(idx)}
+              onMouseLeave={() => setHovered(-1)}
+            >
+              {/* NFT Image */}
+              <div className={`relative overflow-hidden ${
+                viewMode === 'list' ? 'w-32 h-32 flex-shrink-0' : 'aspect-square'
+              }`}>
+                <img
+                  src={nft.image || `https://picsum.photos/400/400?random=${nft.id}`}
+                  alt={nft.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                
+                {/* Overlay on hover */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewDetail(nft);
+                      }}
+                      className="bg-white/90 text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-white transition-colors duration-200"
+                    >
+                      Ver Detalle
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBuy(nft);
+                      }}
+                      className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors duration-200"
+                    >
+                      Comprar
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Favorite Button */}
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFavorite(nft);
                   }}
-                  tabIndex={0}
-                  onFocus={() => setHovered(idx)}
-                  onBlur={() => setHovered(-1)}
-                  onMouseEnter={() => setHovered(idx)}
-                  onMouseLeave={() => setHovered(-1)}
-                  aria-label={`Tarjeta NFT: ${nft.name}`}
-                  role="button"
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handleViewDetail(nft);
-                    }
-                  }}
+                  className="absolute top-3 right-3 p-2 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+                  disabled={favLoading === nft.id}
                 >
-                  {/* Botón de favoritos en la esquina superior derecha */}
-                  <Tooltip title={favorites.includes(nft.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'} arrow enterDelay={300} leaveDelay={100} describeChild>
-                    <span>
-                      <IconButton
-                        color={favorites.includes(nft.id) ? 'error' : 'default'}
-                        size="small"
-                        style={{ position: 'absolute', top: 8, right: 8, background: theme.palette.background.paper, boxShadow: theme.shadows[2], zIndex: 2, transition: 'box-shadow 0.3s, transform 0.2s', transform: hovered === idx ? 'scale(1.1)' : 'scale(1)', outline: 'none' }}
-                        onClick={e => { e.stopPropagation(); handleFavorite(nft); }}
-                        aria-label={favorites.includes(nft.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-                        tabIndex={0}
-                        disabled={favLoading === nft.id}
-                        onFocus={e => e.currentTarget.style.boxShadow = theme.shadows[6]}
-                        onBlur={e => e.currentTarget.style.boxShadow = theme.shadows[2]}
-                        onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && !favLoading) { e.stopPropagation(); handleFavorite(nft); } }}
-                        role="button"
-                      >
-                        {favLoading === nft.id ? <CircularProgress size={18} aria-label="Cargando favorito" /> : favorites.includes(nft.id) ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <CardMedia
-                    component="img"
-                    height={isMobile ? 140 : 200}
-                    image={nft.image}
-                    alt={nft.name}
-                    style={{ objectFit: 'cover', borderRadius: 8 }}
-                  />
-                  <CardContent style={{ padding: isMobile ? 8 : 16 }}>
-                    <Typography variant="h6" gutterBottom style={{ color: theme.palette.text.primary, fontSize: isMobile ? 15 : 18 }}>
-                      {nft.name}
-                    </Typography>
-                    <Tooltip title="Propietario de este NFT" arrow enterDelay={300} leaveDelay={100} describeChild>
-                      <Typography variant="body2" style={{ color: theme.palette.text.secondary, fontSize: isMobile ? 12 : 14, display: 'flex', alignItems: 'center', gap: 4 }} aria-label={`Propietario: ${nft.owner}`}> <PersonIcon fontSize="small" color="primary" /> {nft.owner} </Typography>
-                    </Tooltip>
-                    <Typography variant="body2" style={{ color: theme.palette.text.secondary, fontSize: isMobile ? 12 : 14, display: 'flex', alignItems: 'center', gap: 4 }} aria-label={`Precio: ${nft.price} ETH`}> <LocalOfferIcon fontSize="small" color="primary" /> Precio: {nft.price} ETH </Typography>
-                    <Tooltip title={`Estado: ${nft.status}`} arrow enterDelay={300} leaveDelay={100} describeChild>
-                      <Chip label={nft.status} color={nft.status === 'en venta' ? 'success' : 'default'} size="small" style={{ marginTop: 8, fontSize: isMobile ? 11 : 13 }} icon={<LocalOfferIcon fontSize="small" />} aria-label={`Estado: ${nft.status}`} tabIndex={0} />
-                    </Tooltip>
-                    <Tooltip title={`Rareza: ${nft.rarity}`} arrow enterDelay={300} leaveDelay={100} describeChild>
-                      <Chip label={nft.rarity} color="info" size="small" style={{ marginTop: 8, marginLeft: 8, fontSize: isMobile ? 11 : 13 }} icon={<StarIcon fontSize="small" />} aria-label={`Rareza: ${nft.rarity}`} tabIndex={0} />
-                    </Tooltip>
-                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                      <Tooltip title="Ver detalles del NFT" arrow enterDelay={300} leaveDelay={100} describeChild>
-                        <span>
-                          <Button
-                            variant="outlined"
-                            size={isMobile ? 'small' : 'medium'}
-                            style={{
-                              color: theme.palette.primary.main,
-                              borderColor: theme.palette.primary.main,
-                              fontSize: isMobile ? 13 : 15,
-                              boxShadow: theme.shadows[2],
-                              transition: 'box-shadow 0.3s, transform 0.2s',
-                              transform: hovered === idx ? 'scale(1.04)' : 'scale(1)',
-                              outline: 'none',
-                            }}
-                            startIcon={<VisibilityIcon />}
-                            onClick={e => { e.stopPropagation(); handleViewDetail(nft); }}
-                            onMouseEnter={e => e.currentTarget.style.boxShadow = theme.shadows[6]}
-                            onMouseLeave={e => e.currentTarget.style.boxShadow = theme.shadows[2]}
-                            onFocus={e => e.currentTarget.style.boxShadow = theme.shadows[6]}
-                            onBlur={e => e.currentTarget.style.boxShadow = theme.shadows[2]}
-                            onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && !loading) { e.stopPropagation(); handleViewDetail(nft); } }}
-                            disabled={loading}
-                            aria-label="Ver detalles del NFT"
-                            tabIndex={0}
-                            role="button"
-                          >
-                            {loading && selected && selected.id === nft.id ? <CircularProgress size={16} aria-label="Cargando detalle" /> : 'Ver Detalle'}
-                          </Button>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Comprar NFT (simulado)" arrow enterDelay={300} leaveDelay={100} describeChild>
-                        <span>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            size={isMobile ? 'small' : 'medium'}
-                            style={{ fontSize: isMobile ? 13 : 15, boxShadow: theme.shadows[2], transition: 'box-shadow 0.3s, transform 0.2s', outline: 'none' }}
-                            startIcon={<ShoppingCartIcon />}
-                            onClick={e => { e.stopPropagation(); handleBuy(nft); }}
-                            onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && !loading) { e.stopPropagation(); handleBuy(nft); } }}
-                            disabled={loading}
-                            aria-label="Comprar NFT"
-                            tabIndex={0}
-                            role="button"
-                          >
-                            {loading ? <CircularProgress size={16} aria-label="Cargando compra" /> : 'Comprar'}
-                          </Button>
-                        </span>
-                      </Tooltip>
+                  {favLoading === nft.id ? (
+                    <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : favorites.includes(nft.id) ? (
+                    <span className="text-red-500 text-lg">❤️</span>
+                  ) : (
+                    <span className="text-gray-400 hover:text-red-500 text-lg">🤍</span>
+                  )}
+                </motion.button>
+
+                {/* Price Tag */}
+                <div className="absolute bottom-3 left-3 bg-primary-600 text-white px-3 py-1 rounded-lg text-sm font-semibold">
+                  {nft.price} ETH
+                </div>
+
+                {/* Rarity Badge */}
+                <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2 py-1 rounded-lg text-xs font-semibold">
+                  {nft.rarity}
+                </div>
+              </div>
+
+              {/* NFT Info */}
+              <div className={`p-4 space-y-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
+                    {nft.name}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
+                    {nft.description}
+                  </p>
+                </div>
+
+                {/* Creator Info */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-brain-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {nft.creator?.charAt(0) || 'U'}
                     </div>
-                  </CardContent>
-                </Card>
-              </Fade>
-            </Grid>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Creador</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {nft.creator || 'Usuario'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Rating */}
+                  <div className="flex items-center space-x-1">
+                    <span className="text-yellow-500">⭐</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {nft.rating || '4.5'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Vistas</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {nft.views || Math.floor(Math.random() * 1000)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Likes</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {nft.likes || Math.floor(Math.random() * 100)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Ofertas</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {nft.offers || Math.floor(Math.random() * 10)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
-      <Snackbar open={success} autoHideDuration={2000} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="success" sx={{ width: '100%' }} role="status">{actionMsg || 'Acción realizada correctamente.'}</Alert>
-      </Snackbar>
-      <Snackbar open={error} autoHideDuration={2000} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="error" sx={{ width: '100%' }} role="alert">{actionMsg || 'Ocurrió un error.'}</Alert>
-      </Snackbar>
-    </Grid>
+        </AnimatePresence>
+      </div>
+
+      {/* Success/Error Messages */}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+          >
+            {actionMsg}
+          </motion.div>
+        )}
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+          >
+            {actionMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Loading Overlay */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center"
+            >
+              <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-900 dark:text-white font-medium">Procesando...</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 } 

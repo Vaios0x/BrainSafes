@@ -20,7 +20,7 @@ export default function CommunityRewardsForm({ user, setUser, pts, setPts, loadi
 
   return (
     <Box sx={{ background: '#fff', borderRadius: 2, boxShadow: '0 2px 8px #1976d220', p: 3, mb: 3 }}>
-      <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><StarIcon color="warning" /> Asignar Puntos (Admin)</h3>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><StarIcon color="warning" /> Asignar Puntos</h3>
       <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
         <Tooltip title="Dirección del usuario" arrow enterDelay={300} leaveDelay={100} describeChild>
           <TextField

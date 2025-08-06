@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { VitePWA } from 'vite-plugin-pwa';
+import tailwindcss from '@tailwindcss/vite';
 import fs from 'fs';
 import path from 'path';
 
@@ -31,6 +32,7 @@ function copyABIsPlugin() {
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     svgr(),
     VitePWA({
       registerType: 'autoUpdate',

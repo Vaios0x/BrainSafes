@@ -1,3 +1,6 @@
+@import "tailwindcss";
+
+/* Estilos personalizados para BrainSafes */
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -17,43 +20,51 @@ body {
   background: #fff;
   color: #181c32;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Prevenir barras blancas no deseadas */
+*[style*="position: fixed"],
+*[style*="position: absolute"] {
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+/* Asegurar que elementos fixed no causen scroll horizontal */
+.fixed {
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+}
+
+/* Prevenir overflow horizontal */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Navbar responsive */
+@media (max-width: 1024px) {
+  .navbar-nav {
+    display: none;
+  }
+}
+
+/* Prevenir overflow en navbar */
+nav {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.navbar-container {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
-a {
-  color: #1976d2;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-a:hover {
-  color: #0d47a1;
-  text-decoration: underline;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  color: #181c32;
-  margin-top: 0;
-}
-
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: 1rem;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  background: #f3f3f3;
-}
-::-webkit-scrollbar-thumb {
-  background: #e0e0e0;
-  border-radius: 4px;
-} 
-
-/* Navbar responsive y animaciones */
+/* Estilos personalizados para componentes específicos */
 .navbar-burger {
   display: none;
 }
@@ -86,303 +97,6 @@ button, input, select, textarea {
     width: 100%;
     margin: 0.5rem 0;
   }
-  
-  /* Mobile optimizations */
-  .mobile-hidden {
-    display: none !important;
-  }
-  
-  .mobile-full-width {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 16px !important;
-  }
-  
-  .mobile-stack {
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  
-  .mobile-center {
-    text-align: center !important;
-    justify-content: center !important;
-  }
-  
-  .mobile-padding {
-    padding: 16px !important;
-  }
-  
-  .mobile-margin {
-    margin: 16px 0 !important;
-  }
-}
-
-@media (max-width: 900px) {
-  .tablet-hidden {
-    display: none !important;
-  }
-  
-  .tablet-stack {
-    flex-direction: column !important;
-  }
-  
-  .tablet-center {
-    text-align: center !important;
-  }
-}
-
-@media (max-width: 1200px) {
-  .desktop-hidden {
-    display: none !important;
-  }
-}
-
-/* Touch optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .touch-target {
-    min-height: 44px !important;
-    min-width: 44px !important;
-  }
-  
-  .touch-spacing {
-    margin: 8px 0 !important;
-  }
-  
-  .touch-button {
-    padding: 12px 20px !important;
-    font-size: 16px !important;
-  }
-}
-
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .high-dpi {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-}
-
-/* Landscape mobile */
-@media (max-width: 900px) and (orientation: landscape) {
-  .landscape-optimized {
-    padding: 8px 16px !important;
-  }
-  
-  .landscape-compact {
-    margin: 4px 0 !important;
-  }
-}
-
-.navbar-menu li a:focus {
-  outline: 2px solid #1976d2;
-  outline-offset: 2px;
-  background: #e3f2fd;
-  border-radius: 4px;
-}
-
-.navbar-menu li a[aria-current="page"] {
-  border-bottom: 2px solid #1976d2;
-  color: #1976d2;
-  font-weight: 700;
-  background: #e3f2fd;
-  border-radius: 4px 4px 0 0;
-  transition: background 0.2s, border-bottom 0.2s;
-}
-
-.navbar-menu li a:hover {
-  color: #0d47a1;
-  background: #e3f2fd;
-  border-radius: 4px;
-  transition: background 0.2s, color 0.2s;
-}
-
-/* Animación de burger */
-.navbar-burger span {
-  transition: all 0.3s;
-} 
-
-/* Animaciones fade-in */
-.fade-in {
-  opacity: 0;
-  transform: translateY(40px);
-}
-
-/* Feedback visual CTA */
-.cta-btn:focus {
-  outline: 2px solid #1976d2;
-  outline-offset: 2px;
-  background: #1565c0;
-}
-.cta-btn:hover {
-  background: #1565c0;
-  color: #fff;
-  transition: background 0.2s, color 0.2s;
-}
-
-/* Tarjetas de beneficios */
-.benefit-card:focus {
-  outline: 2px solid #1976d2;
-  outline-offset: 2px;
-  background: #e3f2fd;
-}
-.benefit-card:hover {
-  box-shadow: 0 6px 24px #1976d220;
-  background: #f3f6fa;
-  transition: box-shadow 0.2s, background 0.2s;
-}
-
-/* Responsive Landing */
-@media (max-width: 900px) {
-  .benefit-card {
-    min-width: 90vw;
-    max-width: 98vw;
-    margin-bottom: 16px;
-  }
-}
-
-@media (max-width: 700px) {
-  main[role="main"] section[aria-label="Hero principal"] {
-    flex-direction: column !important;
-    gap: 24px !important;
-    padding: 32px 4vw 16px 4vw !important;
-  }
-  .benefit-card {
-    padding: 20px;
-  }
-  .cta-btn {
-    font-size: 16px;
-    padding: 10px 20px;
-  }
-  h1 {
-    font-size: 2rem !important;
-  }
-}
-
-/* Mobile specific optimizations */
-@media (max-width: 600px) {
-  /* Grid optimizations */
-  .mobile-grid-1 {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .mobile-grid-2 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  
-  /* Card optimizations */
-  .mobile-card {
-    margin: 8px 0 !important;
-    padding: 16px !important;
-  }
-  
-  /* Button optimizations */
-  .mobile-button {
-    width: 100% !important;
-    margin: 8px 0 !important;
-    padding: 12px 16px !important;
-  }
-  
-  /* Text optimizations */
-  .mobile-text {
-    font-size: 14px !important;
-    line-height: 1.4 !important;
-  }
-  
-  .mobile-title {
-    font-size: 20px !important;
-    line-height: 1.3 !important;
-  }
-  
-  /* Spacing optimizations */
-  .mobile-gap {
-    gap: 12px !important;
-  }
-  
-  .mobile-padding-sm {
-    padding: 8px !important;
-  }
-  
-  .mobile-padding-md {
-    padding: 16px !important;
-  }
-  
-  .mobile-padding-lg {
-    padding: 24px !important;
-  }
-  
-  /* Navigation optimizations */
-  .mobile-nav {
-    padding: 8px 16px !important;
-  }
-  
-  .mobile-nav-item {
-    padding: 12px 16px !important;
-    margin: 4px 0 !important;
-  }
-  
-  /* Form optimizations */
-  .mobile-form {
-    padding: 16px !important;
-  }
-  
-  .mobile-input {
-    margin: 8px 0 !important;
-    padding: 12px !important;
-  }
-  
-  /* Gallery optimizations */
-  .mobile-gallery {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
-  }
-  
-  .mobile-gallery-item {
-    margin: 0 !important;
-  }
-  
-  /* Dashboard optimizations */
-  .mobile-dashboard {
-    padding: 16px !important;
-  }
-  
-  .mobile-metric {
-    padding: 12px !important;
-    margin: 8px 0 !important;
-  }
-  
-  /* Modal optimizations */
-  .mobile-modal {
-    margin: 16px !important;
-    max-width: calc(100vw - 32px) !important;
-  }
-  
-  /* Table optimizations */
-  .mobile-table {
-    font-size: 12px !important;
-  }
-  
-  .mobile-table-cell {
-    padding: 8px 4px !important;
-  }
-}
-
-/* Tablet optimizations */
-@media (min-width: 601px) and (max-width: 900px) {
-  .tablet-grid-2 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  
-  .tablet-grid-3 {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-  
-  .tablet-padding {
-    padding: 20px !important;
-  }
-  
-  .tablet-text {
-    font-size: 16px !important;
-  }
 }
 
 /* Accessibility improvements */
@@ -391,23 +105,6 @@ button, input, select, textarea {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #fff;
-    background: #181c32;
-  }
-  
-  body {
-    background: #181c32;
-    color: #fff;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    color: #fff;
   }
 }
 

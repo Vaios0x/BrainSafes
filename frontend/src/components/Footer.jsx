@@ -1,79 +1,68 @@
 import React from 'react';
-import { Box, Typography, Container, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation();
 
   return (
-    <Box
-      component="footer"
-      sx={{
-        backgroundColor: theme.palette.mode === 'dark' ? '#1a1a2e' : '#f8f9fa',
-        color: theme.palette.text.secondary,
-        borderTop: `1px solid ${theme.palette.divider}`,
-        py: isMobile ? 3 : 4,
-        mt: 'auto',
-        position: 'relative',
-        bottom: 0,
-        width: '100%'
-      }}
-    >
-      <Container maxWidth="lg">
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: isMobile ? 2 : 0
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: isMobile ? '0.875rem' : '1rem',
-              textAlign: isMobile ? 'center' : 'left',
-              opacity: 0.8
-            }}
-          >
-            © 2025 BrainSafes. {t('footer.rights') || 'Todos los derechos reservados.'}
-          </Typography>
+    <footer className="mt-auto border-t transition-colors duration-300 dark:bg-gray-900 dark:border-gray-700 bg-gray-50 border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+          <div className="text-center sm:text-left">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              © 2025 BrainSafes. {t('footer.rights') || 'Todos los derechos reservados.'}
+            </p>
+          </div>
           
-          <Box
-            sx={{
-              display: 'flex',
-              gap: isMobile ? 2 : 3,
-              flexDirection: isMobile ? 'column' : 'row',
-              alignItems: 'center'
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                opacity: 0.7,
-                textAlign: 'center'
-              }}
-            >
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6">
+            <p className="text-xs text-gray-500 dark:text-gray-500 text-center">
               {t('footer.version') || 'Versión 1.0.0'}
-            </Typography>
+            </p>
             
-            <Typography
-              variant="body2"
-              sx={{
-                fontSize: isMobile ? '0.75rem' : '0.875rem',
-                opacity: 0.7,
-                textAlign: 'center'
-              }}
-            >
-              {t('footer.built') || 'Construido con React & Material-UI'}
-            </Typography>
-          </Box>
-        </Box>
-      </Container>
-    </Box>
+            <p className="text-xs text-gray-500 dark:text-gray-500 text-center">
+              {t('footer.built') || 'Construido con React & Tailwind CSS'}
+            </p>
+          </div>
+        </div>
+        
+        {/* Additional footer content */}
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                BrainSafes
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Plataforma descentralizada para la gestión segura de credenciales educativas y profesionales.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                Tecnologías
+              </h3>
+              <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• Blockchain & Smart Contracts</li>
+                <li>• Web3 & DeFi Integration</li>
+                <li>• AI & Machine Learning</li>
+                <li>• Zero-Knowledge Proofs</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                Comunidad
+              </h3>
+              <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• GitHub</li>
+                <li>• Discord</li>
+                <li>• Twitter</li>
+                <li>• Documentation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 } 

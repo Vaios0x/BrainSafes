@@ -17,8 +17,21 @@
     "disconnectWallet": "Desconectar Wallet"
   },
   "landing": {
-    "title": "Bienvenido a BrainSafes",
-    "subtitle": "Tu plataforma segura de aprendizaje y credenciales blockchain"
+    "title": "BrainSafes",
+    "subtitle": "La plataforma descentralizada que revoluciona la educación con blockchain, IA y oráculos",
+    "description": "Construye tu futuro con credenciales verificables, mentoría descentralizada y oportunidades de financiamiento inteligente",
+    "cta": "Comenzar Ahora",
+    "learnMore": "Ver Demo",
+    "benefitsTitle": "¿Por qué elegir BrainSafes?",
+    "benefitsSubtitle": "Descubre las ventajas únicas de nuestra plataforma descentralizada",
+    "featuresTitle": "Características Principales",
+    "featuresSubtitle": "Todo lo que necesitas para tu desarrollo educativo y profesional",
+    "testimonialsTitle": "Lo que dicen nuestros usuarios",
+    "testimonialsSubtitle": "Descubre las experiencias de estudiantes y profesionales que confían en BrainSafes",
+    "ctaTitle": "¿Listo para comenzar tu viaje?",
+    "ctaSubtitle": "Únete a miles de estudiantes y profesionales que ya confían en BrainSafes para su desarrollo educativo",
+    "createAccount": "Crear Cuenta Gratis",
+    "viewDemo": "Ver Demo Interactivo"
   },
   "dashboard": {
     "main": "Panel principal",
@@ -58,6 +71,6 @@
   "footer": {
     "rights": "Todos los derechos reservados.",
     "version": "Versión 1.0.0",
-    "built": "Construido con React & Material-UI"
+    "built": "Construido con React & Tailwind CSS"
   }
 } 

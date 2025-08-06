@@ -1,43 +1,233 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useAuthContext } from '../context/AuthContext';
 import { ethers } from 'ethers';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Logo from '../assets/Logo.svg?react';
-import { 
-  Switch, 
-  FormControlLabel, 
-  MenuItem, 
-  Select, 
-  IconButton, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  ListItemIcon,
-  useTheme, 
-  useMediaQuery,
-  Box,
-  Typography,
-  Divider,
-  AppBar,
-  Toolbar,
-  Container
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import StoreIcon from '@mui/icons-material/Store';
-import SecurityIcon from '@mui/icons-material/Security';
-import SchoolIcon from '@mui/icons-material/School';
-import SupportIcon from '@mui/icons-material/Support';
-import GroupIcon from '@mui/icons-material/Group';
-import MentorIcon from '@mui/icons-material/Person';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import PersonIcon from '@mui/icons-material/Person';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ReownWalletConnect from './ReownWalletConnect';
+
+// Componente de partículas para el navbar
+const NavbarParticles = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {[...Array(8)].map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute w-0.5 h-0.5 bg-primary-400/30 rounded-full"
+        style={{
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+        }}
+        animate={{
+          y: [0, -15, 0],
+          opacity: [0.1, 0.4, 0.1],
+        }}
+        transition={{
+          duration: 4 + Math.random() * 2,
+          repeat: Infinity,
+          delay: Math.random() * 4,
+        }}
+      />
+    ))}
+  </div>
+);
+
+// Componente de enlace de navegación animado
+const AnimatedNavLink = ({ link, isActive, onClick, isMobile = false }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className="flex-shrink-0"
+    >
+      <Link
+        to={link.to}
+        className={`relative flex items-center space-x-1 px-2 py-2 rounded-xl text-xs font-medium transition-all duration-300 ${
+          isActive
+            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25'
+            : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-white/80 dark:hover:bg-gray-800/80 backdrop-blur-sm'
+        }`}
+        onClick={onClick}
+      >
+        <motion.span
+          animate={{ 
+            rotate: isHovered ? [0, 10, -10, 0] : 0,
+            scale: isHovered ? 1.1 : 1
+          }}
+          transition={{ duration: 0.3 }}
+          className="text-sm"
+        >
+          {link.icon}
+        </motion.span>
+        <span className="font-medium hidden xl:block">{link.label}</span>
+        
+        {isActive && (
+          <motion.div
+            layoutId="activeIndicator"
+            className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl -z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+      </Link>
+    </motion.div>
+  );
+};
+
+// Componente de selector de idioma moderno
+const LanguageSelectorV2 = ({ i18n, themeMode }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Verificar que i18n esté disponible
+  if (!i18n) {
+    return null;
+  }
+
+  // Cerrar dropdown cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const languages = [
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+  ];
+
+  const currentLanguage = i18n.language || 'es';
+  const currentLang = languages.find(lang => lang.code === currentLanguage) || languages[0];
+
+  console.log('LanguageSelectorV2 render:', { currentLanguage, currentLang });
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+          themeMode === 'dark'
+            ? 'bg-gray-800/80 border border-gray-700/50 text-white hover:bg-gray-700/80 backdrop-blur-sm'
+            : 'bg-white/80 border border-gray-300/50 text-gray-900 hover:bg-gray-50/80 backdrop-blur-sm'
+        }`}
+      >
+        <span className="text-lg">
+          {currentLang.flag}
+        </span>
+        <span style={{ 
+          display: 'none', 
+          '@media (min-width: 640px)': { display: 'block' },
+          fontSize: '0.75rem',
+          fontWeight: 'bold'
+        }}>
+          ES
+        </span>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-xs"
+        >
+          ▼
+        </motion.span>
+      </motion.button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className={`absolute top-full mt-2 right-0 min-w-[140px] rounded-xl shadow-xl border z-50 ${
+              themeMode === 'dark'
+                ? 'bg-gray-800/95 border-gray-700/50 backdrop-blur-md'
+                : 'bg-white/95 border-gray-300/50 backdrop-blur-md'
+            }`}
+          >
+            {languages.map((lang) => (
+              <motion.button
+                key={lang.code}
+                whileHover={{ scale: 1.02, x: 5 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  i18n.changeLanguage(lang.code);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 text-left text-sm font-medium transition-colors duration-200 ${
+                  currentLanguage === lang.code
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <span className="text-lg">{lang.flag}</span>
+                <span>{lang.name}</span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// Componente de toggle de tema moderno
+const ThemeToggle = ({ themeMode, setThemeMode }) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleThemeChange = () => {
+    setIsAnimating(true);
+    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
+    setTimeout(() => setIsAnimating(false), 600);
+  };
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.1, rotate: 5 }}
+      whileTap={{ scale: 0.9, rotate: -5 }}
+      onClick={handleThemeChange}
+      className={`relative p-2 rounded-xl transition-all duration-300 ${
+        themeMode === 'dark'
+          ? 'text-yellow-400 hover:bg-gray-800/80 backdrop-blur-sm'
+          : 'text-gray-600 hover:bg-gray-100/80 backdrop-blur-sm'
+      }`}
+      aria-label="Toggle theme"
+    >
+      <motion.div
+        animate={{ 
+          rotate: isAnimating ? 360 : 0,
+          scale: isAnimating ? 1.2 : 1
+        }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+        className="text-xl"
+      >
+        {themeMode === 'dark' ? '🌙' : '☀️'}
+      </motion.div>
+      
+      <motion.div
+        className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-400/20 to-orange-400/20"
+        animate={{ opacity: isAnimating ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+      />
+    </motion.button>
+  );
+};
 
 export default function Navbar({ themeMode, setThemeMode }) {
   const { user, login, loginWallet, logout, error, loading } = useAuthContext();
@@ -46,33 +236,24 @@ export default function Navbar({ themeMode, setThemeMode }) {
   const { t, i18n } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const location = useLocation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const handleThemeChange = () => {
-    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
-  };
+  const { scrollY } = useScroll();
+  const navbarBackground = useTransform(
+    scrollY,
+    [0, 100],
+    [0, 0.8]
+  );
 
   const navLinks = [
-    { to: '/', label: t('home'), icon: null },
-    { to: '/dashboard', label: t('dashboard'), icon: <DashboardIcon /> },
-    { to: '/marketplace', label: 'marketplace', icon: <StoreIcon /> },
-    { to: '/security', label: 'security', icon: <SecurityIcon /> },
-    { to: '/learning', label: 'learning', icon: <SchoolIcon /> },
-    { to: '/support', label: 'support', icon: <SupportIcon /> },
-    { to: '/community', label: t('community'), icon: <GroupIcon /> },
-    { to: '/mentoring', label: t('mentoring'), icon: <MentorIcon /> },
-    { to: '/loans', label: t('loans'), icon: <AccountBalanceIcon /> },
-    { to: '/profile', label: t('profile'), icon: <PersonIcon /> },
-    { to: '/admin', label: t('admin'), icon: <AdminPanelSettingsIcon /> },
+    { to: '/', label: t('home'), icon: '🏠' },
+    { to: '/dashboard', label: t('dashboard'), icon: '📊' },
+    { to: '/marketplace', label: 'marketplace', icon: '🛒' },
+    { to: '/learning', label: 'learning', icon: '📚' },
+    { to: '/support', label: 'support', icon: '💬' },
+    { to: '/community', label: t('community'), icon: '👥' },
+    { to: '/mentoring', label: t('mentoring'), icon: '🎓' },
+    { to: '/loans', label: t('loans'), icon: '💰' },
+    { to: '/profile', label: t('profile'), icon: '👤' },
   ];
-
-  // Agregar wallet como elemento especial en mobile
-  const mobileNavLinks = isMobile ? [
-    ...navLinks,
-    { to: 'wallet', label: 'Connect Wallet', icon: <AccountBalanceWalletIcon />, isWallet: true }
-  ] : navLinks;
 
   const handleMenuClose = () => {
     setShowMenu(false);
@@ -83,323 +264,164 @@ export default function Navbar({ themeMode, setThemeMode }) {
   };
 
   return (
-    <AppBar 
-      position="sticky" 
-      elevation={0}
-      sx={{
-        backgroundColor: themeMode === 'dark' ? '#222' : '#fff',
-        color: themeMode === 'dark' ? '#fff' : '#222',
-        borderBottom: '1px solid #e0e0e0',
-        zIndex: 100,
+    <motion.nav
+      style={{
+        backgroundColor: useTransform(
+          scrollY,
+          [0, 100],
+          themeMode === 'dark' 
+            ? ['rgba(17, 24, 39, 0.8)', 'rgba(17, 24, 39, 0.95)']
+            : ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.95)']
+        ),
+        backdropFilter: useTransform(
+          scrollY,
+          [0, 100],
+          ['blur(8px)', 'blur(16px)']
+        ),
       }}
+      className="sticky top-0 z-50 border-b border-white/20 dark:border-gray-700/20 shadow-lg w-full"
     >
-      <Toolbar 
-        sx={{
-          padding: isSmallMobile ? '8px 16px' : '8px 24px',
-          minHeight: { xs: 56, sm: 64 },
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Logo and Brand */}
-        <Link 
-          to="/" 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 8, 
-            textDecoration: 'none',
-            minWidth: isSmallMobile ? 120 : 160 
-          }} 
-          aria-label="Ir a inicio"
-        >
-          <Logo width={isSmallMobile ? 28 : 36} height={isSmallMobile ? 28 : 36} style={{ display: 'block' }} />
-          <Typography 
-            variant={isSmallMobile ? "h6" : "h5"}
-            sx={{ 
-              fontWeight: 700, 
-              color: theme.palette.primary.main, 
-              letterSpacing: 1,
-              display: { xs: 'none', sm: 'block' }
-            }}
+      <NavbarParticles />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 navbar-container">
+        <div className="flex justify-between items-center h-16 min-w-0">
+          {/* Logo */}
+          <motion.div 
+            className="flex-shrink-0 flex items-center"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            BrainSafes
-          </Typography>
-        </Link>
-
-        {/* Desktop Navigation */}
-        {!isMobile && (
-          <Box 
-            component="nav"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              gap: 0,
-              mx: 2,
-            }}
-          >
-            <Box
-              component="ul"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 0,
-                listStyle: 'none',
-                margin: 0,
-                padding: 0,
-                width: '100%',
-              }}
-            >
-              {navLinks.slice(1, 7).map(({ to, label }) => (
-                <Box component="li" key={to} sx={{ flex: 1, textAlign: 'center', minWidth: 90 }}>
-                  <Link
-                    to={to}
-                    aria-current={location.pathname === to ? 'page' : undefined}
-                    tabIndex={0}
-                    style={{
-                      fontWeight: 500,
-                      position: 'relative',
-                      padding: '8px 12px',
-                      borderBottom: location.pathname === to ? `2px solid ${theme.palette.primary.main}` : '2px solid transparent',
-                      fontSize: 14,
-                      width: '100%',
-                      display: 'inline-block',
-                      whiteSpace: 'nowrap',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                    }}
-                  >
-                    {label}
-                  </Link>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        )}
-
-        {/* Right side controls */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
-          {/* Wallet Connect - Solo visible en desktop */}
-          {!isMobile && <ReownWalletConnect onConnect={() => {}} />}
-          
-          {!isSmallMobile && (
-            <>
-              <Select
-                value={i18n.language}
-                onChange={e => i18n.changeLanguage(e.target.value)}
-                aria-label="Selector de idioma"
-                size="small"
-                sx={{
-                  background: themeMode === 'dark' ? '#333' : '#f3f3f3',
-                  color: themeMode === 'dark' ? '#fff' : '#222',
-                  borderRadius: 1,
-                  fontWeight: 500,
-                  minWidth: 60,
-                }}
+            <Link to="/" className="flex items-center space-x-3">
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
               >
-                <MenuItem value="es">ES</MenuItem>
-                <MenuItem value="en">EN</MenuItem>
-              </Select>
-              
-              <FormControlLabel
-                control={
-                  <Switch 
-                    checked={themeMode === 'dark'} 
-                    onChange={handleThemeChange} 
-                    color="primary" 
-                    inputProps={{ 'aria-label': 'Cambiar tema claro/oscuro' }} 
-                  />
-                }
-                label={themeMode === 'dark' ? '🌙' : '☀️'}
-                sx={{ 
-                  marginLeft: 1,
-                  color: themeMode === 'dark' ? '#fff' : '#222',
-                  '& .MuiFormControlLabel-label': {
-                    fontSize: 16,
-                  }
-                }}
-              />
-            </>
-          )}
+                <Logo className="h-8 w-8" />
+              </motion.div>
+              <motion.span 
+                className="font-bold text-xl bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent hidden sm:block"
+                whileHover={{ scale: 1.02 }}
+              >
+                BrainSafes
+              </motion.span>
+            </Link>
+          </motion.div>
 
-          {/* Mobile Menu Button */}
-          {isMobile && (
-            <IconButton 
-              onClick={() => setShowMenu(true)} 
-              color="inherit" 
-              aria-label="Abrir menú"
-              sx={{ ml: 1 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-        </Box>
-
-        {/* Mobile Drawer - Fixed positioning */}
-        <Drawer 
-          anchor="right" 
-          open={showMenu} 
-          onClose={handleMenuClose}
-          ModalProps={{
-            keepMounted: true, // Better mobile performance
-          }}
-          PaperProps={{
-            sx: {
-              width: { xs: '100vw', sm: 320 },
-              backgroundColor: themeMode === 'dark' ? '#232946' : '#fff',
-              color: themeMode === 'dark' ? '#fff' : '#222',
-              position: 'fixed',
-              top: 0,
-              right: 0,
-              height: '100vh',
-              zIndex: 1200,
-              overflow: 'auto',
-              display: 'block'
-            }
-          }}
-          sx={{
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-            },
-            zIndex: 1200
-          }}
-        >
-          {/* Header */}
-          <Box 
-            sx={{ 
-              p: 2, 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              borderBottom: `1px solid ${theme.palette.divider}`,
-              backgroundColor: themeMode === 'dark' ? '#1a1a2e' : '#f8f9fa',
-              position: 'sticky',
-              top: 0,
-              zIndex: 1
-            }}
+          {/* Desktop Navigation - Centrado */}
+          <motion.div 
+            className="hidden lg:flex items-center justify-center flex-1 px-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Menú
-            </Typography>
-            <IconButton 
-              onClick={handleMenuClose} 
-              color="inherit"
-              sx={{ 
-                p: 1,
-                '&:hover': {
-                  backgroundColor: theme.palette.action.hover
-                }
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          
-          {/* Navigation List */}
-          <Box>
-            <List sx={{ pt: 1, pb: 1 }}>
-              {mobileNavLinks.map(({ to, label, icon, isWallet }) => (
-                <ListItem 
-                  button 
-                  key={to} 
-                  component={isWallet ? 'div' : Link} 
-                  to={isWallet ? undefined : to} 
-                  onClick={isWallet ? undefined : () => handleNavClick(to)} 
-                  selected={!isWallet && location.pathname === to}
-                  sx={{
-                    py: 1.5,
-                    px: 2,
-                    mx: 1,
-                    borderRadius: 1,
-                    '&.Mui-selected': {
-                      backgroundColor: theme.palette.primary.light + '20',
-                      borderLeft: `3px solid ${theme.palette.primary.main}`,
-                      '&:hover': {
-                        backgroundColor: theme.palette.primary.light + '30',
-                      }
-                    },
-                    '&:hover': {
-                      backgroundColor: theme.palette.action.hover,
-                    },
-                    '&:active': {
-                      backgroundColor: theme.palette.action.selected,
-                    }
-                  }}
+            <div className="flex items-center space-x-1 max-w-2xl">
+              {navLinks.map((link, index) => (
+                <motion.div
+                  key={link.to}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
+                  className="flex-shrink-0"
                 >
-                  {icon && (
-                    <ListItemIcon sx={{ 
-                      minWidth: 40, 
-                      color: 'inherit',
-                      opacity: (!isWallet && location.pathname === to) ? 1 : 0.7
-                    }}>
-                      {icon}
-                    </ListItemIcon>
-                  )}
-                  <ListItemText 
-                    primary={isWallet ? (
-                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <ReownWalletConnect onConnect={handleMenuClose} />
-                      </Box>
-                    ) : label} 
-                    primaryTypographyProps={{
-                      fontSize: 16,
-                      fontWeight: (!isWallet && location.pathname === to) ? 600 : 400,
-                      color: (!isWallet && location.pathname === to) ? theme.palette.primary.main : 'inherit'
-                    }}
+                  <AnimatedNavLink
+                    link={link}
+                    isActive={location.pathname === link.to}
+                    onClick={() => handleNavClick(link.to)}
                   />
-                </ListItem>
+                </motion.div>
               ))}
-            </List>
-          </Box>
-          
-          
+            </div>
+          </motion.div>
 
-          {/* Settings Section */}
-          <Box 
-            sx={{ 
-              p: 2,
-              borderTop: `1px solid ${theme.palette.divider}`,
-              backgroundColor: themeMode === 'dark' ? '#1a1a2e' : '#f8f9fa'
-            }}
+          {/* Right side controls */}
+          <motion.div 
+            className="flex items-center space-x-2 flex-shrink-0"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Typography variant="body2" sx={{ mb: 2, opacity: 0.7, fontWeight: 500 }}>
-              Configuración
-            </Typography>
+            {/* Language Selector */}
+            {i18n && <LanguageSelectorV2 key={`lang-${i18n.language || 'es'}`} i18n={i18n} themeMode={themeMode} />}
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="body2">Idioma</Typography>
-              <Select
-                value={i18n.language}
-                onChange={e => i18n.changeLanguage(e.target.value)}
-                size="small"
-                sx={{
-                  minWidth: 80,
-                  '& .MuiSelect-select': {
-                    py: 0.5
-                  }
-                }}
+            {/* Theme Toggle */}
+            <ThemeToggle themeMode={themeMode} setThemeMode={setThemeMode} />
+
+            {/* Wallet Connect */}
+            <div className="hidden md:block">
+              <ReownWalletConnect />
+            </div>
+
+            {/* Mobile menu button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowMenu(!showMenu)}
+              className={`lg:hidden p-3 rounded-xl transition-all duration-300 ${
+                themeMode === 'dark'
+                  ? 'text-gray-300 hover:bg-gray-800/80 backdrop-blur-sm'
+                  : 'text-gray-600 hover:bg-gray-100/80 backdrop-blur-sm'
+              }`}
+              aria-label="Toggle menu"
+            >
+              <motion.div
+                animate={{ rotate: showMenu ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-xl"
               >
-                <MenuItem value="es">ES</MenuItem>
-                <MenuItem value="en">EN</MenuItem>
-              </Select>
-            </Box>
+                {showMenu ? '✕' : '☰'}
+              </motion.div>
+            </motion.button>
+          </motion.div>
+        </div>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Tema</Typography>
-              <Switch
-                checked={themeMode === 'dark'}
-                onChange={handleThemeChange}
-                color="primary"
-              />
-            </Box>
-          </Box>
-          
-          {/* Espacio adicional al final para asegurar scroll */}
-          <Box sx={{ height: 20 }} />
-        </Drawer>
-      </Toolbar>
-    </AppBar>
+        {/* Mobile Navigation */}
+        <AnimatePresence>
+          {showMenu && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="lg:hidden overflow-hidden"
+            >
+              <motion.div 
+                className={`px-2 pt-2 pb-3 space-y-2 border-t ${
+                  themeMode === 'dark' ? 'border-gray-700/50' : 'border-gray-200/50'
+                }`}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                {navLinks.map((link, index) => (
+                  <motion.div
+                    key={link.to}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}
+                  >
+                    <AnimatedNavLink
+                      link={link}
+                      isActive={location.pathname === link.to}
+                      onClick={() => handleNavClick(link.to)}
+                      isMobile={true}
+                    />
+                  </motion.div>
+                ))}
+                
+                {/* Mobile Wallet Connect */}
+                <motion.div 
+                  className="pt-4 border-t border-gray-200/50 dark:border-gray-700/50"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.5 }}
+                >
+                  <ReownWalletConnect />
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.nav>
   );
 } 

@@ -45,7 +45,7 @@ export default function AIChatPanel() {
   };
 
   return (
-    <Paper elevation={4} style={{ maxWidth: 260, minWidth: 200, margin: '24px auto', padding: 16, borderRadius: 18, boxShadow: '0 4px 24px #0001' }}>
+    <Paper elevation={4} style={{ maxWidth: 260, minWidth: 200, margin: 0, padding: 16, borderRadius: 18, boxShadow: '0 4px 24px #0001' }}>
       <Typography variant="h6" style={{ fontWeight: 700, marginBottom: 10, fontSize: 17, color: '#1976d2' }}>Asistente IA</Typography>
       <Box style={{ minHeight: 120, maxHeight: 150, overflowY: 'auto', marginBottom: 10, background: '#f3f6fa', borderRadius: 10, padding: 8 }}>
         <List>

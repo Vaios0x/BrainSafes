@@ -1,168 +1,261 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  TextField, 
-  MenuItem, 
-  Select, 
-  InputLabel, 
-  FormControl, 
-  useTheme, 
-  useMediaQuery, 
-  Tooltip, 
-  InputAdornment, 
-  Fade, 
-  IconButton 
-} from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import SearchIcon from '@mui/icons-material/Search';
-import StarIcon from '@mui/icons-material/Star';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import TuneIcon from '@mui/icons-material/Tune';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const rarezas = [
-  { value: 'all', label: 'Todas' },
-  { value: 'Legendario', label: 'Legendario' },
-  { value: 'Raro', label: 'Raro' },
-  { value: 'Común', label: 'Común' },
+  { value: 'all', label: 'Todas', icon: '🌟' },
+  { value: 'Legendario', label: 'Legendario', icon: '👑' },
+  { value: 'Raro', label: 'Raro', icon: '💎' },
+  { value: 'Común', label: 'Común', icon: '⭐' },
 ];
 
 const estados = [
-  { value: 'all', label: 'Todos' },
-  { value: 'en venta', label: 'En venta' },
-  { value: 'vendido', label: 'Vendido' },
+  { value: 'all', label: 'Todos', icon: '📋' },
+  { value: 'en venta', label: 'En venta', icon: '🛒' },
+  { value: 'vendido', label: 'Vendido', icon: '✅' },
 ];
 
 export default function MarketplaceFilters({ filtros, setFiltros, visible = true }) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [showFilters, setShowFilters] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeFilter, setActiveFilter] = useState(null);
 
   const handleChange = (e) => {
     setFiltros({ ...filtros, [e.target.name]: e.target.value });
   };
 
+  const clearFilters = () => {
+    setFiltros({
+      nombre: '',
+      rareza: 'all',
+      estado: 'all',
+      precioMin: '',
+      precioMax: '',
+    });
+  };
+
+  const hasActiveFilters = filtros.nombre || filtros.rareza !== 'all' || filtros.estado !== 'all' || filtros.precioMin || filtros.precioMax;
+
   return (
-    <Fade in={visible && showFilters} timeout={400}>
-      <Box
-        display="flex"
-        flexDirection={isMobile ? 'column' : 'row'}
-        gap={isMobile ? 2 : 3}
-        mb={isMobile ? 2 : 3}
-        alignItems={isMobile ? 'stretch' : 'center'}
-        aria-label="Barra de filtros de NFTs"
-        width="100%"
-        boxShadow={2}
-        borderRadius={2}
-        p={isMobile ? 1 : 2}
-        bgcolor={theme.palette.background.paper}
-        style={{ transition: 'box-shadow 0.3s, background 0.3s' }}
-        role="region"
-      >
-        <Tooltip title="Buscar NFT por nombre" arrow enterDelay={300} leaveDelay={100} describeChild>
-          <TextField
-            label="Buscar"
-            name="nombre"
-            value={filtros.nombre}
-            onChange={handleChange}
-            size={isMobile ? 'small' : 'medium'}
-            sx={{ minWidth: isMobile ? 120 : 180, outline: 'none' }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon color="primary" />
-                </InputAdornment>
-              ),
-              inputProps: {
-                tabIndex: 0,
-                'aria-label': 'Buscar NFT por nombre',
-                style: { outline: 'none' },
-              },
-            }}
-            autoComplete="off"
-            role="searchbox"
-          />
-        </Tooltip>
-        
-        <Tooltip title="Filtrar por rareza" arrow enterDelay={300} leaveDelay={100} describeChild>
-          <FormControl sx={{ minWidth: isMobile ? 120 : 160 }} size={isMobile ? 'small' : 'medium'}>
-            <InputLabel id="rareza-label">Rareza</InputLabel>
-            <Select
-              labelId="rareza-label"
-              name="rareza"
-              value={filtros.rareza}
-              label="Rareza"
-              onChange={handleChange}
-              startAdornment={
-                <InputAdornment position="start">
-                  <StarIcon color="primary" />
-                </InputAdornment>
-              }
-              inputProps={{ 
-                tabIndex: 0, 
-                'aria-label': 'Filtrar por rareza', 
-                style: { outline: 'none' }, 
-                role: 'combobox' 
-              }}
-              role="combobox"
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-4"
+        >
+          {/* Basic Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search Filter */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="relative"
             >
-              {rarezas.map((r) => (
-                <MenuItem key={r.value} value={r.value} tabIndex={0} aria-label={r.label}>
-                  {r.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Tooltip>
-        
-        <Tooltip title="Filtrar por estado" arrow enterDelay={300} leaveDelay={100} describeChild>
-          <FormControl sx={{ minWidth: isMobile ? 120 : 160 }} size={isMobile ? 'small' : 'medium'}>
-            <InputLabel id="estado-label">Estado</InputLabel>
-            <Select
-              labelId="estado-label"
-              name="estado"
-              value={filtros.estado}
-              label="Estado"
-              onChange={handleChange}
-              startAdornment={
-                <InputAdornment position="start">
-                  <LocalOfferIcon color="primary" />
-                </InputAdornment>
-              }
-              inputProps={{ 
-                tabIndex: 0, 
-                'aria-label': 'Filtrar por estado', 
-                style: { outline: 'none' }, 
-                role: 'combobox' 
-              }}
-              role="combobox"
+              <div className="relative">
+                <input
+                  type="text"
+                  name="nombre"
+                  value={filtros.nombre}
+                  onChange={handleChange}
+                  placeholder="Buscar NFTs..."
+                  className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                />
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  🔍
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Rarity Filter */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="relative"
             >
-              {estados.map((e) => (
-                <MenuItem key={e.value} value={e.value} tabIndex={0} aria-label={e.label}>
-                  {e.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Tooltip>
-        
-        <Tooltip title={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'} arrow enterDelay={300} leaveDelay={100} describeChild>
-          <span>
-            <IconButton
-              color="primary"
-              onClick={() => setShowFilters(f => !f)}
-              style={{ alignSelf: isMobile ? 'flex-end' : 'center', outline: 'none' }}
-              aria-label={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
-              tabIndex={0}
-              role="button"
-              onKeyDown={e => { 
-                if (e.key === 'Enter' || e.key === ' ') setShowFilters(f => !f); 
-              }}
+              <select
+                name="rareza"
+                value={filtros.rareza}
+                onChange={handleChange}
+                className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 appearance-none"
+              >
+                {rarezas.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.icon} {r.label}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                ⭐
+              </span>
+              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                ▼
+              </span>
+            </motion.div>
+
+            {/* Status Filter */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="relative"
             >
-              <TuneIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    </Fade>
+              <select
+                name="estado"
+                value={filtros.estado}
+                onChange={handleChange}
+                className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 appearance-none"
+              >
+                {estados.map((e) => (
+                  <option key={e.value} value={e.value}>
+                    {e.icon} {e.label}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                🏷️
+              </span>
+              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                ▼
+              </span>
+            </motion.div>
+
+            {/* Advanced Toggle */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-brain-500 text-white rounded-xl font-medium hover:from-primary-600 hover:to-brain-600 transition-all duration-300 shadow-medium hover:shadow-large"
+              >
+                {showAdvanced ? 'Ocultar' : 'Avanzado'} ⚙️
+              </motion.button>
+            </motion.div>
+          </div>
+
+          {/* Advanced Filters */}
+          <AnimatePresence>
+            {showAdvanced && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  {/* Price Range */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Precio Mínimo (ETH)
+                    </label>
+                    <input
+                      type="number"
+                      name="precioMin"
+                      value={filtros.precioMin}
+                      onChange={handleChange}
+                      placeholder="0.0"
+                      step="0.1"
+                      min="0"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Precio Máximo (ETH)
+                    </label>
+                    <input
+                      type="number"
+                      name="precioMax"
+                      value={filtros.precioMax}
+                      onChange={handleChange}
+                      placeholder="10.0"
+                      step="0.1"
+                      min="0"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="flex items-end">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={clearFilters}
+                      disabled={!hasActiveFilters}
+                      className={`w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                        hasActiveFilters
+                          ? 'bg-red-500 text-white hover:bg-red-600 shadow-medium hover:shadow-large'
+                          : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      Limpiar Filtros 🗑️
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-wrap gap-2"
+            >
+              <span className="text-sm text-gray-600 dark:text-gray-400">Filtros activos:</span>
+              
+              {filtros.nombre && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="inline-flex items-center px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm"
+                >
+                  Buscar: {filtros.nombre} ✖️
+                </motion.span>
+              )}
+              
+              {filtros.rareza !== 'all' && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="inline-flex items-center px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-sm"
+                >
+                  Rareza: {rarezas.find(r => r.value === filtros.rareza)?.label} ✖️
+                </motion.span>
+              )}
+              
+              {filtros.estado !== 'all' && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm"
+                >
+                  Estado: {estados.find(e => e.value === filtros.estado)?.label} ✖️
+                </motion.span>
+              )}
+              
+              {(filtros.precioMin || filtros.precioMax) && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                >
+                  Precio: {filtros.precioMin || '0'} - {filtros.precioMax || '∞'} ETH ✖️
+                </motion.span>
+              )}
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 } 

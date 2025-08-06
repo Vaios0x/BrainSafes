@@ -4,13 +4,12 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Landing from './components/Landing';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminPanel from './components/AdminPanel';
+
 import { ToastProvider } from './components/ToastContainer';
 import Dashboard from "./components/Dashboard/Dashboard";
-import { Tabs, Tab, Box, Button, Fade, ThemeProvider, CssBaseline } from '@mui/material';
 import AIChatWidget from './components/AIChatWidget';
-import { lightTheme, darkTheme } from './theme';
 import { AppKitProvider } from './config/reown.jsx';
+import { LoadingSpinner } from './components/Spinner';
 
 const Profile = lazy(() => import('./components/Profile'));
 const Certificates = lazy(() => import('./components/Certificates'));
@@ -21,73 +20,179 @@ const MentorshipPanel = lazy(() => import('./components/MentorshipPanel'));
 const LoanManagerDashboard = lazy(() => import('./components/LoanManagerDashboard'));
 const GovernancePanel = lazy(() => import('./components/Governance').then(m => ({ default: m.GovernancePanel })));
 const MarketplacePanel = lazy(() => import('./components/Marketplace/MarketplacePanel'));
-const SecurityPanel = lazy(() => import('./components/Security/SecurityPanel'));
+
 const AIChatPanel = lazy(() => import('./components/AIChatPanel'));
 const LearningPanel = lazy(() => import('./components/Learning/LearningPanel'));
 const SupportPanel = lazy(() => import('./components/SupportPanel'));
 
+
 function CommunityPage() {
   const [tab, setTab] = useState(0);
   return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} centered>
-        <Tab label="Recompensas" />
-        <Tab label="Gobernanza" />
-      </Tabs>
-      <Box mt={3}>
-        {tab === 0 && <Suspense fallback={<div>Cargando...</div>}><CommunityRewardsPanel /></Suspense>}
-        {tab === 1 && <Suspense fallback={<div>Cargando...</div>}><GovernancePanel /></Suspense>}
-      </Box>
-    </Box>
+    <div className="w-full mt-8">
+      <div className="flex justify-center mb-8">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <button
+            onClick={() => setTab(0)}
+            className={`px-6 py-3 rounded-md font-medium transition-all duration-200 ${
+              tab === 0
+                ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Recompensas
+          </button>
+          <button
+            onClick={() => setTab(1)}
+            className={`px-6 py-3 rounded-md font-medium transition-all duration-200 ${
+              tab === 1
+                ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Gobernanza
+          </button>
+        </div>
+      </div>
+      <div className="mt-8">
+        {tab === 0 && (
+          <Suspense fallback={<LoadingSpinner text="Cargando recompensas..." className="h-64" />}>
+            <CommunityRewardsPanel />
+          </Suspense>
+        )}
+        {tab === 1 && (
+          <Suspense fallback={<LoadingSpinner text="Cargando gobernanza..." className="h-64" />}>
+            <GovernancePanel />
+          </Suspense>
+        )}
+      </div>
+    </div>
   );
 }
 
 export default function App() {
-  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('themeMode') || 'light');
-  useEffect(() => { localStorage.setItem('themeMode', themeMode); }, [themeMode]);
-  const theme = useMemo(() => (themeMode === 'dark' ? darkTheme : lightTheme), [themeMode]);
+  const [themeMode, setThemeMode] = useState(() => {
+    const saved = localStorage.getItem('themeMode');
+    return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  });
+
+  useEffect(() => {
+    localStorage.setItem('themeMode', themeMode);
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [themeMode]);
+
   return (
     <AppKitProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
+      <div className={`min-h-screen transition-colors duration-300 ${
+        themeMode === 'dark' 
+          ? 'dark bg-gray-900 text-white' 
+          : 'bg-white text-gray-900'
+      }`}>
         <ToastProvider>
           <Router>
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              minHeight: '100vh' 
-            }}>
+            <div className="flex flex-col min-h-screen">
               <Navbar themeMode={themeMode} setThemeMode={setThemeMode} />
-              <Box sx={{ flex: 1 }}>
+              <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Landing />} />
-                  <Route path="/dashboard" element={<Suspense fallback={<div>Cargando...</div>}><Dashboard /></Suspense>} />
-                  <Route path="/certificates" element={<Suspense fallback={<div>Cargando...</div>}><Certificates /></Suspense>} />
-                  <Route path="/courses" element={<Suspense fallback={<div>Cargando...</div>}><Courses /></Suspense>} />
-                  <Route path="/badges" element={<Suspense fallback={<div>Cargando...</div>}><BadgeGallery /></Suspense>} />
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando dashboard..." className="h-64" />}>
+                        <Dashboard />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/certificates" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando certificados..." className="h-64" />}>
+                        <Certificates />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/courses" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando cursos..." className="h-64" />}>
+                        <Courses />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/badges" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando badges..." className="h-64" />}>
+                        <BadgeGallery />
+                      </Suspense>
+                    } 
+                  />
                   <Route path="/community" element={<CommunityPage />} />
-                  <Route path="/mentoring" element={<Suspense fallback={<div>Cargando...</div>}><MentorshipPanel /></Suspense>} />
-                  <Route path="/loans" element={<Suspense fallback={<div>Cargando...</div>}><LoanManagerDashboard /></Suspense>} />
-                  <Route path="/marketplace" element={<Suspense fallback={<div>Cargando...</div>}><MarketplacePanel /></Suspense>} />
-                  <Route path="/profile" element={<Suspense fallback={<div>Cargando...</div>}><Profile /></Suspense>} />
-                  <Route path="/security" element={<Suspense fallback={<div>Cargando...</div>}><SecurityPanel /></Suspense>} />
-                  <Route path="/learning" element={<Suspense fallback={<div>Cargando...</div>}><LearningPanel /></Suspense>} />
-                  <Route path="/support" element={<Suspense fallback={<div>Cargando...</div>}><SupportPanel /></Suspense>} />
-                  <Route path="/admin" element={
-                    <ProtectedRoute role="admin">
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  } />
+                  <Route 
+                    path="/mentoring" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando mentoría..." className="h-64" />}>
+                        <MentorshipPanel />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/loans" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando préstamos..." className="h-64" />}>
+                        <LoanManagerDashboard />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/marketplace" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando marketplace..." className="h-64" />}>
+                        <MarketplacePanel />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando perfil..." className="h-64" />}>
+                        <Profile />
+                      </Suspense>
+                    } 
+                  />
+
+                  <Route 
+                    path="/learning" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando aprendizaje..." className="h-64" />}>
+                        <LearningPanel />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/support" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando soporte..." className="h-64" />}>
+                        <SupportPanel />
+                      </Suspense>
+                    } 
+                  />
                 </Routes>
-              </Box>
+              </main>
               <Footer />
-              <div style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 2000 }}>
-                <AIChatWidget />
+              <div className="fixed bottom-8 right-8 z-50 pointer-events-none">
+                <div className="pointer-events-auto">
+                  <AIChatWidget />
+                </div>
               </div>
-            </Box>
+            </div>
           </Router>
         </ToastProvider>
-      </ThemeProvider>
+      </div>
     </AppKitProvider>
   );
 }

@@ -1,104 +1,259 @@
 import React, { useState, useEffect } from "react";
-import { Card, Tooltip, useTheme, useMediaQuery, Fade } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import PeopleIcon from '@mui/icons-material/People';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import LockIcon from '@mui/icons-material/Lock';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import { motion, AnimatePresence } from "framer-motion";
 
-const iconMap = [
-  <PeopleIcon fontSize="large" color="primary" />, // Usuarios
-  <SwapHorizIcon fontSize="large" color="primary" />, // Transacciones
-  <LockIcon fontSize="large" color="primary" />, // Contratos activos
-  <AccountBalanceWalletIcon fontSize="large" color="primary" />, // Balance
-];
+// Componente de métrica animada mejorado
+const AnimatedMetric = ({ value, suffix = "", duration = 2000 }) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    let startTime = null;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      setCount(Math.floor(value * progress));
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+
+  return (
+    <motion.span 
+      className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-brain-600 bg-clip-text text-transparent"
+      initial={{ scale: 0.8 }}
+      animate={{ scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {count}{suffix}
+    </motion.span>
+  );
+};
+
+// Componente de tarjeta de métrica con glassmorphism
+const MetricCard = ({ metric, index, isHovered, onHover }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay: index * 0.1 }}
+    whileHover={{ 
+      scale: 1.05,
+      y: -10,
+      transition: { duration: 0.3 }
+    }}
+    onHoverStart={() => onHover(index)}
+    onHoverEnd={() => onHover(-1)}
+    className={`group relative p-6 rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 transition-all duration-500 ${
+      isHovered === index ? 'shadow-large' : 'shadow-soft'
+    } ${metric.bgColor} backdrop-blur-sm`}
+  >
+    <div className={`absolute inset-0 bg-gradient-to-br ${metric.color} rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+    <div className="relative z-10">
+      <div className="flex items-center justify-between mb-4">
+        <motion.div 
+          className={`text-4xl group-hover:scale-110 transition-transform duration-300 ${metric.textColor}`}
+          whileHover={{ rotate: 5 }}
+        >
+          {metric.icon}
+        </motion.div>
+        <div className="text-right">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{metric.label}</p>
+          <AnimatedMetric value={metric.value} />
+        </div>
+      </div>
+      
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${(metric.value / 10000) * 100}%` }}
+        transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
+        className={`h-2 bg-gradient-to-r ${metric.color} rounded-full`}
+      />
+      
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        {metric.tooltip}
+      </p>
+    </div>
+  </motion.div>
+);
 
 const MetricsSummary = () => {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const metricsInit = [
-    { label: t('dashboard.metrics.users'), value: 0, tooltip: t('dashboard.metrics.users') },
-    { label: t('dashboard.metrics.transactions'), value: 0, tooltip: t('dashboard.metrics.transactions') },
-    { label: t('dashboard.metrics.activeContracts'), value: 0, tooltip: t('dashboard.metrics.activeContracts') },
-    { label: t('dashboard.metrics.balance'), value: 0, tooltip: t('dashboard.metrics.balance') + ' (ETH)' },
-  ];
-  const [metrics, setMetrics] = useState(metricsInit);
   const [hovered, setHovered] = useState(-1);
+  const [metrics, setMetrics] = useState([
+    { 
+      label: t('dashboard.metrics.users') || 'Usuarios', 
+      value: 0, 
+      tooltip: t('dashboard.metrics.users') || 'Usuarios registrados en la plataforma',
+      icon: '👥',
+      color: 'from-blue-500 to-cyan-500',
+      bgColor: 'bg-blue-50/80 dark:bg-blue-900/20',
+      textColor: 'text-blue-600 dark:text-blue-400'
+    },
+    { 
+      label: t('dashboard.metrics.transactions') || 'Transacciones', 
+      value: 0, 
+      tooltip: t('dashboard.metrics.transactions') || 'Total de transacciones procesadas',
+      icon: '🔄',
+      color: 'from-green-500 to-emerald-500',
+      bgColor: 'bg-green-50/80 dark:bg-green-900/20',
+      textColor: 'text-green-600 dark:text-green-400'
+    },
+    { 
+      label: t('dashboard.metrics.activeContracts') || 'Contratos Activos', 
+      value: 0, 
+      tooltip: t('dashboard.metrics.activeContracts') || 'Contratos inteligentes activos actualmente',
+      icon: '📋',
+      color: 'from-purple-500 to-pink-500',
+      bgColor: 'bg-purple-50/80 dark:bg-purple-900/20',
+      textColor: 'text-purple-600 dark:text-purple-400'
+    },
+    { 
+      label: t('dashboard.metrics.balance') || 'Balance', 
+      value: 0, 
+      tooltip: t('dashboard.metrics.balance') || 'Balance total en la plataforma (ETH)',
+      icon: '💰',
+      color: 'from-yellow-500 to-orange-500',
+      bgColor: 'bg-yellow-50/80 dark:bg-yellow-900/20',
+      textColor: 'text-yellow-600 dark:text-yellow-400'
+    },
+  ]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setMetrics([
-        { label: t('dashboard.metrics.users'), value: 1200 + Math.floor(Math.random() * 50), tooltip: t('dashboard.metrics.users') },
-        { label: t('dashboard.metrics.transactions'), value: 50000 + Math.floor(Math.random() * 1000), tooltip: t('dashboard.metrics.transactions') },
-        { label: t('dashboard.metrics.activeContracts'), value: 35 + Math.floor(Math.random() * 5), tooltip: t('dashboard.metrics.activeContracts') },
-        { label: t('dashboard.metrics.balance'), value: (1000 + Math.random() * 100).toFixed(2), tooltip: t('dashboard.metrics.balance') + ' (ETH)' },
+        { 
+          label: t('dashboard.metrics.users') || 'Usuarios', 
+          value: 1200 + Math.floor(Math.random() * 50), 
+          tooltip: t('dashboard.metrics.users') || 'Usuarios registrados en la plataforma',
+          icon: '👥',
+          color: 'from-blue-500 to-cyan-500',
+          bgColor: 'bg-blue-50/80 dark:bg-blue-900/20',
+          textColor: 'text-blue-600 dark:text-blue-400'
+        },
+        { 
+          label: t('dashboard.metrics.transactions') || 'Transacciones', 
+          value: 50000 + Math.floor(Math.random() * 1000), 
+          tooltip: t('dashboard.metrics.transactions') || 'Total de transacciones procesadas',
+          icon: '🔄',
+          color: 'from-green-500 to-emerald-500',
+          bgColor: 'bg-green-50/80 dark:bg-green-900/20',
+          textColor: 'text-green-600 dark:text-green-400'
+        },
+        { 
+          label: t('dashboard.metrics.activeContracts') || 'Contratos Activos', 
+          value: 35 + Math.floor(Math.random() * 5), 
+          tooltip: t('dashboard.metrics.activeContracts') || 'Contratos inteligentes activos actualmente',
+          icon: '📋',
+          color: 'from-purple-500 to-pink-500',
+          bgColor: 'bg-purple-50/80 dark:bg-purple-900/20',
+          textColor: 'text-purple-600 dark:text-purple-400'
+        },
+        { 
+          label: t('dashboard.metrics.balance') || 'Balance', 
+          value: (1000 + Math.random() * 100).toFixed(2), 
+          tooltip: t('dashboard.metrics.balance') || 'Balance total en la plataforma (ETH)',
+          icon: '💰',
+          color: 'from-yellow-500 to-orange-500',
+          bgColor: 'bg-yellow-50/80 dark:bg-yellow-900/20',
+          textColor: 'text-yellow-600 dark:text-yellow-400'
+        },
       ]);
     }, 5000);
     return () => clearInterval(interval);
   }, [t]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '1rem' : '1.5rem',
-        marginBottom: isMobile ? '1.5rem' : '2.5rem',
-        alignItems: isMobile ? 'stretch' : 'center',
-        width: '100%',
-      }}
-      role="region"
-      aria-label={t('dashboard.main')}
-    >
-      {metrics.map((m, i) => (
-        <Tooltip
-          key={m.label}
-          title={<span><b>{m.label}</b>: {m.tooltip} <br />
-            {i === 0 && t('Usuarios registrados en la plataforma.')} 
-            {i === 1 && t('Total de transacciones procesadas.')} 
-            {i === 2 && t('Contratos inteligentes activos actualmente.')} 
-            {i === 3 && t('Balance total en la plataforma (ETH).')}
-          </span>}
-          arrow
+    <div className="p-6 lg:p-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="mb-8 text-center"
+      >
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4"
         >
-          <Card
-            tabIndex={0}
-            role="status"
-            aria-label={`${m.label}: ${m.value}`}
-            style={{
-              padding: isMobile ? '1.2rem 1rem' : '1.5rem 2rem',
-              minWidth: isMobile ? 120 : 170,
-              textAlign: "center",
-              transition: 'box-shadow 0.3s, transform 0.2s',
-              boxShadow: hovered === i ? theme.shadows[6] : theme.shadows[2],
-              background: theme.palette.background.paper,
-              outline: 'none',
-              border: `2px solid ${theme.palette.primary.main}`,
-              color: theme.palette.text.primary,
-              cursor: 'pointer',
-              borderRadius: 8,
-              marginBottom: 0,
-              fontSize: isMobile ? 15 : 18,
-              flex: 1,
-              maxWidth: isMobile ? '100%' : 220,
-              transform: hovered === i ? 'scale(1.04)' : 'scale(1)',
-            }}
-            onFocus={e => e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.palette.primary.main}`}
-            onBlur={e => e.currentTarget.style.boxShadow = theme.shadows[2]}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(-1)}
-          >
-            <Fade in timeout={400}>{iconMap[i]}</Fade>
-            <h3 style={{ margin: 0, color: theme.palette.primary.main, fontSize: isMobile ? 16 : 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              {m.label}
-            </h3>
-            <Fade in timeout={400}>
-              <p style={{ fontSize: isMobile ? 22 : 32, fontWeight: "bold", margin: 0, transition: 'color 0.3s' }}>{m.value}</p>
-            </Fade>
-          </Card>
-        </Tooltip>
-      ))}
+          <span className="bg-gradient-to-r from-primary-600 to-brain-600 bg-clip-text text-transparent">
+            Métricas en Tiempo Real
+          </span>
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-gray-600 dark:text-gray-300 text-lg"
+        >
+          Estadísticas actualizadas de la plataforma BrainSafes
+        </motion.p>
+      </motion.div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <AnimatePresence>
+          {metrics.map((metric, index) => (
+            <MetricCard
+              key={index}
+              metric={metric}
+              index={index}
+              isHovered={hovered}
+              onHover={setHovered}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Summary Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8 }}
+        className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6"
+      >
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl border border-white/20 dark:border-gray-700/20"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Crecimiento Mensual</p>
+              <p className="text-xl font-bold text-green-600">+12.5%</p>
+            </div>
+            <div className="text-2xl">📈</div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl border border-white/20 dark:border-gray-700/20"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Tiempo Promedio</p>
+              <p className="text-xl font-bold text-blue-600">2.3s</p>
+            </div>
+            <div className="text-2xl">⚡</div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl border border-white/20 dark:border-gray-700/20"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Uptime</p>
+              <p className="text-xl font-bold text-purple-600">99.9%</p>
+            </div>
+            <div className="text-2xl">🟢</div>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
