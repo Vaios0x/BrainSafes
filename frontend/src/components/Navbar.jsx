@@ -49,7 +49,9 @@ const AnimatedNavLink = ({ link, isActive, onClick, isMobile = false }) => {
         className={`relative flex items-center space-x-1 px-2 py-2 rounded-xl text-xs font-medium transition-all duration-300 ${
           isActive
             ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25'
-            : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-white/80 dark:hover:bg-gray-800/80 backdrop-blur-sm'
+            : isMobile 
+              ? 'text-white hover:text-white/80 hover:bg-white/20 backdrop-blur-sm'
+              : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-white/80 dark:hover:bg-gray-800/80 backdrop-blur-sm'
         }`}
         onClick={onClick}
       >
@@ -63,7 +65,7 @@ const AnimatedNavLink = ({ link, isActive, onClick, isMobile = false }) => {
         >
           {link.icon}
         </motion.span>
-        <span className="font-medium hidden xl:block">{link.label}</span>
+        <span className={`font-medium ${isMobile ? 'block text-white' : 'hidden xl:block'}`}>{link.label}</span>
         
         {isActive && (
           <motion.div
