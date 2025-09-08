@@ -96,24 +96,16 @@ const SmartSuggestions = ({ suggestions, onSuggestionClick }) => {
       transition={{ duration: 0.5, delay: 0.3 }}
       className="space-y-2"
     >
-      <p className="text-xs text-gray-400 font-medium">💡 Sugerencias</p>
-      <div className="flex flex-wrap gap-1.5">
+      <p className="text-xs sm:text-sm text-gray-400 font-medium">💡 Sugerencias</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {suggestions.slice(0, 4).map((suggestion, index) => (
-          <motion.button
+          <button
             key={index}
             onClick={() => onSuggestionClick(suggestion)}
-            className="px-2 py-1.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl text-xs text-gray-300 hover:text-white transition-all duration-300"
-            whileHover={{ 
-              scale: 1.05, 
-              backgroundColor: 'rgba(255, 255, 255, 0.1)' 
-            }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1 }}
+            className="px-3 py-2 sm:px-4 sm:py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl text-xs sm:text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-left cursor-pointer"
           >
-            {suggestion.length > 25 ? suggestion.substring(0, 25) + '...' : suggestion}
-          </motion.button>
+            {suggestion}
+          </button>
         ))}
       </div>
     </motion.div>
@@ -127,22 +119,22 @@ const PredictiveAnalysis = ({ predictions }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.5 }}
-      className="p-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-purple-500/20 rounded-xl"
+      className="p-3 sm:p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-purple-500/20 rounded-xl"
     >
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-xs">🔮</span>
-        <p className="text-xs text-purple-300 font-medium">Análisis</p>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-sm">🔮</span>
+        <p className="text-sm text-purple-300 font-medium">Análisis Predictivo</p>
       </div>
-      <div className="space-y-1">
+      <div className="space-y-2">
         {predictions.slice(0, 2).map((prediction, index) => (
           <motion.p
             key={index}
-            className="text-xs text-gray-300"
+            className="text-xs sm:text-sm text-gray-300 leading-relaxed"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 + index * 0.1 }}
           >
-            • {prediction.length > 40 ? prediction.substring(0, 40) + '...' : prediction}
+            • {prediction}
           </motion.p>
         ))}
       </div>
@@ -252,19 +244,14 @@ const EnhancedAIChatWidget = () => {
     <>
       {/* Botón flotante mejorado */}
       <motion.div
-        className="fixed bottom-8 right-8 z-50"
+        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50"
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ duration: 0.8, type: "spring", stiffness: 200 }}
       >
-        <motion.button
+        <button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative w-12 h-12 rounded-full bg-gradient-to-r from-primary-500 to-brain-500 shadow-2xl flex items-center justify-center text-white text-lg font-bold"
-          whileHover={{ 
-            scale: 1.1, 
-            boxShadow: "0 20px 40px rgba(59, 130, 246, 0.4)" 
-          }}
-          whileTap={{ scale: 0.9 }}
+          className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-primary-500 to-brain-500 shadow-2xl flex items-center justify-center text-white text-lg sm:text-xl font-bold cursor-pointer hover:scale-110 transition-transform duration-200"
           style={{
             backdropFilter: 'blur(20px)',
             border: '2px solid rgba(255, 255, 255, 0.2)'
@@ -307,7 +294,7 @@ const EnhancedAIChatWidget = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-20 right-6 w-72 max-w-[calc(100vw-2rem)] z-40"
+            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-80 md:w-96 lg:w-[400px] z-50"
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
@@ -315,7 +302,7 @@ const EnhancedAIChatWidget = () => {
             style={{ perspective: 1000 }}
           >
             <AdvancedGlassCard
-              className="h-[400px] max-h-[70vh] flex flex-col overflow-hidden"
+              className="h-[500px] sm:h-[550px] md:h-[600px] max-h-[90vh] flex flex-col overflow-hidden"
               intensity="high"
               variant="primary"
             >
@@ -324,42 +311,40 @@ const EnhancedAIChatWidget = () => {
                 showNetwork={true}
                 showParticles={true}
                 showWaves={true}
-                className="opacity-20"
+                className="opacity-20 pointer-events-none"
               />
               
               {/* Header */}
               <motion.div
-                className="relative z-10 flex items-center justify-between p-2 border-b border-white/10"
+                className="relative z-10 flex items-center justify-between p-3 sm:p-4 border-b border-white/10"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <motion.div
-                    className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-brain-500 flex items-center justify-center"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-primary-500 to-brain-500 flex items-center justify-center"
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                   >
-                    <span className="text-sm">🧠</span>
+                    <span className="text-sm sm:text-base">🧠</span>
                   </motion.div>
                   <div>
-                    <h3 className="text-white font-semibold text-sm">BrainSafes AI</h3>
-                    <p className="text-xs text-gray-400">Asistente</p>
+                    <h3 className="text-white font-semibold text-sm sm:text-base">BrainSafes AI</h3>
+                    <p className="text-xs sm:text-sm text-gray-400">Asistente Blockchain</p>
                   </div>
                 </div>
                 
-                <motion.button
+                <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  className="p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors duration-200 cursor-pointer"
                 >
-                  <span className="text-white text-sm">×</span>
-                </motion.button>
+                  <span className="text-white text-sm sm:text-base">×</span>
+                </button>
               </motion.div>
 
               {/* Área de mensajes */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[200px]">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 max-h-[300px] sm:max-h-[350px] md:max-h-[400px]">
                 <AnimatePresence>
                   {messages.map((message, index) => (
                     <NeuralMessage
@@ -390,7 +375,7 @@ const EnhancedAIChatWidget = () => {
 
               {/* Sugerencias inteligentes */}
               {messages.length <= 1 && (
-                <div className="px-2 pb-1">
+                <div className="px-3 sm:px-4 pb-2">
                   <SmartSuggestions 
                     suggestions={suggestions}
                     onSuggestionClick={handleSuggestionClick}
@@ -400,33 +385,33 @@ const EnhancedAIChatWidget = () => {
 
               {/* Análisis predictivo */}
               {messages.length > 2 && (
-                <div className="px-2 pb-1">
+                <div className="px-3 sm:px-4 pb-2">
                   <PredictiveAnalysis predictions={predictions} />
                 </div>
               )}
 
               {/* Input area */}
               <motion.div
-                className="relative z-10 p-2 border-t border-white/10"
+                className="relative z-10 p-3 sm:p-4 border-t border-white/10"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
                 <div className="flex gap-2">
-                  <GlassInput
+                  <input
                     ref={inputRef}
+                    type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Escribe tu mensaje..."
-                    className="flex-1"
                     disabled={isTyping}
+                    className="flex-1 px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all duration-300"
                   />
-                  <GlassButton
+                  <button
                     onClick={handleSendMessage}
                     disabled={!input.trim() || isTyping}
-                    className="px-4 py-3"
-                    variant="primary"
+                    className="px-4 py-3 bg-gradient-to-r from-primary-500 to-brain-500 text-white rounded-2xl font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <motion.span
                       animate={{ rotate: isTyping ? 360 : 0 }}
@@ -434,7 +419,7 @@ const EnhancedAIChatWidget = () => {
                     >
                       {isTyping ? '⏳' : '➤'}
                     </motion.span>
-                  </GlassButton>
+                  </button>
                 </div>
               </motion.div>
             </AdvancedGlassCard>

@@ -10,7 +10,7 @@ import { ThemeProvider } from './context/ThemeContext';
 
 import { ToastProvider } from './components/ToastContainer';
 import Dashboard from "./components/Dashboard/Dashboard";
-import AIChatWidget from './components/AIChatWidget';
+import EnhancedAIChatWidget from './components/EnhancedAIChatWidget';
 import { AppKitProvider } from './config/reown.jsx';
 import { LoadingSpinner } from './components/Spinner';
 import ContractStatus from './components/ContractStatus';
@@ -293,7 +293,7 @@ export default function App() {
               <Footer />
               <div className="fixed bottom-8 right-8 z-50 pointer-events-none">
                 <div className="pointer-events-auto">
-                  <AIChatWidget />
+                  <EnhancedAIChatWidget />
                 </div>
               </div>
               </div>
