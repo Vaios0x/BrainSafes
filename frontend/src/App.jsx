@@ -5,6 +5,8 @@ import Footer from './components/Footer';
 import Landing from './components/Landing';
 import ProtectedRoute from './components/ProtectedRoute';
 import NeuralBackground from './components/NeuralBackground';
+import { useTheme } from './hooks/useTheme';
+import { ThemeProvider } from './context/ThemeContext';
 
 import { ToastProvider } from './components/ToastContainer';
 import Dashboard from "./components/Dashboard/Dashboard";
@@ -89,31 +91,20 @@ function CommunityPage() {
 }
 
 export default function App() {
-  const [themeMode, setThemeMode] = useState(() => {
-    const saved = localStorage.getItem('themeMode');
-    return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  });
-
-  useEffect(() => {
-    localStorage.setItem('themeMode', themeMode);
-    if (themeMode === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [themeMode]);
+  const { themeMode, setThemeMode } = useTheme();
 
   return (
-    <AppKitProvider>
-      <div className={`min-h-screen transition-colors duration-300 ${
-        themeMode === 'dark' 
-          ? 'dark bg-gray-900 text-white' 
-          : 'bg-white text-gray-900'
-      }`}>
-        <ToastProvider>
-          <Router>
-            <div className="flex flex-col min-h-screen">
-              <Navbar themeMode={themeMode} setThemeMode={setThemeMode} />
+    <ThemeProvider>
+      <AppKitProvider>
+        <div className={`min-h-screen transition-colors duration-300 ${
+          themeMode === 'dark' 
+            ? 'dark bg-gray-900 text-white' 
+            : 'bg-white text-gray-900'
+        }`}>
+          <ToastProvider>
+            <Router>
+              <div className="flex flex-col min-h-screen">
+                <Navbar themeMode={themeMode} setThemeMode={setThemeMode} />
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Landing />} />
@@ -305,10 +296,11 @@ export default function App() {
                   <AIChatWidget />
                 </div>
               </div>
-            </div>
-          </Router>
-        </ToastProvider>
-      </div>
-    </AppKitProvider>
+              </div>
+            </Router>
+          </ToastProvider>
+        </div>
+      </AppKitProvider>
+    </ThemeProvider>
   );
 }

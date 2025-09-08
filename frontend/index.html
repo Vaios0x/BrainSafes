@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/brain.svg" />
@@ -68,6 +68,34 @@
         "description": "Certificaciones NFT verificables y mentoría descentralizada"
       }
     }
+    </script>
+    
+    <!-- Script para aplicar modo oscuro inmediatamente -->
+    <script>
+      // Aplicar modo oscuro por defecto inmediatamente
+      (function() {
+        const STORAGE_KEY = 'themeMode';
+        const DEFAULT_THEME = 'dark';
+        const DARK_CLASS = 'dark';
+        
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const theme = saved || DEFAULT_THEME;
+        
+        // Aplicar clase dark al html
+        document.documentElement.classList.add(DARK_CLASS);
+        document.documentElement.style.colorScheme = 'dark';
+        
+        // Guardar en localStorage si no existe
+        if (!saved) {
+          localStorage.setItem(STORAGE_KEY, DEFAULT_THEME);
+        }
+        
+        // Aplicar meta theme-color
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+          metaThemeColor.content = '#3b82f6';
+        }
+      })();
     </script>
   </head>
   <body>
