@@ -266,11 +266,12 @@ export default function Navbar({ themeMode, setThemeMode }) {
   };
 
   return (
-    <nav className={`sticky top-0 z-40 w-full border-b ${
-      themeMode === 'dark'
-        ? 'bg-gray-900 border-gray-700'
-        : 'bg-white border-gray-200'
-    }`}>
+    <>
+      <nav className={`fixed top-0 left-0 right-0 z-40 w-full border-b ${
+        themeMode === 'dark'
+          ? 'bg-gray-900 border-gray-700'
+          : 'bg-white border-gray-200'
+      }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center h-16">
           {/* All elements centered as one block */}
@@ -340,8 +341,10 @@ export default function Navbar({ themeMode, setThemeMode }) {
 
         {/* Mobile Navigation */}
         {showMenu && (
-          <div className={`lg:hidden border-t ${
-            themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
+          <div className={`lg:hidden fixed top-16 left-0 right-0 z-30 border-t ${
+            themeMode === 'dark' 
+              ? 'bg-gray-900 border-gray-700' 
+              : 'bg-white border-gray-200'
           }`}>
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navLinks.map((link) => (
@@ -388,5 +391,9 @@ export default function Navbar({ themeMode, setThemeMode }) {
         )}
       </div>
     </nav>
+    
+    {/* Spacer to compensate for fixed navbar */}
+    <div className="h-16"></div>
+    </>
   );
 } 
