@@ -241,20 +241,6 @@ const ChatbotDemo = () => {
           </div>
         </AdvancedGlassCard>
 
-        {/* Footer */}
-        <motion.div
-          className="text-center mt-12"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1 }}
-        >
-          <p className="text-gray-400">
-            Desarrollado por Senior Blockchain Developer con 20 años de experiencia
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            BrainSafes - Innovación en Web3 y Blockchain
-          </p>
-        </motion.div>
       </div>
     </div>
   );

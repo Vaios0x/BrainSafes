@@ -342,36 +342,6 @@ const AlertsPanel = ({ filtros }) => {
         )}
       </motion.div>
 
-      {/* Footer */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 1.4 }}
-        className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700"
-      >
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            <span>Total: {alerts.length} alertas</span>
-            <span className="mx-2">•</span>
-            <span>Última actualización: {new Date().toLocaleTimeString()}</span>
-          </div>
-          <div className="flex space-x-2">
-            <GlassButton
-              variant="secondary"
-              size="small"
-              onClick={() => setAlerts([])}
-            >
-              Limpiar Todo
-            </GlassButton>
-            <GlassButton
-              variant="primary"
-              size="small"
-            >
-              Ver Todas
-            </GlassButton>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 };

@@ -583,22 +583,6 @@ export default function MarketplacePanel() {
           </div>
         </motion.div>
 
-        {/* Footer Stats con Glassmorphism 3D */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.4 }}
-          className="mt-12 text-center"
-        >
-          <div className="relative p-6 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-2xl border-2 border-white/30 shadow-2xl overflow-hidden">
-            {/* Efecto de brillo animado */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-pulse"></div>
-            
-            <p className="text-lg text-white/90 font-medium relative z-10" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
-              Mostrando {filteredNFTs.length} de {nfts.length} NFTs disponibles
-            </p>
-          </div>
-        </motion.div>
       </div>
     </div>
   );

@@ -402,15 +402,6 @@ const NotificationCenter = ({ wallet }) => {
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-gray-200 text-center">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-sm text-gray-600 hover:text-gray-800"
-              >
-                Cerrar
-              </button>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

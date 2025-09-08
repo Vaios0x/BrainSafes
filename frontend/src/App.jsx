@@ -1,8 +1,8 @@
 import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
 import Landing from './components/Landing';
+import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import NeuralBackground from './components/NeuralBackground';
 import { useTheme } from './hooks/useTheme';

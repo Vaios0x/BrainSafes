@@ -55,9 +55,4 @@
     "panel": "Admin Panel",
     "access": "Access for administrators only"
   },
-  "footer": {
-    "rights": "All rights reserved.",
-    "version": "Version 1.0.0",
-    "built": "Built with React & Material-UI"
-  }
 } 

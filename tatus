@@ -1,0 +1,5 @@
+[33m5615de3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: ensure chatbot is fully visible and interactive
+[33maf508ed[m feat: enhance chatbot with comprehensive BrainSafes and Arbitrum 2025 context
+[33m56d5ecd[m fix: make chatbot fully interactive and mobile responsive
+[33mc5d5150[m feat: further reduce chatbot size for better mobile experience
+[33m27824d3[m feat: implement fixed navbar positioning for desktop and mobile

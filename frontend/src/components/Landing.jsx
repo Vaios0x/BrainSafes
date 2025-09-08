@@ -164,15 +164,19 @@ const FloatingParticles = () => {
   const [particles, setParticles] = useState([]);
 
   useEffect(() => {
-    const newParticles = Array.from({ length: 100 }, (_, i) => ({
+    const newParticles = Array.from({ length: 200 }, (_, i) => ({
       id: i,
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
-      size: Math.random() * 4 + 1,
-      speed: Math.random() * 0.5 + 0.1,
+      size: Math.random() * 8 + 2,
+      speed: Math.random() * 0.8 + 0.2,
       direction: Math.random() * Math.PI * 2,
-      opacity: Math.random() * 0.6 + 0.2,
-      hue: Math.random() * 60 + 200
+      opacity: Math.random() * 0.8 + 0.2,
+      hue: Math.random() * 60 + 200,
+      pulseSpeed: Math.random() * 0.02 + 0.01,
+      rotationSpeed: Math.random() * 0.05 + 0.01,
+      waveAmplitude: Math.random() * 30 + 10,
+      waveFrequency: Math.random() * 0.02 + 0.01
     }));
     setParticles(newParticles);
   }, []);
@@ -188,20 +192,45 @@ const FloatingParticles = () => {
             top: particle.y,
             width: particle.size,
             height: particle.size,
-            backgroundColor: `hsl(${particle.hue}, 70%, 60%)`,
+            backgroundColor: `hsl(${particle.hue}, 80%, 70%)`,
             opacity: particle.opacity,
-            boxShadow: `0 0 ${particle.size * 2}px hsl(${particle.hue}, 70%, 60%)`
+            boxShadow: `0 0 ${particle.size * 3}px hsl(${particle.hue}, 80%, 70%), 0 0 ${particle.size * 6}px hsl(${particle.hue}, 80%, 50%)`,
+            filter: 'blur(0.5px)'
           }}
           animate={{
-            x: [0, Math.cos(particle.direction) * 50, 0],
-            y: [0, Math.sin(particle.direction) * 50, 0],
-            opacity: [particle.opacity, particle.opacity * 0.3, particle.opacity],
-            scale: [1, 1.2, 1]
+            x: [
+              0, 
+              Math.cos(particle.direction) * particle.waveAmplitude, 
+              Math.cos(particle.direction + Math.PI) * particle.waveAmplitude,
+              0
+            ],
+            y: [
+              0, 
+              Math.sin(particle.direction) * particle.waveAmplitude, 
+              Math.sin(particle.direction + Math.PI) * particle.waveAmplitude,
+              0
+            ],
+            opacity: [
+              particle.opacity, 
+              particle.opacity * 0.2, 
+              particle.opacity * 0.8,
+              particle.opacity
+            ],
+            scale: [1, 1.5, 0.8, 1.2, 1],
+            rotate: [0, 180, 360],
+            filter: [
+              'blur(0.5px)',
+              'blur(1px)',
+              'blur(0.5px)',
+              'blur(0px)',
+              'blur(0.5px)'
+            ]
           }}
           transition={{
-            duration: 8 + Math.random() * 4,
+            duration: 12 + Math.random() * 8,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
+            times: [0, 0.25, 0.5, 0.75, 1]
           }}
         />
       ))}
@@ -507,16 +536,51 @@ export default function Landing() {
         showNetwork={true}
         showParticles={true}
         showWaves={true}
-        showForceField={false}
+        showForceField={true}
+        particleCount={300}
+        waveIntensity={0.8}
+        networkDensity={0.6}
       />
       
-      {/* Fondo con efectos parallax */}
+      {/* Fondo con efectos parallax mejorado */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-brain-500/5"
+        className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-brain-500/10"
         animate={{
-          backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`
+          backgroundPosition: [`${mousePosition.x}% ${mousePosition.y}%`, `${mousePosition.x + 10}% ${mousePosition.y + 10}%`, `${mousePosition.x}% ${mousePosition.y}%`]
         }}
-        transition={{ duration: 0.1 }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      
+      {/* Ondas de fondo animadas */}
+      <motion.div
+        className="absolute inset-0 opacity-20"
+        style={{
+          background: `
+            radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%)
+          `
+        }}
+        animate={{
+          background: [
+            `
+              radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%)
+            `,
+            `
+              radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 60% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%)
+            `,
+            `
+              radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%)
+            `
+          ]
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       
       {/* Hero Section */}
@@ -652,37 +716,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <AdvancedGlassCard intensity="medium" variant="default" className="p-4 sm:p-6 overflow-hidden">
-                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">{stat.icon}</div>
-                  <div className="mb-2 min-h-[3rem] flex items-center justify-center">
-                    <AnimatedCounter end={stat.value} />
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium text-center leading-tight">{stat.label}</div>
-                </AdvancedGlassCard>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
 
       {/* Benefits Section */}
       <section className="py-20 lg:py-32 relative">
@@ -694,12 +727,14 @@ export default function Landing() {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-8">
-              ¿Por qué elegir{' '}
-              <span className="bg-gradient-to-r from-primary-600 to-brain-600 bg-clip-text text-transparent">
-                BrainSafes
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 dark:text-white mb-8 leading-tight px-4">
+              <span className="inline-block">
+                ¿Por qué elegir{' '}
+                <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                  BrainSafes
+                </span>
+                ?
               </span>
-              ?
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Descubre las ventajas únicas de nuestra plataforma descentralizada
@@ -849,14 +884,38 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600"></div>
         <div className="absolute inset-0 bg-black/20"></div>
         
-        {/* Efectos de fondo animados */}
+        {/* Efectos de fondo animados mejorados */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-primary-400/30 via-brain-400/30 to-purple-400/30"
+          className="absolute inset-0 bg-gradient-to-r from-primary-400/40 via-brain-400/40 to-purple-400/40"
           animate={{
-            backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+            backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+            backgroundSize: ["100% 100%", "200% 200%", "100% 100%"]
           }}
           transition={{
-            duration: 10,
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Ondas de energía adicionales */}
+        <motion.div
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: `
+              conic-gradient(from 0deg at 50% 50%, 
+                rgba(59, 130, 246, 0.2) 0deg,
+                rgba(139, 92, 246, 0.2) 120deg,
+                rgba(6, 182, 212, 0.2) 240deg,
+                rgba(59, 130, 246, 0.2) 360deg
+              )
+            `
+          }}
+          animate={{
+            rotate: [0, 360]
+          }}
+          transition={{
+            duration: 20,
             repeat: Infinity,
             ease: "linear"
           }}
@@ -869,8 +928,8 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8">
-              ¿Listo para comenzar tu viaje?
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-8 leading-tight px-4">
+              <span className="inline-block">¿Listo para comenzar tu viaje?</span>
             </h2>
             <p className="text-xl text-primary-100 mb-12 max-w-2xl mx-auto">
               Únete a miles de estudiantes y profesionales que ya confían en BrainSafes para su desarrollo educativo
@@ -888,6 +947,7 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
     </main>
   );
 }

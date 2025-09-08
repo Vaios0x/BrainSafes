@@ -1,0 +1,17 @@
+[1mdiff --git a/frontend/src/components/EnhancedAIChatWidget.jsx b/frontend/src/components/EnhancedAIChatWidget.jsx[m
+[1mindex fe73b32..383d3e6 100644[m
+[1m--- a/frontend/src/components/EnhancedAIChatWidget.jsx[m
+[1m+++ b/frontend/src/components/EnhancedAIChatWidget.jsx[m
+[36m@@ -384,9 +384,10 @@[m [mconst EnhancedAIChatWidget = () => {[m
+                 [m
+                 <button[m
+                   onClick={() => setIsOpen(false)}[m
+[31m-                  className="p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors duration-200 cursor-pointer"[m
+[32m+[m[32m                  className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 cursor-pointer border border-white/20 hover:border-white/40"[m
+[32m+[m[32m                  title="Cerrar chatbot"[m
+                 >[m
+[31m-                  <span className="text-white text-sm sm:text-base">×</span>[m
+[32m+[m[32m                  <span className="text-white text-lg sm:text-xl font-bold">×</span>[m
+                 </button>[m
+               </motion.div>[m
+ [m
