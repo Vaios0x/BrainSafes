@@ -1,46 +1,184 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import NeuralBackground from '../NeuralBackground';
 
-// Componente de partículas para la gobernanza
-const GovernanceParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(12)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-1 h-1 bg-governance-400/20 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-        animate={{
-          y: [0, -25, 0],
-          opacity: [0.2, 0.6, 0.2],
-        }}
-        transition={{
-          duration: 6 + Math.random() * 3,
-          repeat: Infinity,
-          delay: Math.random() * 6,
-        }}
-      />
-    ))}
-  </div>
-);
+// Componente de partículas neurales avanzadas para la gobernanza
+const NeuralGovernanceParticles = () => {
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const particlesRef = useRef([]);
 
-// Componente de estadísticas animadas
-const AnimatedGovernanceStats = ({ label, value, icon, delay = 0 }) => (
+  const createParticle = useCallback(() => {
+    return {
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 3 + 1,
+      opacity: Math.random() * 0.8 + 0.2,
+      color: `hsl(${Math.random() * 40 + 200}, 80%, 60%)`, // Azul a verde
+      connections: [],
+      pulse: Math.random() * Math.PI * 2,
+    };
+  }, []);
+
+  const animate = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Actualizar y dibujar partículas
+    particlesRef.current.forEach((particle, i) => {
+      // Actualizar posición
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+
+      // Rebote en bordes
+      if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+      if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+
+      // Mantener en canvas
+      particle.x = Math.max(0, Math.min(canvas.width, particle.x));
+      particle.y = Math.max(0, Math.min(canvas.height, particle.y));
+
+      // Efecto de pulso
+      particle.pulse += 0.025;
+      const pulseSize = particle.size + Math.sin(particle.pulse) * 0.8;
+
+      // Dibujar partícula con glow
+      const gradient = ctx.createRadialGradient(
+        particle.x, particle.y, 0,
+        particle.x, particle.y, pulseSize * 3
+      );
+      gradient.addColorStop(0, particle.color);
+      gradient.addColorStop(1, 'transparent');
+      
+      ctx.fillStyle = gradient;
+      ctx.globalAlpha = particle.opacity;
+      ctx.fillRect(particle.x - pulseSize * 3, particle.y - pulseSize * 3, pulseSize * 6, pulseSize * 6);
+
+      // Dibujar conexiones neurales
+      particlesRef.current.forEach((otherParticle, j) => {
+        if (i !== j) {
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(otherParticle.x, otherParticle.y);
+            ctx.strokeStyle = particle.color;
+            ctx.globalAlpha = (100 - distance) / 100 * 0.3;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      });
+    });
+
+    animationRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  useEffect(() => {
+    // Crear partículas
+    particlesRef.current = Array.from({ length: 30 }, createParticle);
+    
+    // Iniciar animación
+    animate();
+
+    // Limpiar al desmontar
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animate, createParticle]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 1 }}
+    />
+  );
+};
+
+// Componente de estadísticas con glassmorphism 3D avanzado
+const NeuralAnimatedGovernanceStats = ({ label, value, icon, delay = 0, color = "blue" }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay }}
-    className="text-center"
+    initial={{ opacity: 0, y: 20, scale: 0.8 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.8, delay, type: "spring", stiffness: 100 }}
+    whileHover={{ 
+      scale: 1.05, 
+      rotateY: 5,
+      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+    }}
+    className="relative group"
   >
-    <div className="text-2xl mb-1">{icon}</div>
-    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-      {value}
-    </div>
-    <div className="text-sm text-gray-500 dark:text-gray-400">
-      {label}
+    <div className="relative p-6 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
+      {/* Efecto de brillo animado */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+      
+      {/* Partículas flotantes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/40 rounded-full"
+            style={{
+              left: `${20 + i * 15}%`,
+              top: `${30 + (i % 2) * 40}%`,
+            }}
+            animate={{
+              y: [0, -12, 0],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 2 + i * 0.3,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 text-center">
+        <motion.div 
+          className="text-4xl mb-3"
+          animate={{ 
+            rotate: [0, 8, -8, 0],
+            scale: [1, 1.15, 1]
+          }}
+          transition={{ 
+            duration: 3, 
+            repeat: Infinity,
+            delay: delay * 0.5
+          }}
+        >
+          {icon}
+        </motion.div>
+        <motion.div 
+          className="text-3xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent mb-2"
+          style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.5)' }}
+        >
+          {value}
+        </motion.div>
+        <div className="text-sm text-white/80 font-medium">
+          {label}
+        </div>
+      </div>
+
+      {/* Borde animado */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/20 via-green-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     </div>
   </motion.div>
 );
@@ -87,33 +225,69 @@ const ProposalCard = ({ proposal, onSelect, isSelected }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
+      initial={{ opacity: 0, y: 20, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ 
+        scale: 1.05, 
+        rotateY: 3,
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+      }}
       whileTap={{ scale: 0.98 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => onSelect(proposal)}
-      className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 p-6 cursor-pointer transition-all duration-300 ${
-        isSelected ? 'ring-2 ring-governance-500 shadow-large' : ''
+      className={`relative bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden group cursor-pointer transition-all duration-300 p-6 ${
+        isSelected ? 'ring-2 ring-blue-400/50 shadow-large' : ''
       }`}
     >
+      {/* Efecto de brillo animado */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+      
+      {/* Partículas flotantes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(4)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/40 rounded-full"
+            style={{
+              left: `${20 + i * 25}%`,
+              top: `${30 + (i % 2) * 40}%`,
+            }}
+            animate={{
+              y: [0, -8, 0],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 2 + i * 0.3,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </div>
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-4 relative z-10">
         <div className="flex items-center gap-3">
-          <div className={`text-2xl ${isHovered ? 'animate-bounce' : ''}`}>
+          <motion.div 
+            className="text-3xl"
+            animate={{ 
+              rotate: isHovered ? 360 : 0,
+              scale: isHovered ? 1.2 : 1
+            }}
+            transition={{ duration: 0.6 }}
+          >
             {getTypeIcon(proposal.type)}
-          </div>
+          </motion.div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+            <h3 className="text-xl font-bold text-white mb-2" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
               {proposal.title}
             </h3>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getStatusColor(proposal.status)} text-white`}>
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-2xl text-sm font-bold bg-gradient-to-r ${getStatusColor(proposal.status)} text-white border border-white/30`}>
                 <span>{getStatusIcon(proposal.status)}</span>
                 <span className="capitalize">{proposal.status}</span>
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-white/70 bg-white/10 backdrop-blur-xl px-2 py-1 rounded-xl border border-white/20">
                 {proposal.type}
               </span>
             </div>
@@ -121,59 +295,60 @@ const ProposalCard = ({ proposal, onSelect, isSelected }) => {
         </div>
         
         <div className="text-right">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-white/70">
             Cierra
           </div>
-          <div className="text-sm font-medium text-gray-900 dark:text-white">
+          <div className="text-sm font-bold text-white">
             {new Date(proposal.closeDate).toLocaleDateString()}
           </div>
         </div>
       </div>
 
       {/* Description */}
-      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+      <p className="text-white/80 text-base mb-4 line-clamp-2 leading-relaxed relative z-10">
         {proposal.description}
       </p>
 
       {/* Votes Progress */}
-      <div className="mb-4">
-        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+      <div className="mb-4 relative z-10">
+        <div className="flex justify-between text-sm text-white/80 mb-2 font-medium">
           <span>Progreso de votación</span>
           <span>{Math.round(calculateProgress())}%</span>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-white/20 backdrop-blur-xl rounded-full h-3 border border-white/30">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${calculateProgress()}%` }}
             transition={{ duration: 1, delay: 0.5 }}
-            className="bg-gradient-to-r from-governance-500 to-governance-600 h-2 rounded-full"
+            className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full shadow-lg"
+            style={{ boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}
           />
         </div>
       </div>
 
       {/* Vote Counts */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-green-100 dark:bg-green-900/30 rounded-lg p-2">
-          <div className="text-green-600 dark:text-green-400 font-bold text-sm">
+      <div className="grid grid-cols-3 gap-3 text-center relative z-10">
+        <div className="bg-green-500/20 backdrop-blur-xl rounded-2xl p-3 border border-green-400/30">
+          <div className="text-green-400 font-bold text-lg">
             {proposal.votes.yes}
           </div>
-          <div className="text-xs text-green-600 dark:text-green-400">
+          <div className="text-xs text-green-300 font-medium">
             Sí
           </div>
         </div>
-        <div className="bg-red-100 dark:bg-red-900/30 rounded-lg p-2">
-          <div className="text-red-600 dark:text-red-400 font-bold text-sm">
+        <div className="bg-red-500/20 backdrop-blur-xl rounded-2xl p-3 border border-red-400/30">
+          <div className="text-red-400 font-bold text-lg">
             {proposal.votes.no}
           </div>
-          <div className="text-xs text-red-600 dark:text-red-400">
+          <div className="text-xs text-red-300 font-medium">
             No
           </div>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
-          <div className="text-gray-600 dark:text-gray-400 font-bold text-sm">
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 border border-white/30">
+          <div className="text-white font-bold text-lg">
             {proposal.votes.abstain}
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400">
+          <div className="text-xs text-white/70 font-medium">
             Abstención
           </div>
         </div>
@@ -181,11 +356,11 @@ const ProposalCard = ({ proposal, onSelect, isSelected }) => {
 
       {/* Author info */}
       {proposal.author && (
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-governance-400 to-governance-500 flex items-center justify-center text-white text-xs font-bold">
+        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/30 relative z-10">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-bold border border-white/30">
             {proposal.author.charAt(0).toUpperCase()}
           </div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-sm text-white/80 font-medium">
             {proposal.author}
           </span>
         </div>
@@ -449,36 +624,36 @@ const GovernanceFilters = ({ filter, setFilter }) => {
 
   return (
     <div className="space-y-4 mb-6">
-      {/* Search */}
+      {/* Search con Glassmorphism */}
       <div className="relative">
         <input
           type="text"
           value={filter.search}
           onChange={(e) => setFilter({ ...filter, search: e.target.value })}
           placeholder="Buscar propuestas..."
-          className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-governance-500 focus:border-transparent"
+          className="w-full px-6 py-4 pl-14 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white placeholder-white/60 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300 shadow-2xl"
         />
-        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+        <span className="absolute left-5 top-1/2 transform -translate-y-1/2 text-white/80 text-xl">
           🔍
         </span>
       </div>
 
-      {/* Status Filters */}
+      {/* Status Filters con Glassmorphism */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <h4 className="text-base font-bold text-white mb-3" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
           Estado
         </h4>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {filters.map((f) => (
             <motion.button
               key={f.id}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, rotateY: 3 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setFilter({ ...filter, status: f.id })}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold transition-all duration-300 border-2 ${
                 filter.status === f.id
-                  ? 'bg-gradient-to-r from-governance-500 to-governance-600 text-white shadow-medium'
-                  : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  ? 'bg-gradient-to-r from-blue-600/90 to-green-600/90 text-white border-blue-400/50 shadow-2xl'
+                  : 'bg-white/10 backdrop-blur-xl text-white/80 border-white/30 hover:bg-white/20 hover:border-white/50'
               }`}
             >
               <span>{f.icon}</span>
@@ -488,22 +663,22 @@ const GovernanceFilters = ({ filter, setFilter }) => {
         </div>
       </div>
 
-      {/* Type Filters */}
+      {/* Type Filters con Glassmorphism */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <h4 className="text-base font-bold text-white mb-3" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
           Tipo
         </h4>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {types.map((t) => (
             <motion.button
               key={t.id}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, rotateY: 3 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setFilter({ ...filter, type: t.id })}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold transition-all duration-300 border-2 ${
                 filter.type === t.id
-                  ? 'bg-gradient-to-r from-governance-500 to-governance-600 text-white shadow-medium'
-                  : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  ? 'bg-gradient-to-r from-purple-600/90 to-pink-600/90 text-white border-purple-400/50 shadow-2xl'
+                  : 'bg-white/10 backdrop-blur-xl text-white/80 border-white/30 hover:bg-white/20 hover:border-white/50'
               }`}
             >
               <span>{t.icon}</span>
@@ -615,11 +790,12 @@ export default function GovernancePanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      <GovernanceParticles />
+    <div className="min-h-screen relative overflow-hidden">
+      <NeuralBackground theme="governance" particleCount={55} waveCount={8} intensity="high" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        {/* Header Section */}
+        {/* Header Section con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -631,8 +807,9 @@ export default function GovernancePanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-flex items-center px-4 py-2 bg-governance-100/80 dark:bg-governance-900/30 backdrop-blur-sm text-governance-700 dark:text-governance-300 rounded-full text-sm font-medium border border-governance-200/50 dark:border-governance-700/50 mb-4"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600/90 to-green-600/90 backdrop-blur-xl text-white rounded-full text-sm font-bold border-2 border-white/50 mb-6 shadow-2xl"
             >
+              <span className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse shadow-lg shadow-green-400/50"></span>
               ⚖️ Gobernanza
             </motion.div>
             
@@ -640,9 +817,10 @@ export default function GovernancePanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6"
+              style={{ textShadow: '0 0 30px rgba(0, 0, 0, 0.8)' }}
             >
-              <span className="bg-gradient-to-r from-governance-600 via-primary-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 via-green-400 to-purple-400 bg-clip-text text-transparent">
                 Governance
               </span>
             </motion.h1>
@@ -651,49 +829,54 @@ export default function GovernancePanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto lg:mx-0"
+              className="text-xl text-white/90 max-w-3xl mx-auto lg:mx-0 font-medium"
+              style={{ textShadow: '0 0 10px rgba(0, 0, 0, 0.8)' }}
             >
               Participa en la toma de decisiones de la comunidad. Vota en propuestas, crea nuevas iniciativas y ayuda a dar forma al futuro de BrainSafes.
             </motion.p>
           </div>
         </motion.div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           className="mb-8"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <AnimatedGovernanceStats 
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <NeuralAnimatedGovernanceStats 
               label="Propuestas Activas" 
               value={proposals.filter(p => p.status === 'abierta').length} 
               icon="🗳️" 
               delay={1.0}
+              color="blue"
             />
-            <AnimatedGovernanceStats 
+            <NeuralAnimatedGovernanceStats 
               label="Votos Totales" 
               value={proposals.reduce((sum, p) => sum + p.votes.yes + p.votes.no + p.votes.abstain, 0)} 
               icon="📊" 
               delay={1.1}
+              color="green"
             />
-            <AnimatedGovernanceStats 
+            <NeuralAnimatedGovernanceStats 
               label="Participación" 
               value="87%" 
               icon="👥" 
               delay={1.2}
+              color="purple"
             />
-            <AnimatedGovernanceStats 
+            <NeuralAnimatedGovernanceStats 
               label="Aprobadas" 
               value={proposals.filter(p => p.status === 'aprobada').length} 
               icon="✅" 
               delay={1.3}
+              color="orange"
             />
           </div>
         </motion.div>
 
-        {/* Alert */}
+        {/* Alert con Glassmorphism */}
         <AnimatePresence>
           {showAlert && (
             <motion.div
@@ -702,14 +885,20 @@ export default function GovernancePanel() {
               exit={{ opacity: 0, y: -20 }}
               className="mb-6"
             >
-              <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🔔</span>
+              <div className="bg-gradient-to-r from-blue-600/20 to-green-600/20 backdrop-blur-xl border-2 border-blue-400/30 rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-center gap-4">
+                  <motion.span 
+                    className="text-3xl"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🔔
+                  </motion.span>
                   <div>
-                    <div className="font-medium text-blue-900 dark:text-blue-100">
+                    <div className="font-bold text-white text-lg" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
                       Nueva propuesta disponible
                     </div>
-                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                    <div className="text-sm text-white/80 font-medium">
                       Actualiza la lista para ver la propuesta más reciente.
                     </div>
                   </div>

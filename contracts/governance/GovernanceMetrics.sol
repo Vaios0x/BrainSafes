@@ -7,12 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-/**
- * @title GovernanceMetrics
- * @notice Metrics and analytics contract for BrainSafes governance
- * @dev Tracks participation, proposal outcomes, and voting statistics
- * @author BrainSafes Team
- */
+
 contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
@@ -176,9 +171,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         _grantRole(ANALYST_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Actualiza métricas de propuesta
-     */
+    
     function updateProposalMetrics(
         uint256 proposalId,
         uint256 votesFor,
@@ -215,9 +208,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         _updateEpochMetrics(proposalId, totalVotes);
     }
 
-    /**
-     * @dev Registra voto en métricas
-     */
+    
     function recordVote(
         uint256 proposalId,
         address voter,
@@ -262,9 +253,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Actualiza métricas de delegado
-     */
+    
     function updateDelegateMetrics(
         address delegate,
         uint256 votingPower,
@@ -290,9 +279,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Registra voto de delegado
-     */
+    
     function recordDelegateVote(
         address delegate,
         uint256 proposalId,
@@ -315,9 +302,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         });
     }
 
-    /**
-     * @dev Actualiza métricas de época
-     */
+    
     function _updateEpochMetrics(
         uint256 proposalId,
         uint256 totalVotes
@@ -353,9 +338,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Actualiza estadísticas diarias
-     */
+    
     function updateDailyStats(
         uint256 activeProposals,
         uint256 newVoters,
@@ -383,9 +366,7 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Crea snapshot de métricas
-     */
+    
     function createMetricsSnapshot(
         uint256 totalVotingPower,
         uint256 activeVoters,
@@ -471,16 +452,12 @@ contract GovernanceMetrics is AccessControl, ReentrancyGuard, Pausable {
         return metricsSnapshots[_snapshotIdCounter.current()];
     }
 
-    /**
-     * @dev Pausa el contrato
-     */
+    
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Despausa el contrato
-     */
+    
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }

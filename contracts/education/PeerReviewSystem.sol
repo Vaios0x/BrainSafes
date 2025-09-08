@@ -7,11 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title PeerReviewSystem
- * @dev Sistema de evaluación por pares para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant REVIEWER_ROLE = keccak256("REVIEWER_ROLE");
@@ -88,9 +84,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
     event ReviewerRegistered(address indexed reviewer, uint256 timestamp);
     event SubmissionFinalized(uint256 indexed submissionId, uint256 finalScore);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(address _brainSafes, address _securityManager) {
         require(_brainSafes != address(0), "Invalid BrainSafes address");
         require(_securityManager != address(0), "Invalid SecurityManager address");
@@ -102,9 +96,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         _setupRole(MODERATOR_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Crear una nueva submission para revisión
-     */
+    
     function createSubmission(
         uint256 courseId,
         string memory ipfsHash,
@@ -133,9 +125,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         emit SubmissionCreated(submissionCounter, msg.sender, courseId);
     }
 
-    /**
-     * @dev Enviar una revisión
-     */
+    
     function submitReview(
         uint256 submissionId,
         uint256 score,
@@ -181,9 +171,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         emit ReviewSubmitted(submissionId, msg.sender, score);
     }
 
-    /**
-     * @dev Disputar una revisión
-     */
+    
     function disputeReview(
         uint256 submissionId,
         uint256 reviewIndex,
@@ -201,9 +189,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         emit ReviewDisputed(submissionId, msg.sender, reason);
     }
 
-    /**
-     * @dev Resolver una disputa
-     */
+    
     function resolveDispute(
         uint256 submissionId,
         uint256 reviewIndex,
@@ -225,9 +211,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         emit ReviewResolved(submissionId, newScore);
     }
 
-    /**
-     * @dev Crear una nueva rúbrica
-     */
+    
     function createRubric(
         string[] memory criteria,
         uint256[] memory weights,
@@ -254,9 +238,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         emit RubricCreated(rubricCounter, maxScore);
     }
 
-    /**
-     * @dev Registrar un nuevo revisor
-     */
+    
     function registerReviewer(address reviewer) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(!hasRole(REVIEWER_ROLE, reviewer), "Already registered");
         require(securityManager.isSecure(reviewer), "Security check failed");
@@ -274,9 +256,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         emit ReviewerRegistered(reviewer, block.timestamp);
     }
 
-    /**
-     * @dev Finalizar una submission
-     */
+    
     function _finalizeSubmission(uint256 submissionId) internal {
         Submission storage submission = submissions[submissionId];
         require(!submission.isFinalized, "Already finalized");
@@ -301,9 +281,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Recalcular puntuación final después de resolver una disputa
-     */
+    
     function _recalculateFinalScore(uint256 submissionId) internal {
         Submission storage submission = submissions[submissionId];
         
@@ -324,9 +302,7 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Obtener detalles de una submission
-     */
+    
     function getSubmissionDetails(uint256 submissionId) external view returns (
         address student,
         uint256 courseId,
@@ -352,30 +328,22 @@ contract PeerReviewSystem is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Obtener revisiones de una submission
-     */
+    
     function getSubmissionReviews(uint256 submissionId) external view returns (Review[] memory) {
         return reviews[submissionId];
     }
 
-    /**
-     * @dev Obtener estadísticas de un revisor
-     */
+    
     function getReviewerStats(address reviewer) external view returns (ReviewerStats memory) {
         return reviewerStats[reviewer];
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }

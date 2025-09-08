@@ -8,12 +8,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IAIProcessor.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title DataValidationSystem
- * @dev Sistema avanzado de validación de datos para oráculos en BrainSafes
- * @notice Proporciona validación multi-nivel, detección de anomalías y verificación cruzada
- * @custom:security-contact security@brainsafes.com
- */
+
 contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
 
@@ -139,9 +134,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
     event CrossValidationFailed(bytes32 indexed primaryKey, bytes32[] relatedKeys, string reason);
     event ValidatorPerformanceUpdated(address indexed validator, uint256 successRate, uint256 totalValidations);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(
         address _aiProcessor,
         address _securityManager
@@ -157,9 +150,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         _setupRole(VALIDATOR_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Crear nueva regla de validación
-     */
+    
     function createValidationRule(
         string memory name,
         RuleType ruleType,
@@ -194,9 +185,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return ruleCounter;
     }
 
-    /**
-     * @dev Validar datos usando múltiples métodos
-     */
+    
     function validateData(
         bytes32 dataKey,
         uint256 value,
@@ -234,9 +223,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return result;
     }
 
-    /**
-     * @dev Realizar validación comprehensiva
-     */
+    
     function _performComprehensiveValidation(
         bytes32 dataKey,
         uint256 value,
@@ -294,9 +281,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return result;
     }
 
-    /**
-     * @dev Validar contra reglas definidas
-     */
+    
     function _validateAgainstRules(
         bytes32 dataKey,
         uint256 value
@@ -341,9 +326,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Detectar anomalías usando análisis estadístico
-     */
+    
     function _detectAnomalies(
         bytes32 dataKey,
         uint256 value
@@ -372,9 +355,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Realizar validación cruzada con datos relacionados
-     */
+    
     function _performCrossValidation(
         bytes32 dataKey,
         uint256 value
@@ -398,9 +379,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return (correlationScore >= 70, correlationScore);
     }
 
-    /**
-     * @dev Validación usando IA
-     */
+    
     function _performAIValidation(
         bytes32 dataKey,
         uint256 value,
@@ -418,9 +397,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Actualizar detección de anomalías
-     */
+    
     function _updateAnomalyDetection(bytes32 dataKey, uint256 value) internal {
         AnomalyDetection storage detector = anomalyDetectors[dataKey];
         
@@ -448,9 +425,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Calcular estadísticas (media y desviación estándar)
-     */
+    
     function _calculateStatistics(
         uint256[] storage values
     ) internal view returns (uint256 mean, uint256 standardDeviation) {
@@ -474,9 +449,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         standardDeviation = _sqrt(variance);
     }
 
-    /**
-     * @dev Calcular raíz cuadrada (aproximación)
-     */
+    
     function _sqrt(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 0;
         uint256 z = x.add(1).div(2);
@@ -488,17 +461,13 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return y;
     }
 
-    /**
-     * @dev Calcular peso de la fuente
-     */
+    
     function _calculateSourceWeight(address source) internal view returns (uint256) {
         // Implementar lógica para calcular peso basado en reputación de la fuente
         return 100; // Peso por defecto
     }
 
-    /**
-     * @dev Actualizar métricas del validador
-     */
+    
     function _updateValidatorMetrics(
         address validator,
         bool wasSuccessful,
@@ -526,9 +495,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Funciones auxiliares para manejo de arrays
-     */
+    
     function _appendFailedRules(
         string[] memory existing,
         string[] memory newRules
@@ -552,9 +519,7 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return array;
     }
 
-    /**
-     * @dev Configurar validación cruzada
-     */
+    
     function setupCrossValidation(
         bytes32 primaryKey,
         bytes32[] memory relatedKeys,
@@ -572,18 +537,14 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         crossVal.isActive = true;
     }
 
-    /**
-     * @dev Obtener métricas de validación
-     */
+    
     function getValidationMetrics(
         address validator
     ) external view returns (ValidationMetrics memory) {
         return validatorMetrics[validator];
     }
 
-    /**
-     * @dev Obtener resultado de validación de datos
-     */
+    
     function getValidationResult(
         bytes32 dataHash,
         uint256 validationIndex
@@ -591,16 +552,12 @@ contract DataValidationSystem is AccessControl, ReentrancyGuard, Pausable {
         return dataPoints[dataHash].validationResults[validationIndex];
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(VALIDATION_ADMIN) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(VALIDATION_ADMIN) {
         _unpause();
     }

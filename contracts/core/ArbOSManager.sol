@@ -6,10 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "../monitoring/ChainMonitor.sol";
 
-/**
- * @title ArbOSManager
- * @dev Gestor de actualizaciones de ArbOS con verificación y rollback
- */
+
 contract ArbOSManager is AccessControl, ReentrancyGuard {
     bytes32 public constant UPGRADE_ADMIN_ROLE = keccak256("UPGRADE_ADMIN_ROLE");
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
@@ -82,9 +79,7 @@ contract ArbOSManager is AccessControl, ReentrancyGuard {
         currentVersion = 1;
     }
 
-    /**
-     * @dev Registrar nueva versión de ArbOS
-     */
+    
     function registerVersion(
         uint256 version,
         string calldata name,
@@ -117,9 +112,7 @@ contract ArbOSManager is AccessControl, ReentrancyGuard {
         emit VersionRegistered(version, name);
     }
 
-    /**
-     * @dev Proponer actualización
-     */
+    
     function proposeUpgrade(
         uint256 targetVersion,
         string calldata reason
@@ -143,9 +136,7 @@ contract ArbOSManager is AccessControl, ReentrancyGuard {
         return proposalCount;
     }
 
-    /**
-     * @dev Validar propuesta de actualización
-     */
+    
     function validateUpgrade(
         uint256 proposalId,
         bool approve,
@@ -175,9 +166,7 @@ contract ArbOSManager is AccessControl, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Ejecutar actualización programada
-     */
+    
     function executeUpgrade(uint256 proposalId) external nonReentrant onlyRole(UPGRADE_ADMIN_ROLE) {
         require(!upgradeFreeze, "Upgrades frozen");
         
@@ -206,9 +195,7 @@ contract ArbOSManager is AccessControl, ReentrancyGuard {
         emit UpgradeExecuted(proposalId, oldVersion, newVersion);
     }
 
-    /**
-     * @dev Cancelar actualización
-     */
+    
     function cancelUpgrade(
         uint256 proposalId,
         string calldata reason
@@ -222,68 +209,52 @@ contract ArbOSManager is AccessControl, ReentrancyGuard {
         emit UpgradeCancelled(proposalId, reason);
     }
 
-    /**
-     * @dev Congelar actualizaciones (emergencia)
-     */
+    
     function toggleUpgradeFreeze() external onlyRole(DEFAULT_ADMIN_ROLE) {
         upgradeFreeze = !upgradeFreeze;
         emit EmergencyFreeze(upgradeFreeze);
     }
 
-    /**
-     * @dev Verificar si se puede programar la actualización
-     */
+    
     function _canScheduleUpgrade(uint256 proposalId) internal view returns (bool) {
         UpgradeProposal storage proposal = proposals[proposalId];
         return versions[proposal.targetVersion].validations >= minValidations;
     }
 
-    /**
-     * @dev Programar actualización
-     */
+    
     function _scheduleUpgrade(uint256 proposalId) internal {
         UpgradeProposal storage proposal = proposals[proposalId];
         proposal.scheduledFor = block.timestamp + upgradeDelay;
         emit UpgradeScheduled(proposalId, proposal.scheduledFor);
     }
 
-    /**
-     * @dev Verificar salud de la cadena
-     */
+    
     function _isChainHealthy() internal view returns (bool) {
         // Implementar verificación real usando ChainMonitor
         return true;
     }
 
-    /**
-     * @dev Ejecutar actualización de ArbOS
-     */
+    
     function _performUpgrade(uint256 oldVersion, uint256 newVersion) internal {
         // Implementar lógica real de actualización
         // Este es un placeholder - la implementación real dependería del contexto
     }
 
-    /**
-     * @dev Obtener información de versión
-     */
+    
     function getVersionInfo(
         uint256 version
     ) external view returns (ArbOSVersion memory) {
         return versions[version];
     }
 
-    /**
-     * @dev Obtener reportes de validación
-     */
+    
     function getValidationReports(
         uint256 proposalId
     ) external view returns (ValidationReport[] memory) {
         return validationReports[proposalId];
     }
 
-    /**
-     * @dev Verificar estado de actualización
-     */
+    
     function getUpgradeStatus(
         uint256 proposalId
     ) external view returns (

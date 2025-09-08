@@ -7,12 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-/**
- * @title ParticipationIncentives
- * @notice Incentives contract for governance participation in BrainSafes
- * @dev Rewards users for voting and proposal engagement
- * @author BrainSafes Team
- */
+
 contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
 
@@ -132,12 +127,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         _startNewEpoch();
     }
 
-    /**
-     * @notice Records a proposal participation event.
-     * @dev Only callable by governance roles.
-     * @param participant The address of the participant.
-     * @param successful Boolean indicating if the proposal was successful.
-     */
+    
     function recordProposalParticipation(
         address participant,
         bool successful
@@ -177,12 +167,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Records a vote participation event.
-     * @dev Only callable by governance roles.
-     * @param participant The address of the participant.
-     * @param withMajority Boolean indicating if the vote had a majority.
-     */
+    
     function recordVoteParticipation(
         address participant,
         bool withMajority
@@ -219,10 +204,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Claims accumulated rewards.
-     * @dev Only callable when not paused.
-     */
+    
     function claimRewards() external nonReentrant whenNotPaused {
         ParticipationMetrics storage metrics = participationMetrics[msg.sender];
         require(metrics.isActive, "Participant not active");
@@ -272,10 +254,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Updates the participation streak.
-     * @param metrics The metrics of the participant.
-     */
+    
     function _updateParticipationStreak(
         ParticipationMetrics storage metrics
     ) internal {
@@ -288,12 +267,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         metrics.lastParticipation = block.timestamp;
     }
 
-    /**
-     * @dev Applies multipliers to the reward.
-     * @param baseReward The base reward amount.
-     * @param metrics The metrics of the participant.
-     * @return The final reward amount after multipliers.
-     */
+    
     function _applyMultipliers(
         uint256 baseReward,
         ParticipationMetrics memory metrics
@@ -313,11 +287,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         return reward;
     }
 
-    /**
-     * @dev Calculates rewards for proposals.
-     * @param metrics The metrics of the participant.
-     * @return The total reward for proposals.
-     */
+    
     function _calculateProposalRewards(
         ParticipationMetrics memory metrics
     ) internal view returns (uint256) {
@@ -332,11 +302,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         return baseReward.add(successBonus);
     }
 
-    /**
-     * @dev Calculates rewards for votes.
-     * @param metrics The metrics of the participant.
-     * @return The total reward for votes.
-     */
+    
     function _calculateVoteRewards(
         ParticipationMetrics memory metrics
     ) internal view returns (uint256) {
@@ -344,11 +310,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
             .mul(metrics.votesSubmitted);
     }
 
-    /**
-     * @dev Calculates streak bonus.
-     * @param metrics The metrics of the participant.
-     * @return The streak bonus amount.
-     */
+    
     function _calculateStreakBonus(
         ParticipationMetrics memory metrics
     ) internal view returns (uint256) {
@@ -360,11 +322,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
             .div(100);
     }
 
-    /**
-     * @dev Calculates reputation bonus.
-     * @param metrics The metrics of the participant.
-     * @return The reputation bonus amount.
-     */
+    
     function _calculateReputationBonus(
         ParticipationMetrics memory metrics
     ) internal view returns (uint256) {
@@ -378,9 +336,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
             .div(100);
     }
 
-    /**
-     * @dev Starts a new epoch.
-     */
+    
     function _startNewEpoch() internal {
         currentEpoch++;
         
@@ -394,11 +350,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         });
     }
 
-    /**
-     * @notice Registers a new participant.
-     * @dev Only callable by governance roles.
-     * @param participant The address of the participant to register.
-     */
+    
     function registerParticipant(address participant) external onlyRole(GOVERNANCE_ROLE) {
         require(!participationMetrics[participant].isActive, "Already registered");
 
@@ -418,13 +370,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         stats.totalParticipants++;
     }
 
-    /**
-     * @notice Updates the reputation of a participant.
-     * @dev Only callable by governance roles.
-     * @param participant The address of the participant.
-     * @param newScore The new reputation score.
-     * @param reason The reason for the reputation update.
-     */
+    
     function updateReputation(
         address participant,
         uint256 newScore,
@@ -444,11 +390,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Adds funds to the rewards pool.
-     * @dev Only callable by the contract owner.
-     * @param amount The amount of tokens to add.
-     */
+    
     function addRewardsToPool(uint256 amount) external {
         require(
             rewardsToken.transferFrom(msg.sender, address(this), amount),
@@ -457,18 +399,7 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         rewardsPool = rewardsPool.add(amount);
     }
 
-    /**
-     * @notice Updates the incentive configuration.
-     * @dev Only callable by incentives admin roles.
-     * @param _baseProposalReward The new base proposal reward.
-     * @param _baseVoteReward The new base vote reward.
-     * @param _successfulProposalBonus The new successful proposal bonus.
-     * @param _streakMultiplier The new streak multiplier.
-     * @param _reputationMultiplier The new reputation multiplier.
-     * @param _minReputationForBonus The new minimum reputation for bonus.
-     * @param _maxDailyReward The new max daily reward.
-     * @param _cooldownPeriod The new cooldown period.
-     */
+    
     function updateIncentiveConfig(
         uint256 _baseProposalReward,
         uint256 _baseVoteReward,
@@ -500,37 +431,21 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         emit ConfigUpdated("cooldownPeriod", oldConfig.cooldownPeriod, _cooldownPeriod);
     }
 
-    /**
-     * @notice Gets the metrics of a participant.
-     * @param participant The address of the participant.
-     * @return The metrics of the participant.
-     */
+    
     function getParticipantMetrics(
         address participant
     ) external view returns (ParticipationMetrics memory) {
         return participationMetrics[participant];
     }
 
-    /**
-     * @notice Gets the statistics of an epoch.
-     * @param epoch The number of the epoch.
-     * @return The statistics of the epoch.
-     */
+    
     function getEpochStats(
         uint256 epoch
     ) external view returns (EpochStats memory) {
         return epochStats[epoch];
     }
 
-    /**
-     * @notice Gets estimated rewards for a participant.
-     * @param participant The address of the participant.
-     * @return proposalRewards The estimated reward for proposals.
-     * @return voteRewards The estimated reward for votes.
-     * @return streakBonus The estimated streak bonus.
-     * @return reputationBonus The estimated reputation bonus.
-     * @return total The total estimated reward.
-     */
+    
     function getEstimatedRewards(
         address participant
     ) external view returns (
@@ -559,18 +474,12 @@ contract ParticipationIncentives is AccessControl, ReentrancyGuard, Pausable {
         return (proposalRewards, voteRewards, streakBonus, reputationBonus, total);
     }
 
-    /**
-     * @notice Pauses the contract.
-     * @dev Only callable by incentives admin roles.
-     */
+    
     function pause() external onlyRole(INCENTIVES_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @notice Unpauses the contract.
-     * @dev Only callable by incentives admin roles.
-     */
+    
     function unpause() external onlyRole(INCENTIVES_ADMIN_ROLE) {
         _unpause();
     }

@@ -7,11 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 
-/**
- * @title BrainSafes Real-Time Monitor
- * @dev Monitors platform security, gas usage, transactions, and network metrics
- * @custom:security-contact security@brainsafes.com
- */
+
 contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant MONITOR_ADMIN = keccak256("MONITOR_ADMIN");
@@ -94,13 +90,11 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
     );
     event AlertResolved(uint256 indexed alertId, address resolver);
     event GasMetricsUpdated(uint256 l1BaseFee, uint256 l2GasPrice);
-    event HighGasUsageDetected(address indexed contract, uint256 gasUsed);
+    event HighGasUsageDetected(address indexed contractAddress, uint256 gasUsed);
     event NetworkCongestion(uint256 pendingTxCount, uint256 currentTps);
     event SuspiciousActivityDetected(address indexed account, string reason);
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -110,14 +104,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         _grantRole(MONITOR_ADMIN, msg.sender);
     }
 
-    /**
-     * @dev Raise a security alert
-     * @param alertType Type of alert
-     * @param severity Alert severity level
-     * @param source Address that triggered the alert
-     * @param description Description of the alert
-     * @param data Additional data related to the alert
-     */
+    
     function raiseAlert(
         AlertType alertType,
         AlertSeverity severity,
@@ -144,11 +131,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         }
     }
 
-    /**
-     * @dev Update gas metrics
-     * @param contractAddress Contract being monitored
-     * @param gasUsed Gas used in the operation
-     */
+    
     function updateGasMetrics(
         address contractAddress,
         uint256 gasUsed
@@ -175,13 +158,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         }
     }
 
-    /**
-     * @dev Update transaction metrics
-     * @param user User address
-     * @param success Transaction success status
-     * @param confirmationTime Time taken for confirmation
-     * @param methodSelector Function selector called
-     */
+    
     function updateTransactionMetrics(
         address user,
         bool success,
@@ -205,12 +182,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         ) / txMetrics.totalTransactions;
     }
 
-    /**
-     * @dev Update network metrics
-     * @param nodeCount Current number of nodes
-     * @param latency Network latency in milliseconds
-     * @param pendingTxs Number of pending transactions
-     */
+    
     function updateNetworkMetrics(
         uint256 nodeCount,
         uint256 latency,
@@ -235,9 +207,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         }
     }
 
-    /**
-     * @dev Get current gas metrics
-     */
+    
     function getGasMetrics() external view returns (
         uint256 l1BaseFee,
         uint256 l2GasPrice,
@@ -252,9 +222,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         );
     }
 
-    /**
-     * @dev Get transaction metrics
-     */
+    
     function getTransactionMetrics() external view returns (
         uint256 total,
         uint256 successful,
@@ -269,9 +237,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         );
     }
 
-    /**
-     * @dev Get network metrics
-     */
+    
     function getNetworkMetrics() external view returns (
         uint256 blocks,
         uint256 nodes,
@@ -288,12 +254,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         );
     }
 
-    /**
-     * @dev Check for suspicious activity
-     * @param account Account to check
-     * @param txCount Recent transaction count
-     * @param gasUsed Gas used in recent transactions
-     */
+    
     function checkSuspiciousActivity(
         address account,
         uint256 txCount,
@@ -310,10 +271,7 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         }
     }
 
-    /**
-     * @dev Resolve an alert
-     * @param alertId ID of the alert to resolve
-     */
+    
     function resolveAlert(uint256 alertId) external onlyRole(ALERT_MANAGER) {
         require(!alerts[alertId].isResolved, "Alert already resolved");
         require(
@@ -325,8 +283,6 @@ contract RealTimeMonitor is UUPSUpgradeable, AccessControlUpgradeable, PausableU
         emit AlertResolved(alertId, msg.sender);
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 

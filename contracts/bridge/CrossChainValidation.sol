@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/**
- * @title CrossChainValidation
- * @dev Validación avanzada de mensajes y operaciones cross-chain para BrainSafes
- * @notice Incluye Merkle proofs, firmas, anti-replay y doble validación
- * @custom:security-contact security@brainsafes.com
- */
+
 contract CrossChainValidation is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant VALIDATION_ADMIN = keccak256("VALIDATION_ADMIN");
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");

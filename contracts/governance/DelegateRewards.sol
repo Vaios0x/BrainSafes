@@ -7,12 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-/**
- * @title DelegateRewards
- * @notice Rewards contract for governance delegates in BrainSafes
- * @dev Distributes incentives based on participation and voting
- * @author BrainSafes Team
- */
+
 contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
@@ -149,12 +144,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         });
     }
 
-    /**
-     * @notice Records a vote participation event for a delegate.
-     * @dev Only callable by the GOVERNANCE_ROLE.
-     * @param delegate The address of the delegate.
-     * @param proposalId The ID of the proposal being voted on.
-     */
+    
     function recordVoteParticipation(
         address delegate,
         uint256 proposalId
@@ -194,11 +184,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @notice Records a proposal creation event for a delegate.
-     * @dev Only callable by the GOVERNANCE_ROLE.
-     * @param delegate The address of the delegate.
-     */
+    
     function recordProposalCreation(
         address delegate
     ) external onlyRole(GOVERNANCE_ROLE) whenNotPaused {
@@ -220,11 +206,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Activates the streak bonus for a delegate.
-     * @dev Internal function to be called when a streak bonus is achieved.
-     * @param delegate The address of the delegate.
-     */
+    
     function _activateStreakBonus(address delegate) internal {
         DelegateStats storage stats = delegateStats[delegate];
         
@@ -245,12 +227,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Calculates the base reward for a delegate.
-     * @dev Internal view function.
-     * @param delegate The address of the delegate.
-     * @return uint256 The calculated base reward.
-     */
+    
     function _calculateBaseReward(
         address delegate
     ) internal view returns (uint256) {
@@ -270,12 +247,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         return baseAmount;
     }
 
-    /**
-     * @notice Calculates the total multiplier for a delegate.
-     * @dev Internal view function.
-     * @param delegate The address of the delegate.
-     * @return uint256 The calculated total multiplier.
-     */
+    
     function _calculateMultiplier(
         address delegate
     ) internal view returns (uint256) {
@@ -300,10 +272,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
             rewardConfig.maxMultiplier : multiplier;
     }
 
-    /**
-     * @notice Claims available rewards for a delegate.
-     * @dev Only callable by non-reentrant and non-paused delegates.
-     */
+    
     function claimRewards() external nonReentrant whenNotPaused {
         DelegateStats storage stats = delegateStats[msg.sender];
         require(stats.availableRewards > 0, "No rewards available");
@@ -329,12 +298,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Creates a new reward period.
-     * @dev Only callable by the ADMIN_ROLE.
-     * @param duration The duration of the reward period in blocks.
-     * @param totalRewards The total rewards to be distributed in this period.
-     */
+    
     function createRewardPeriod(
         uint256 duration,
         uint256 totalRewards
@@ -362,11 +326,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Finalizes a reward period.
-     * @dev Only callable by the ADMIN_ROLE.
-     * @param periodId The ID of the reward period to finalize.
-     */
+    
     function finalizeRewardPeriod(
         uint256 periodId
     ) external onlyRole(ADMIN_ROLE) {
@@ -379,14 +339,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         emit RewardPeriodFinalized(periodId, period.distributedRewards);
     }
 
-    /**
-     * @notice Records a reward event for a delegate.
-     * @dev Internal function to be called by other functions to log rewards.
-     * @param delegate The address of the delegate.
-     * @param amount The amount of the reward.
-     * @param rewardType The type of reward (e.g., "Vote participation", "Proposal creation").
-     * @param multiplier The multiplier applied to the reward.
-     */
+    
     function _recordRewardEvent(
         address delegate,
         uint256 amount,
@@ -406,19 +359,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         }));
     }
 
-    /**
-     * @notice Updates the reward configuration.
-     * @dev Only callable by the ADMIN_ROLE.
-     * @param _baseReward The new base reward amount.
-     * @param _proposalCreationReward The new proposal creation reward amount.
-     * @param _votingStreakBonus The new voting streak bonus amount.
-     * @param _reputationMultiplier The new reputation multiplier.
-     * @param _maxMultiplier The new maximum multiplier.
-     * @param _minVotesForReward The new minimum votes required for a reward.
-     * @param _streakThreshold The new streak threshold for bonus activation.
-     * @param _bonusDuration The new bonus duration in blocks.
-     * @param _cooldownPeriod The new cooldown period in blocks.
-     */
+    
     function updateRewardConfig(
         uint256 _baseReward,
         uint256 _proposalCreationReward,
@@ -453,12 +394,7 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         emit RewardConfigUpdated("cooldownPeriod", oldConfig.cooldownPeriod, _cooldownPeriod);
     }
 
-    /**
-     * @notice Updates the reputation score of a delegate.
-     * @dev Only callable by the GOVERNANCE_ROLE.
-     * @param delegate The address of the delegate.
-     * @param newReputation The new reputation score.
-     */
+    
     function updateDelegateReputation(
         address delegate,
         uint256 newReputation
@@ -502,24 +438,16 @@ contract DelegateRewards is AccessControl, ReentrancyGuard, Pausable {
         return _calculateMultiplier(delegate);
     }
 
-    /**
-     * @notice Pauses the contract.
-     * @dev Only callable by the ADMIN_ROLE.
-     */
+    
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @notice Unpauses the contract.
-     * @dev Only callable by the ADMIN_ROLE.
-     */
+    
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }
 
-    /**
-     * @notice Receives ETH.
-     */
+    
     receive() external payable {}
 } 

@@ -5,6 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract BadgeNFT is ERC721, AccessControl {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant REVOKER_ROLE = keccak256("REVOKER_ROLE");
     uint256 public nextTokenId;
@@ -16,10 +19,10 @@ contract BadgeNFT is ERC721, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function mintBadge(address to, string memory tokenURI) external onlyRole(MINTER_ROLE) returns (uint256) {
+    function mintBadge(address to, string memory uri) external onlyRole(MINTER_ROLE) returns (uint256) {
         uint256 tokenId = ++nextTokenId;
         _mint(to, tokenId);
-        tokenURIs[tokenId] = tokenURI;
+        tokenURIs[tokenId] = uri;
         return tokenId;
     }
 

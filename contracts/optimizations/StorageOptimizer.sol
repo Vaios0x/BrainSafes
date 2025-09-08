@@ -5,11 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-/**
- * @title BrainSafes Storage Optimizer
- * @dev Handles storage optimizations and data packing
- * @custom:security-contact security@brainsafes.com
- */
+
 contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant STORAGE_ADMIN = keccak256("STORAGE_ADMIN");
@@ -58,9 +54,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
     event StorageOptimized(bytes32 indexed key, uint256 originalSize, uint256 newSize);
     event CompressionUpdated(bytes32 indexed key, uint256 savingsPercent);
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -70,9 +64,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         _grantRole(STORAGE_ADMIN, msg.sender);
     }
 
-    /**
-     * @dev Register a new storage layout
-     */
+    
     function registerLayout(
         string calldata name,
         uint8[] calldata fieldSizes,
@@ -95,9 +87,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return layoutId;
     }
 
-    /**
-     * @dev Pack multiple values into a single storage slot
-     */
+    
     function packValues(
         bytes32 layoutId,
         bytes32 key,
@@ -136,9 +126,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return bytes32(packedValue);
     }
 
-    /**
-     * @dev Unpack values from a storage slot
-     */
+    
     function unpackValues(
         bytes32 key
     ) external view returns (uint256[] memory) {
@@ -158,9 +146,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return values;
     }
 
-    /**
-     * @dev Pack address and uint96 into a single slot
-     */
+    
     function packAddressUint96(
         address addr,
         uint96 value
@@ -168,9 +154,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return bytes32(uint256(uint160(addr)) | (uint256(value) << 160));
     }
 
-    /**
-     * @dev Unpack address and uint96 from a single slot
-     */
+    
     function unpackAddressUint96(
         bytes32 packed
     ) external pure returns (address addr, uint96 value) {
@@ -178,9 +162,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         value = uint96(uint256(packed) >> 160);
     }
 
-    /**
-     * @dev Pack multiple small uints into a single slot
-     */
+    
     function packMultipleUints(
         uint8[] calldata uint8Values,
         uint16[] calldata uint16Values,
@@ -217,9 +199,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return bytes32(packed);
     }
 
-    /**
-     * @dev Update compression statistics
-     */
+    
     function updateCompressionStats(
         bytes32 key,
         uint256 originalSize,
@@ -235,9 +215,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit CompressionUpdated(key, stats.savingsPercent);
     }
 
-    /**
-     * @dev Get compression statistics
-     */
+    
     function getCompressionStats(
         bytes32 key
     ) external view returns (
@@ -257,9 +235,7 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         );
     }
 
-    /**
-     * @dev Get layout details
-     */
+    
     function getLayout(
         bytes32 layoutId
     ) external view returns (
@@ -277,8 +253,6 @@ contract StorageOptimizer is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         );
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 

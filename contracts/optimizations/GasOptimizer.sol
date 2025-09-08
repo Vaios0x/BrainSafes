@@ -6,11 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 
-/**
- * @title BrainSafes Gas Optimizer
- * @dev Handles gas optimizations, batch processing, and data compression
- * @custom:security-contact security@brainsafes.com
- */
+
 contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant OPTIMIZER_ADMIN = keccak256("OPTIMIZER_ADMIN");
@@ -65,9 +61,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
     event CacheMiss(bytes32 indexed key);
     event DataCompressed(bytes32 indexed key, uint256 compressionRatio);
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -85,9 +79,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         });
     }
 
-    /**
-     * @dev Create a new batch operation
-     */
+    
     function createBatch(
         address target,
         bytes[] calldata calls,
@@ -119,9 +111,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         return batchId;
     }
 
-    /**
-     * @dev Execute a batch operation
-     */
+    
     function executeBatch(bytes32 batchId) external whenNotPaused returns (bool[] memory) {
         BatchOperation storage batch = batches[batchId];
         require(!batch.executed, "Batch already executed");
@@ -147,9 +137,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         return results;
     }
 
-    /**
-     * @dev Optimize storage slot
-     */
+    
     function optimizeStorage(bytes32 key, bytes calldata data) external onlyRole(OPTIMIZER_ADMIN) {
         uint256 originalSize = data.length;
         bytes memory optimizedData = compressData(data);
@@ -164,9 +152,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         emit StorageOptimized(key, originalSize, optimizedData.length);
     }
 
-    /**
-     * @dev Cache data with intelligent TTL
-     */
+    
     function cacheData(bytes32 key, bytes calldata data) external {
         require(data.length > 0, "Empty data");
 
@@ -185,9 +171,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         }
     }
 
-    /**
-     * @dev Read cached data
-     */
+    
     function readCache(bytes32 key) external view returns (bytes memory, bool) {
         if (isCacheValid(key)) {
             cacheHits[key]++;
@@ -199,9 +183,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         return (new bytes(0), false);
     }
 
-    /**
-     * @dev Update cache configuration
-     */
+    
     function updateCacheConfig(
         uint256 maxSize,
         uint256 ttl,
@@ -214,16 +196,12 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         cacheConfig.compressionEnabled = compressionEnabled;
     }
 
-    /**
-     * @dev Track method gas usage
-     */
+    
     function trackMethodGas(address contract_, bytes4 method, uint256 gasUsed) external {
         methodGasUsage[contract_][method] = (methodGasUsage[contract_][method] * 9 + gasUsed) / 10;
     }
 
-    /**
-     * @dev Get method gas usage statistics
-     */
+    
     function getMethodGasStats(
         address contract_,
         bytes4 method
@@ -233,10 +211,7 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         l2GasPrice = tx.gasprice;
     }
 
-    /**
-     * @dev Compress data using a simple RLE algorithm
-     * @dev In production, use a more sophisticated compression algorithm
-     */
+    
     function compressData(bytes memory data) internal pure returns (bytes memory) {
         if (data.length < 3) return data;
 
@@ -267,26 +242,20 @@ contract GasOptimizer is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgr
         return result;
     }
 
-    /**
-     * @dev Check if data should be cached based on access patterns
-     */
+    
     function shouldCache(bytes32 key) internal view returns (bool) {
         return 
             cacheHits[key] >= cacheConfig.minAccessCount ||
             (block.timestamp - cacheTimestamps[key] <= cacheConfig.ttl);
     }
 
-    /**
-     * @dev Check if cached data is still valid
-     */
+    
     function isCacheValid(bytes32 key) internal view returns (bool) {
         return
             cache[key].length > 0 &&
             block.timestamp - cacheTimestamps[key] <= cacheConfig.ttl;
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 

@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/**
- * @title DelegationManager
- * @dev Sistema avanzado de delegación para BrainSafes Governance
- * @notice Permite delegación flexible, multi-nivel, con historial, límites y revocación
- * @custom:security-contact security@brainsafes.com
- */
+
 contract DelegationManager is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant DELEGATION_ADMIN = keccak256("DELEGATION_ADMIN");
     bytes32 public constant DELEGATE_ROLE = keccak256("DELEGATE_ROLE");

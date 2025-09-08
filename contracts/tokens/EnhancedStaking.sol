@@ -8,11 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title EnhancedStaking
- * @dev Sistema de staking mejorado para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant STAKING_MANAGER = keccak256("STAKING_MANAGER");
@@ -103,9 +99,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
     event BoosterActivated(address indexed user, string boosterName, uint256 duration);
     event PoolUpdated(uint256 indexed poolId, uint256 newAPR);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(
         address _brainSafes,
         address _securityManager,
@@ -123,9 +117,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         _setupRole(STAKING_MANAGER, msg.sender);
     }
 
-    /**
-     * @dev Crear nuevo pool de staking
-     */
+    
     function createStakingPool(
         string memory name,
         uint256 minStakeAmount,
@@ -156,9 +148,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit PoolCreated(poolCounter, name, baseAPR);
     }
 
-    /**
-     * @dev Hacer stake de tokens
-     */
+    
     function stake(
         uint256 poolId,
         uint256 amount
@@ -196,9 +186,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit Staked(msg.sender, poolId, amount);
     }
 
-    /**
-     * @dev Retirar tokens en stake
-     */
+    
     function unstake(
         uint256 poolId,
         uint256 amount
@@ -230,9 +218,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit Unstaked(msg.sender, poolId, amount);
     }
 
-    /**
-     * @dev Reclamar recompensas
-     */
+    
     function claimRewards(uint256 poolId) external whenNotPaused nonReentrant {
         require(
             block.timestamp >= stakingPools[poolId].stakes[msg.sender].lastClaimTime + CLAIM_COOLDOWN,
@@ -253,59 +239,53 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit RewardsClaimed(msg.sender, poolId, rewards);
     }
 
-    /**
-     * @dev Calcular recompensas pendientes
-     */
+    
     function _claimRewards(
         uint256 poolId,
         address user
     ) internal returns (uint256) {
         StakingPool storage pool = stakingPools[poolId];
-        StakeInfo storage stake = pool.stakes[user];
+        StakeInfo storage userStake = pool.stakes[user];
         
-        if (!stake.isActive || stake.amount == 0) {
+        if (!userStake.isActive || userStake.amount == 0) {
             return 0;
         }
 
-        uint256 timeElapsed = block.timestamp - stake.lastClaimTime;
-        uint256 baseReward = (stake.amount * pool.baseAPR * timeElapsed) / (365 days * 10000);
+        uint256 timeElapsed = block.timestamp - userStake.lastClaimTime;
+        uint256 baseReward = (userStake.amount * pool.baseAPR * timeElapsed) / (365 days * 10000);
         
         // Aplicar multiplicadores
-        uint256 tierMultiplier = _getTierMultiplier(stake.tier);
-        uint256 totalReward = (baseReward * tierMultiplier * stake.bonusMultiplier) / 10000;
+        uint256 tierMultiplier = _getTierMultiplier(userStake.tier);
+        uint256 totalReward = (baseReward * tierMultiplier * userStake.bonusMultiplier) / 10000;
 
-        stake.accumulatedRewards += totalReward;
+        userStake.accumulatedRewards += totalReward;
         
         return totalReward;
     }
 
-    /**
-     * @dev Verificar y actualizar tier
-     */
+    
     function _checkAndUpdateTier(uint256 poolId, address user) internal {
         StakingPool storage pool = stakingPools[poolId];
-        StakeInfo storage stake = pool.stakes[user];
+        StakeInfo storage userStake = pool.stakes[user];
 
         uint256 requiredAmount = pool.minStakeAmount;
         StakingTier newTier = StakingTier.Bronze;
 
         // Calcular tier basado en cantidad stakeada
         for (uint256 i = 0; i <= uint256(StakingTier.Diamond); i++) {
-            if (stake.amount >= requiredAmount) {
+            if (userStake.amount >= requiredAmount) {
                 newTier = StakingTier(i);
             }
             requiredAmount *= TIER_THRESHOLD_MULTIPLIER;
         }
 
-        if (newTier > stake.tier) {
-            stake.tier = newTier;
+        if (newTier > userStake.tier) {
+            userStake.tier = newTier;
             emit TierUpgraded(user, poolId, newTier);
         }
     }
 
-    /**
-     * @dev Obtener multiplicador de tier
-     */
+    
     function _getTierMultiplier(StakingTier tier) internal pure returns (uint256) {
         if (tier == StakingTier.Diamond) return 200; // 2x
         if (tier == StakingTier.Platinum) return 175; // 1.75x
@@ -314,9 +294,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         return 100; // 1x para Bronze
     }
 
-    /**
-     * @dev Crear booster de recompensas
-     */
+    
     function createRewardBooster(
         string memory name,
         uint256 multiplier,
@@ -340,9 +318,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit BoosterActivated(msg.sender, name, duration);
     }
 
-    /**
-     * @dev Activar booster
-     */
+    
     function activateBooster(string memory boosterName) external whenNotPaused nonReentrant {
         RewardBooster storage booster = boosters[boosterName];
         require(booster.isActive, "Booster not active");
@@ -356,9 +332,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit BoosterActivated(msg.sender, boosterName, booster.duration);
     }
 
-    /**
-     * @dev Añadir milestone a pool
-     */
+    
     function addPoolMilestone(
         uint256 poolId,
         uint256 threshold,
@@ -377,9 +351,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         });
     }
 
-    /**
-     * @dev Actualizar APR de pool
-     */
+    
     function updatePoolAPR(
         uint256 poolId,
         uint256 newBaseAPR,
@@ -394,9 +366,7 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         emit PoolUpdated(poolId, newBaseAPR);
     }
 
-    /**
-     * @dev Obtener información de stake
-     */
+    
     function getStakeInfo(
         uint256 poolId,
         address user
@@ -409,56 +379,48 @@ contract EnhancedStaking is AccessControl, Pausable, ReentrancyGuard {
         uint256 bonusMultiplier,
         bool isActive
     ) {
-        StakeInfo storage stake = stakingPools[poolId].stakes[user];
+        StakeInfo storage userStake = stakingPools[poolId].stakes[user];
         return (
-            stake.amount,
-            stake.startTime,
-            stake.endTime,
-            stake.accumulatedRewards,
-            stake.tier,
-            stake.bonusMultiplier,
-            stake.isActive
+            userStake.amount,
+            userStake.startTime,
+            userStake.endTime,
+            userStake.accumulatedRewards,
+            userStake.tier,
+            userStake.bonusMultiplier,
+            userStake.isActive
         );
     }
 
-    /**
-     * @dev Obtener pools de usuario
-     */
+    
     function getUserPools(address user) external view returns (uint256[] memory) {
         return userPools[user];
     }
 
-    /**
-     * @dev Calcular recompensas pendientes
-     */
+    
     function getPendingRewards(
         uint256 poolId,
         address user
     ) external view returns (uint256) {
         StakingPool storage pool = stakingPools[poolId];
-        StakeInfo storage stake = pool.stakes[user];
+        StakeInfo storage userStake = pool.stakes[user];
         
-        if (!stake.isActive || stake.amount == 0) {
+        if (!userStake.isActive || userStake.amount == 0) {
             return 0;
         }
 
-        uint256 timeElapsed = block.timestamp - stake.lastClaimTime;
-        uint256 baseReward = (stake.amount * pool.baseAPR * timeElapsed) / (365 days * 10000);
+        uint256 timeElapsed = block.timestamp - userStake.lastClaimTime;
+        uint256 baseReward = (userStake.amount * pool.baseAPR * timeElapsed) / (365 days * 10000);
         
-        uint256 tierMultiplier = _getTierMultiplier(stake.tier);
-        return (baseReward * tierMultiplier * stake.bonusMultiplier) / 10000;
+        uint256 tierMultiplier = _getTierMultiplier(userStake.tier);
+        return (baseReward * tierMultiplier * userStake.bonusMultiplier) / 10000;
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }

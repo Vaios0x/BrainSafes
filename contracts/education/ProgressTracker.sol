@@ -3,15 +3,18 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+// Note: These interfaces are placeholders for the actual implementations
 interface ICourseCatalog {
-    function courses(uint256 id) external view returns (
-        uint256, string memory, string memory, address, string memory, uint256, bool, uint256[] memory
-    );
+    function courses(uint256) external view returns (address, string memory, string memory, uint256, uint256, uint256, bool, uint256[] memory);
 }
 
 interface IBadgeNFT {
-    function mintBadge(address to, string memory tokenURI) external returns (uint256);
+    function mintBadge(address, string memory) external;
 }
+
+
+
+
 
 contract ProgressTracker is AccessControl {
     bytes32 public constant IA_ROLE = keccak256("IA_ROLE");
@@ -58,7 +61,7 @@ contract ProgressTracker is AccessControl {
         require(msg.sender == student || hasRole(IA_ROLE, msg.sender), "No autorizado");
         Progress storage p = progress[student][courseId];
         require(p.totalModules > 0, "No iniciado");
-        require(completedModules <= p.totalModules, "Excede módulos");
+        require(completedModules <= p.totalModules, unicode"Excede módulos");
         p.completedModules = completedModules;
         p.finished = (completedModules == p.totalModules);
         p.lastUpdate = block.timestamp;

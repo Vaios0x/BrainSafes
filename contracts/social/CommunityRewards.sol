@@ -34,13 +34,13 @@ contract CommunityRewards is AccessControl {
     }
 
     function assignPoints(address user, uint96 pts) external onlyRole(ADMIN_ROLE) {
-        require(pts > 0, "Puntos inválidos");
+        require(pts > 0, unicode"Puntos inválidos");
         unchecked { points[user] += pts; }
         emit PointsAssigned(user, pts);
     }
 
     function assignPointsOracle(address user, uint96 pts) external onlyRole(ORACLE_ROLE) {
-        require(pts > 0, "Puntos inválidos");
+        require(pts > 0, unicode"Puntos inválidos");
         unchecked { points[user] += pts; }
         emit PointsAssigned(user, pts);
     }
@@ -48,7 +48,7 @@ contract CommunityRewards is AccessControl {
     function claimTokenReward(uint96 amount) external {
         uint96 userPoints = points[msg.sender];
         require(userPoints >= amount, "No tienes suficientes puntos");
-        require(amount > 0, "Cantidad inválida");
+        require(amount > 0, unicode"Cantidad inválida");
         unchecked { points[msg.sender] = userPoints - amount; }
         claimed[msg.sender] += amount;
         // Assembly transfer

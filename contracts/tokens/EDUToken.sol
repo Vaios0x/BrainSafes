@@ -8,15 +8,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import "@arbitrum/nitro-contracts/src/bridge/ICustomToken.sol";
-import "@arbitrum/nitro-contracts/src/bridge/ITokenGateway.sol";
+import "../interfaces/ICustomToken.sol";
+import "../interfaces/ITokenGateway.sol";
 
-/**
- * @title EDUToken
- * @notice ERC20 utility token for BrainSafes ecosystem
- * @dev Supports minting, burning, staking, and rewards
- * @author BrainSafes Team
- */
+
 contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausable, ICustomToken {
     using SafeMath for uint256;
 
@@ -29,8 +24,6 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     address public l1Gateway;
     
     // Bridge events
-    event TokensBridged(address indexed from, address indexed to, uint256 amount, uint256 chainId);
-    event TokensReceived(address indexed to, uint256 amount, uint256 fromChainId);
     event BridgeConfigUpdated(address l1Token, address l2Gateway, address l1Gateway);
 
     // ========== ROLES ==========
@@ -42,7 +35,6 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     bytes32 public constant BRIDGE_ROLE = keccak256("BRIDGE_ROLE");
     bytes32 public constant FIAT_MINTER_ROLE = keccak256("FIAT_MINTER_ROLE");
     mapping(string => bool) public processedFiatPayments;
-    event FiatUserMinted(address indexed to, uint256 amount, string paymentId);
 
     // ========== CONSTANTS ==========
     uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18; // 1 billion tokens
@@ -52,27 +44,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     uint256 public constant STAKING_LOCK_PERIOD = 30 days; // Minimum lock period
 
     // ========== STRUCTURES ==========
-    /**
-     * @dev Structure for storing staking information
-     */
-    struct StakeInfo {
-        uint256 amount;
-        uint256 timestamp;
-        uint256 lockPeriod;
-        uint256 rewardRate;
-        bool active;
-    }
-
-    /**
-     * @dev Structure for reward configuration
-     */
-    struct RewardConfig {
-        uint256 learningReward;      // Reward for completing lessons
-        uint256 achievementReward;   // Reward for achievements
-        uint256 referralReward;      // Reward for referrals
-        uint256 instructorBonus;     // Bonus for instructors
-        uint256 dailyLoginReward;    // Reward for daily login
-    }
+    // Note: StakeInfo and RewardConfig are defined in ICustomToken interface
 
     // ========== CROSS-CHAIN VARIABLES ==========
     address public l1TokenAddress;
@@ -109,34 +81,26 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     event FiatUserMinted(address indexed to, uint256 amount, string paymentId);
 
     // ========== MODIFIERS ==========
-    /**
-     * @dev Ensures the account is not blacklisted
-     */
+    
     modifier notBlacklisted(address account) {
         require(!blacklisted[account], "Account is blacklisted");
         _;
     }
 
-    /**
-     * @dev Ensures staking is enabled
-     */
+    
     modifier stakingIsEnabled() {
         require(stakingEnabled, "Staking is disabled");
         _;
     }
 
-    /**
-     * @dev Ensures transfers are enabled
-     */
+    
     modifier transfersAreEnabled() {
         require(transfersEnabled, "Transfers are disabled");
         _;
     }
 
     // ========== CONSTRUCTOR ==========
-    /**
-     * @dev Initializes the contract with initial supply and reward configuration
-     */
+    
     constructor() ERC20("BrainSafes Token", "EDU") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
@@ -161,56 +125,39 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     }
 
     // ========== TOKEN FUNCTIONS ==========
-    /**
-     * @dev Mint tokens - only for authorized roles
-     * @param to Address to mint tokens to
-     * @param amount Amount of tokens to mint
-     */
+    
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         require(totalSupply().add(amount) <= MAX_SUPPLY, "Exceeds max supply");
         _mint(to, amount);
     }
 
-    /**
-     * @dev Burn tokens from a specific account
-     */
-    function burnFrom(address account, uint256 amount) public onlyRole(BURNER_ROLE) {
+    
+    function burnFrom(address account, uint256 amount) public override(ERC20Burnable, ICustomToken) onlyRole(BURNER_ROLE) {
         _burn(account, amount);
     }
 
-    /**
-     * @dev Create a snapshot of the current state
-     */
+    
     function snapshot() public onlyRole(SNAPSHOT_ROLE) {
         _snapshot();
     }
 
-    /**
-     * @dev Pause the contract
-     */
+    
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Unpause the contract
-     */
+    
     function unpause() public onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
     // ========== CROSS-CHAIN FUNCTIONALITY ==========
-    /**
-     * @dev Set the L1 token address for cross-chain messaging
-     * @param _l1TokenAddress Address of the token on L1
-     */
+    
     function setL1TokenAddress(address _l1TokenAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         l1TokenAddress = _l1TokenAddress;
     }
     
-    /**
-     * @dev Initialize bridge configuration
-     */
+    
     function initializeBridge(
         address _l1Token,
         address _l2Gateway,
@@ -222,9 +169,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit BridgeConfigUpdated(_l1Token, _l2Gateway, _l1Gateway);
     }
 
-    /**
-     * @dev Implementation of ICustomToken for Arbitrum bridge support
-     */
+    
     function bridgeInit(address _l1Token) external override {
         require(msg.sender == l2Gateway, "Only L2 Gateway can initialize bridge");
         require(l1Token == address(0), "Bridge already initialized");
@@ -232,9 +177,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit BridgeConfigUpdated(_l1Token, l2Gateway, l1Gateway);
     }
 
-    /**
-     * @dev Bridge tokens to L1 using the custom gateway
-     */
+    
     function bridgeToL1(
         address _to,
         uint256 _amount
@@ -256,10 +199,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit TokensBridged(msg.sender, _to, _amount, 1); // 1 for Ethereum mainnet
     }
 
-    /**
-     * @dev Process tokens received from L1
-     * This function can only be called by the L2 Gateway
-     */
+    
     function bridgeMint(
         address _account,
         uint256 _amount
@@ -269,16 +209,12 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit TokensReceived(_account, _amount, 1); // 1 for Ethereum mainnet
     }
 
-    /**
-     * @dev Get the L1 token address
-     */
+    
     function l1Address() external view override returns (address) {
         return l1Token;
     }
 
-    /**
-     * @dev Batch bridge transfer to L1 for gas optimization
-     */
+    
     function batchBridgeToL1(
         address[] calldata _recipients,
         uint256[] calldata _amounts
@@ -309,9 +245,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         }
     }
 
-    /**
-     * @dev Get bridge configuration
-     */
+    
     function getBridgeConfig() external view returns (
         address _l1Token,
         address _l2Gateway,
@@ -320,11 +254,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         return (l1Token, l2Gateway, l1Gateway);
     }
     
-    /**
-     * @dev Batch process multiple transfers for gas optimization
-     * @param _recipients Array of recipient addresses
-     * @param _amounts Array of amounts to transfer
-     */
+    
     function batchTransfer(address[] calldata _recipients, uint256[] calldata _amounts) 
         external 
         notBlacklisted(msg.sender) 
@@ -347,11 +277,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     }
 
     // ========== STAKING SYSTEM ==========
-    /**
-     * @dev Stake tokens
-     * @param amount Amount of tokens to stake
-     * @param lockPeriod Duration to lock tokens for
-     */
+    
     function stake(uint256 amount, uint256 lockPeriod) external stakingIsEnabled notBlacklisted(msg.sender) {
         require(amount >= MIN_STAKING_AMOUNT, "Minimum amount not reached");
         require(lockPeriod >= STAKING_LOCK_PERIOD, "Lock period too short");
@@ -375,9 +301,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit Staked(msg.sender, amount, lockPeriod);
     }
 
-    /**
-     * @dev Unstake tokens
-     */
+    
     function unstake(uint256 stakeIndex) external notBlacklisted(msg.sender) {
         require(stakeIndex < userStakes[msg.sender].length, "Stake does not exist");
         
@@ -406,12 +330,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit Unstaked(msg.sender, stakedAmount, reward);
     }
 
-    /**
-     * @dev Calculate staking reward
-     * @param user Address of the staker
-     * @param stakeIndex Index of the stake
-     * @return Calculated reward amount
-     */
+    
     function calculateStakingReward(address user, uint256 stakeIndex) public view returns (uint256) {
         require(stakeIndex < userStakes[user].length, "Stake does not exist");
         
@@ -425,18 +344,13 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         return reward;
     }
 
-    /**
-     * @dev Get user's stake information
-     */
+    
     function getUserStakes(address user) external view returns (StakeInfo[] memory) {
         return userStakes[user];
     }
 
     // ========== REWARDS SYSTEM ==========
-    /**
-     * @dev Reward for completing a lesson
-     * @param student Address of the student to reward
-     */
+    
     function rewardLearning(address student) external onlyRole(MINTER_ROLE) notBlacklisted(student) {
         uint256 reward = rewardConfig.learningReward;
         mint(student, reward);
@@ -444,9 +358,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit RewardClaimed(student, reward, "learning");
     }
 
-    /**
-     * @dev Reward for achieving an achievement
-     */
+    
     function rewardAchievement(address user) external onlyRole(MINTER_ROLE) notBlacklisted(user) {
         uint256 reward = rewardConfig.achievementReward;
         mint(user, reward);
@@ -454,11 +366,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit RewardClaimed(user, reward, "achievement");
     }
 
-    /**
-     * @dev Reward for referring users
-     * @param referrer Address of the referrer
-     * @param referred Address of the referred user
-     */
+    
     function rewardReferral(address referrer, address referred) external onlyRole(MINTER_ROLE) {
         require(!blacklisted[referrer] && !blacklisted[referred], "User is blacklisted");
         require(referrals[referred] == address(0), "User already referred");
@@ -474,9 +382,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit ReferralRewarded(referrer, referred, reward);
     }
 
-    /**
-     * @dev Daily login reward
-     */
+    
     function claimDailyLoginReward() external notBlacklisted(msg.sender) {
         uint256 currentTime = block.timestamp;
         uint256 lastLogin = lastLoginTime[msg.sender];
@@ -507,9 +413,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit DailyLoginRewarded(msg.sender, streakBonus, streak);
     }
 
-    /**
-     * @dev Bonus for instructors for creating quality content
-     */
+    
     function rewardInstructor(address instructor) external onlyRole(MINTER_ROLE) notBlacklisted(instructor) {
         uint256 reward = rewardConfig.instructorBonus;
         mint(instructor, reward);
@@ -518,14 +422,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     }
 
     // ========== ADMIN FUNCTIONS ==========
-    /**
-     * @dev Update reward configuration
-     * @param _learningReward New reward for completing lessons
-     * @param _achievementReward New reward for achievements
-     * @param _referralReward New reward for referrals
-     * @param _instructorBonus New bonus for instructors
-     * @param _dailyLoginReward New reward for daily login
-     */
+    
     function updateRewardConfig(
         uint256 _learningReward,
         uint256 _achievementReward,
@@ -542,32 +439,24 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         emit RewardConfigUpdated();
     }
 
-    /**
-     * @dev Enable/disable staking
-     */
+    
     function setStakingEnabled(bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
         stakingEnabled = enabled;
         emit StakingConfigUpdated(enabled);
     }
 
-    /**
-     * @dev Enable/disable transfers
-     */
+    
     function setTransfersEnabled(bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
         transfersEnabled = enabled;
     }
 
-    /**
-     * @dev Add/remove from blacklist
-     */
+    
     function setBlacklisted(address user, bool isBlacklisted) external onlyRole(DEFAULT_ADMIN_ROLE) {
         blacklisted[user] = isBlacklisted;
         emit UserBlacklisted(user, isBlacklisted);
     }
 
-    /**
-     * @dev Emergency function to recover blacklisted tokens
-     */
+    
     function emergencyWithdraw(address token, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (token == address(0)) {
             payable(msg.sender).transfer(amount);
@@ -577,19 +466,12 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     }
 
     // ========== GAS OPTIMIZATION FOR ARBITRUM ==========
-    /**
-     * @dev Get the current Arbitrum block number (more gas efficient than block.number)
-     */
+    
     function getBlockNumber() public view returns (uint256) {
         return arbsys.arbBlockNumber();
     }
 
-    /**
-     * @dev Batch claim rewards for gas optimization
-     * @param users Array of user addresses to reward
-     * @param amounts Array of reward amounts
-     * @param rewardType Type of reward
-     */
+    
     function batchReward(
         address[] calldata users,
         uint256[] calldata amounts,
@@ -619,9 +501,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    /**
-     * @dev Override transfer to handle bridge-related checks
-     */
+    
     function transfer(
         address to,
         uint256 amount
@@ -632,9 +512,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         return super.transfer(to, amount);
     }
 
-    /**
-     * @dev Override transferFrom to handle bridge-related checks
-     */
+    
     function transferFrom(
         address from,
         address to,
@@ -646,9 +524,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         return super.transferFrom(from, to, amount);
     }
 
-    /**
-     * @dev Update bridge configuration (only admin)
-     */
+    
     function updateBridgeConfig(
         address _l2Gateway,
         address _l1Gateway
@@ -659,16 +535,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     }
 
     // ========== VIEW FUNCTIONS ==========
-    /**
-     * @dev Get full information of a user
-     * @param user Address of the user
-     * @return balance Current token balance
-     * @return stakedAmount Total amount staked
-     * @return pendingRewards Pending staking rewards
-     * @return loginStreak Current daily login streak
-     * @return referralsCount Number of successful referrals
-     * @return isBlacklisted Whether the user is blacklisted
-     */
+    
     function getUserInfo(address user) external view returns (
         uint256 balance,
         uint256 stakedAmount,
@@ -692,13 +559,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         }
     }
 
-    /**
-     * @dev Get global statistics
-     * @return _totalSupply Current total supply
-     * @return _totalStaked Total amount staked
-     * @return _totalRewardsDistributed Total rewards distributed
-     * @return _stakingAPY Current staking APY
-     */
+    
     function getGlobalStats() external view returns (
         uint256 _totalSupply,
         uint256 _totalStaked,
@@ -711,12 +572,7 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
         _stakingAPY = STAKING_REWARD_RATE; // Returns base rate, could be dynamic
     }
 
-    /**
-     * @dev Check if a user can unstake
-     * @param user Address of the user
-     * @param stakeIndex Index of the stake to check
-     * @return Whether the stake can be unstaked
-     */
+    
     function canUnstake(address user, uint256 stakeIndex) external view returns (bool) {
         if (stakeIndex >= userStakes[user].length) return false;
         
@@ -725,32 +581,22 @@ contract EDUToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, Pausabl
     }
 
     // ========== UTILITY FUNCTIONS ==========
-    /**
-     * @dev Receive ETH (for specific cases)
-     */
+    
     receive() external payable {
         // Only allow deposits from admin
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Unauthorized");
     }
 
-    /**
-     * @dev Contract version
-     * @return Version string in semantic format
-     */
+    
     function version() external pure returns (string memory) {
         return "2.0.0";
     }
 
-    /**
-     * @dev Emite tokens a un usuario tras pago fiat confirmado (solo backend autorizado)
-     * @param to Dirección del usuario
-     * @param amount Cantidad de tokens a emitir
-     * @param paymentId ID único del pago fiat (Stripe)
-     */
+    
     function mintFiatUser(address to, uint256 amount, string memory paymentId) public onlyRole(FIAT_MINTER_ROLE) {
         require(!processedFiatPayments[paymentId], "Pago fiat ya procesado");
-        require(to != address(0), "Dirección inválida");
-        require(amount > 0, "Cantidad inválida");
+        require(to != address(0), unicode"Dirección inválida");
+        require(amount > 0, unicode"Cantidad inválida");
         processedFiatPayments[paymentId] = true;
         _mint(to, amount);
         emit FiatUserMinted(to, amount, paymentId);

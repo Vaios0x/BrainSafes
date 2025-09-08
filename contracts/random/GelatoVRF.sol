@@ -4,14 +4,32 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@gelatonetwork/relay-context/contracts/vendor/GelatoRelayContext.sol";
+import "../interfaces/IGelatoRelayContext.sol";
 
-/**
- * @title GelatoVRF
- * @notice Randomness provider contract for BrainSafes using Gelato VRF
- * @dev Supplies verifiable random numbers for games, lotteries, and draws
- * @author BrainSafes Team
- */
+
+interface IRandomnessConsumer {
+    function rawFulfillRandomWords(
+        uint256 requestId,
+        uint256[] memory randomWords
+    ) external;
+}
+
+
+contract GelatoRelayContext is IGelatoRelayContext {
+    function getFeeCollector() external pure override returns (address) {
+        return address(0);
+    }
+    
+    function getFeeToken() external pure override returns (address) {
+        return address(0);
+    }
+    
+    function getFee() external pure override returns (uint256) {
+        return 0;
+    }
+}
+
+
 contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayContext {
     bytes32 public constant VRF_MANAGER_ROLE = keccak256("VRF_MANAGER_ROLE");
     bytes32 public constant CALLBACK_ROLE = keccak256("CALLBACK_ROLE");
@@ -75,13 +93,7 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         _grantRole(VRF_MANAGER_ROLE, msg.sender);
     }
 
-    /**
-     * @notice Requests random words from the VRF.
-     * @dev This function is non-reentrant and requires the contract to be not paused.
-     * @param numWords The number of random words to request.
-     * @param requestType The type of request (e.g., "game_draw", "lottery_draw").
-     * @return requestId The ID of the requested random words.
-     */
+    
     function requestRandomWords(
         uint256 numWords,
         bytes32 requestType
@@ -124,12 +136,7 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         return requestId;
     }
 
-    /**
-     * @notice Callback function to fulfill random words.
-     * @dev This function is only callable by the CALLBACK_ROLE.
-     * @param requestId The ID of the request.
-     * @param randomWords The array of random words.
-     */
+    
     function fulfillRandomWords(
         uint256 requestId,
         uint256[] memory randomWords
@@ -158,15 +165,7 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         }
     }
 
-    /**
-     * @notice Sets the configuration parameters for a request type.
-     * @dev This function is only callable by the VRF_MANAGER_ROLE.
-     * @param requestType The type of request.
-     * @param minimumRequestConfirmations The minimum number of confirmations required.
-     * @param callbackGasLimit The gas limit for the callback.
-     * @param requestConfirmationDelay The delay in blocks before confirmations are counted.
-     * @param requestExpiryBlocks The number of blocks after which a request expires.
-     */
+    
     function setRequestConfig(
         bytes32 requestType,
         uint256 minimumRequestConfirmations,
@@ -194,12 +193,7 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         );
     }
 
-    /**
-     * @notice Cancels a request.
-     * @dev This function is only callable by the VRF_MANAGER_ROLE.
-     * @param requestId The ID of the request to cancel.
-     * @param reason The reason for cancellation.
-     */
+    
     function cancelRequest(
         uint256 requestId,
         string memory reason
@@ -210,12 +204,7 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         emit RequestCancelled(requestId, reason);
     }
 
-    /**
-     * @notice Retrieves the random words for a specific request.
-     * @dev Requires the request to be fulfilled.
-     * @param requestId The ID of the request.
-     * @return randomWords The array of random words.
-     */
+    
     function getRandomWords(
         uint256 requestId
     ) external view returns (uint256[] memory) {
@@ -223,42 +212,28 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         return requests[requestId].randomWords;
     }
 
-    /**
-     * @notice Retrieves all requests made by a specific user.
-     * @param user The address of the user.
-     * @return requestIds The array of request IDs.
-     */
+    
     function getUserRequests(
         address user
     ) external view returns (uint256[] memory) {
         return userRequests[user];
     }
 
-    /**
-     * @notice Retrieves detailed information about a specific request.
-     * @param requestId The ID of the request.
-     * @return request The details of the request.
-     */
+    
     function getRequestDetails(
         uint256 requestId
     ) external view returns (RandomRequest memory) {
         return requests[requestId];
     }
 
-    /**
-     * @notice Retrieves the configuration parameters for a specific request type.
-     * @param requestType The type of request.
-     * @return config The configuration parameters.
-     */
+    
     function getRequestConfig(
         bytes32 requestType
     ) external view returns (RequestConfig memory) {
         return requestConfigs[requestType];
     }
 
-    /**
-     * @dev Verifica si una dirección es un contrato
-     */
+    
     function _isContract(address addr) internal view returns (bool) {
         uint256 size;
         assembly {
@@ -267,29 +242,16 @@ contract GelatoVRF is AccessControl, ReentrancyGuard, Pausable, GelatoRelayConte
         return size > 0;
     }
 
-    /**
-     * @notice Pauses the contract.
-     * @dev This function is only callable by the VRF_MANAGER_ROLE.
-     */
+    
     function pause() external onlyRole(VRF_MANAGER_ROLE) {
         _pause();
     }
 
-    /**
-     * @notice Unpauses the contract.
-     * @dev This function is only callable by the VRF_MANAGER_ROLE.
-     */
+    
     function unpause() external onlyRole(VRF_MANAGER_ROLE) {
         _unpause();
     }
 }
 
-/**
- * @dev Interfaz para contratos que consumen aleatoriedad
- */
-interface IRandomnessConsumer {
-    function rawFulfillRandomWords(
-        uint256 requestId,
-        uint256[] memory randomWords
-    ) external;
-} 
+
+ 

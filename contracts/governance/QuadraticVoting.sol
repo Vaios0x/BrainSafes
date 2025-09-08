@@ -7,12 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-/**
- * @title QuadraticVoting
- * @notice Quadratic voting contract for BrainSafes governance
- * @dev Implements quadratic voting logic for fairer decision making
- * @author BrainSafes Team
- */
+
 contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
@@ -145,9 +140,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         _grantRole(CREDIT_MANAGER_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Registra un nuevo votante
-     */
+    
     function registerVoter(address voter) external onlyRole(GOVERNANCE_ROLE) {
         require(!voters[voter].isVerified, "Voter already registered");
 
@@ -162,9 +155,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         emit VoterRegistered(voter, BASE_CREDITS, block.timestamp);
     }
 
-    /**
-     * @dev Verifica un votante
-     */
+    
     function verifyVoter(
         address voter,
         string memory verificationMethod
@@ -178,9 +169,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         emit VoterVerified(voter, block.timestamp, verificationMethod);
     }
 
-    /**
-     * @dev Refresca créditos de votación
-     */
+    
     function refreshCredits(address voter) external nonReentrant whenNotPaused {
         Voter storage voterData = voters[voter];
         require(voterData.isVerified, "Voter not verified");
@@ -201,9 +190,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Emite voto cuadrático
-     */
+    
     function castVote(
         uint256 proposalId,
         uint256 credits,
@@ -262,9 +249,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         _updateVotingStats(msg.sender, credits, votingPower);
     }
 
-    /**
-     * @dev Calcula poder de voto cuadrático
-     */
+    
     function _calculateQuadraticPower(
         uint256 credits
     ) internal pure returns (uint256) {
@@ -272,9 +257,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         return sqrt(credits.mul(QUADRATIC_FACTOR));
     }
 
-    /**
-     * @dev Calcula raíz cuadrada (implementación de Babylonian)
-     */
+    
     function sqrt(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 0;
         
@@ -289,9 +272,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         return y;
     }
 
-    /**
-     * @dev Crea nuevo período de votación
-     */
+    
     function createVotingPeriod(
         uint256 duration,
         uint256 baseCredits
@@ -316,9 +297,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Finaliza período de votación
-     */
+    
     function endVotingPeriod(uint256 periodId) external onlyRole(ADMIN_ROLE) {
         VotingPeriod storage period = votingPeriods[periodId];
         require(period.isActive, "Period not active");
@@ -333,9 +312,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Actualiza estadísticas de votación
-     */
+    
     function _updateVotingStats(
         address voter,
         uint256 credits,
@@ -363,9 +340,7 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
             participatedPeriods.mul(100).div(totalPeriods) : 0;
     }
 
-    /**
-     * @dev Calcula votantes únicos en un período
-     */
+    
     function _calculateUniqueVoters(
         uint256 periodId
     ) internal view returns (uint256) {
@@ -435,16 +410,12 @@ contract QuadraticVoting is AccessControl, ReentrancyGuard, Pausable {
         return _verifiedVoters.current();
     }
 
-    /**
-     * @dev Pausa el contrato
-     */
+    
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Despausa el contrato
-     */
+    
     function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }

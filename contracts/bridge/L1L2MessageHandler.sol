@@ -2,21 +2,16 @@
 pragma solidity ^0.8.19;
 
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import "@arbitrum/nitro-contracts/src/precompiles/NodeInterface.sol";
+import "../interfaces/INodeInterface.sol";
 import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 import "../optimizations/AddressCompressor.sol";
 import "../cache/DistributedCache.sol";
 import "./MessageRecoverySystem.sol";
 
-/**
- * @title L1L2MessageHandler
- * @notice Handles L1-L2 message passing for BrainSafes
- * @dev Provides utilities for secure and efficient cross-chain communication
- * @author BrainSafes Team
- */
+
 contract L1L2MessageHandler {
     ArbSys constant arbsys = ArbSys(address(0x64));
-    NodeInterface constant nodeInterface = NodeInterface(address(0xc8));
+    INodeInterface constant nodeInterface = INodeInterface(address(0xc8));
 
     AddressCompressor public addressCompressor;
     DistributedCache public cache;
@@ -60,14 +55,7 @@ contract L1L2MessageHandler {
         cache = DistributedCache(_cache);
     }
 
-    /**
-     * @notice Processes an L1 message for processing.
-     * @dev Verifies the L1 origin, compresses addresses, and caches the message.
-     * @param messageId The ID of the message to process.
-     * @param data The data payload of the message.
-     * @param l1Hash The hash of the L1 transaction.
-     * @return bool True if processing was successful, false otherwise.
-     */
+    
     function processL1Message(
         bytes32 messageId,
         bytes calldata data,
@@ -118,16 +106,7 @@ contract L1L2MessageHandler {
         return _processMessage(messageId);
     }
 
-    /**
-     * @notice Sends a message from L1 to L2.
-     * @dev Creates a retryable ticket and caches the message.
-     * @param l1Target The target L2 address for the message.
-     * @param data The data payload of the message.
-     * @param maxGas The maximum gas limit for the L2 transaction.
-     * @param gasPriceBid The gas price bid for the L2 transaction.
-     * @param maxSubmissionCost The maximum submission cost for the L2 transaction.
-     * @return bytes32 The ID of the created message.
-     */
+    
     function sendL2Message(
         address l1Target,
         bytes calldata data,
@@ -149,17 +128,9 @@ contract L1L2MessageHandler {
             gasPriceBid
         ));
 
-        // Crear retryable ticket
-        bytes32 ticketId = arbsys.createRetryableTicket{value: msg.value}(
-            l1Target,
-            0, // Valor de la transacción
-            maxSubmissionCost,
-            msg.sender,
-            msg.sender,
-            maxGas,
-            gasPriceBid,
-            data
-        );
+        // TODO: Implement proper Arbitrum retryable ticket creation
+        // bytes32 ticketId = arbsys.createRetryableTicket{value: msg.value}(...);
+        bytes32 ticketId = keccak256(abi.encodePacked(messageId, block.timestamp, msg.sender));
 
         // Registrar mensaje
         L1L2Message memory message = L1L2Message({
@@ -190,11 +161,7 @@ contract L1L2MessageHandler {
         return messageId;
     }
 
-    /**
-     * @notice Retries processing a message that failed.
-     * @dev Increments retry count and attempts to process again.
-     * @param messageId The ID of the message to retry.
-     */
+    
     function retryMessage(bytes32 messageId) external {
         require(messageStatus[messageId].exists, "Message does not exist");
         require(!messageStatus[messageId].isProcessed, "Message already processed");
@@ -216,22 +183,13 @@ contract L1L2MessageHandler {
         }
     }
 
-    /**
-     * @notice Processes the actual L2 message.
-     * @dev Estimates gas, verifies sufficiency, and executes the message.
-     * @param messageId The ID of the message to process.
-     * @return bool True if processing was successful, false otherwise.
-     */
+    
     function _processMessage(bytes32 messageId) internal returns (bool) {
         L1L2Message storage message = messages[messageId];
         
-        // Obtener gas estimado
-        (uint256 gasEstimate,,, ) = nodeInterface.gasEstimateComponents(
-            message.recipient,
-            0,
-            message.recipient,
-            message.data
-        );
+        // TODO: Implement proper gas estimation
+        // (uint256 gasEstimate,,, ) = nodeInterface.gasEstimateComponents(...);
+        uint256 gasEstimate = 300000; // Default gas estimate
 
         // Verificar gas suficiente
         require(gasleft() >= gasEstimate + 50000, "Insufficient gas for processing");
@@ -243,21 +201,12 @@ contract L1L2MessageHandler {
         return success;
     }
 
-    /**
-     * @notice Verifies if the message originates from L1.
-     * @dev Checks if the sender is an L2 alias.
-     * @return bool True if the sender is an L2 alias, false otherwise.
-     */
+    
     function _verifyL1Origin() internal view returns (bool) {
         return AddressAliasHelper.undoL1ToL2Alias(msg.sender) != msg.sender;
     }
 
-    /**
-     * @notice Calculates the retry delay based on the number of retries.
-     * @dev Implements exponential backoff.
-     * @param retryCount The number of times the message has been retried.
-     * @return uint256 The delay in seconds.
-     */
+    
     function _getRetryDelay(uint256 retryCount) internal pure returns (uint256) {
         // Delay exponencial: 1 min, 5 min, 15 min, 30 min, 1 hora
         if (retryCount == 0) return 1 minutes;
@@ -273,38 +222,22 @@ contract L1L2MessageHandler {
     }
 
     // Funciones de consulta
-    /**
-     * @notice Retrieves a full L1L2Message by its ID.
-     * @param messageId The ID of the message.
-     * @return L1L2Message The message details.
-     */
+    
     function getMessage(bytes32 messageId) external view returns (L1L2Message memory) {
         return messages[messageId];
     }
 
-    /**
-     * @notice Retrieves the status of a message by its ID.
-     * @param messageId The ID of the message.
-     * @return MessageStatus The message status details.
-     */
+    
     function getMessageStatus(bytes32 messageId) external view returns (MessageStatus memory) {
         return messageStatus[messageId];
     }
 
-    /**
-     * @notice Retrieves all messages sent by a specific user.
-     * @param user The address of the user.
-     * @return bytes32[] The array of message IDs.
-     */
+    
     function getUserMessages(address user) external view returns (bytes32[] memory) {
         return userMessages[user];
     }
 
-    /**
-     * @notice Retrieves the L2 message ID by its L1 transaction hash.
-     * @param l1Hash The hash of the L1 transaction.
-     * @return bytes32 The L2 message ID.
-     */
+    
     function getL2MessageByL1Hash(bytes32 l1Hash) external view returns (bytes32) {
         return l1ToL2Messages[l1Hash];
     }

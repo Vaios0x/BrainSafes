@@ -1,67 +1,181 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
+import { AdvancedGlassCard, GlassButton } from '../GlassmorphismEffects';
 
-// Componente de alerta individual
-const AlertItem = ({ alert, index, onDismiss }) => (
+// Componente de alerta individual mejorado
+const AlertItem = ({ alert, index, onDismiss, onAction }) => (
   <motion.div
-    initial={{ opacity: 0, x: 50 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -50 }}
+    initial={{ opacity: 0, x: 50, scale: 0.9 }}
+    animate={{ opacity: 1, x: 0, scale: 1 }}
+    exit={{ opacity: 0, x: -50, scale: 0.9 }}
     transition={{ duration: 0.3, delay: index * 0.1 }}
     whileHover={{ 
       scale: 1.02,
+      y: -2,
       transition: { duration: 0.2 }
     }}
-    className={`group relative p-4 rounded-xl border-l-4 shadow-soft backdrop-blur-sm ${
-      alert.type === 'error' 
-        ? 'bg-red-50/80 dark:bg-red-900/20 border-red-500' 
-        : alert.type === 'warning' 
-        ? 'bg-yellow-50/80 dark:bg-yellow-900/20 border-yellow-500'
-        : alert.type === 'success'
-        ? 'bg-green-50/80 dark:bg-green-900/20 border-green-500'
-        : 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-500'
-    }`}
+    className="group relative"
   >
-    <div className="flex items-start justify-between">
-      <div className="flex items-start space-x-3">
-        <motion.div
-          className={`text-xl ${
-            alert.type === 'error' 
-              ? 'text-red-500' 
-              : alert.type === 'warning' 
-              ? 'text-yellow-500'
-              : alert.type === 'success'
-              ? 'text-green-500'
-              : 'text-blue-500'
-          }`}
-          whileHover={{ rotate: 5 }}
-        >
-          {alert.icon}
-        </motion.div>
-        <div className="flex-1">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-            {alert.title}
-          </h4>
-          <p className="text-xs text-gray-600 dark:text-gray-300">
-            {alert.message}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {alert.time}
-          </p>
+    <AdvancedGlassCard 
+      intensity="medium" 
+      variant="default" 
+      className={`p-4 border-l-4 ${
+        alert.type === 'error' 
+          ? 'border-red-500' 
+          : alert.type === 'warning' 
+          ? 'border-yellow-500'
+          : alert.type === 'success'
+          ? 'border-green-500'
+          : 'border-blue-500'
+      }`}
+    >
+      <div className={`absolute inset-0 ${
+        alert.type === 'error' 
+          ? 'bg-red-50/80 dark:bg-red-900/20' 
+          : alert.type === 'warning' 
+          ? 'bg-yellow-50/80 dark:bg-yellow-900/20'
+          : alert.type === 'success'
+          ? 'bg-green-50/80 dark:bg-green-900/20'
+          : 'bg-blue-50/80 dark:bg-blue-900/20'
+      } rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      
+      <div className="relative z-10">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3 flex-1">
+            <motion.div
+              className={`text-2xl ${
+                alert.type === 'error' 
+                  ? 'text-red-500' 
+                  : alert.type === 'warning' 
+                  ? 'text-yellow-500'
+                  : alert.type === 'success'
+                  ? 'text-green-500'
+                  : 'text-blue-500'
+              }`}
+              whileHover={{ rotate: 5, scale: 1.1 }}
+              transition={{ duration: 0.2 }}
+            >
+              {alert.icon}
+            </motion.div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                {alert.title}
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                {alert.message}
+              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {alert.time}
+                </p>
+                {alert.action && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onAction(alert.id)}
+                    className="text-xs px-2 py-1 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-md hover:bg-primary-500/20 transition-colors duration-200"
+                  >
+                    {alert.action}
+                  </motion.button>
+                )}
+              </div>
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => onDismiss(alert.id)}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200 ml-2"
+          >
+            ×
+          </motion.button>
         </div>
       </div>
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => onDismiss(alert.id)}
-        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
-      >
-        ×
-      </motion.button>
+    </AdvancedGlassCard>
+  </motion.div>
+);
+
+// Componente de filtro de alertas mejorado
+const AlertFilter = ({ filter, setFilter, alertTypes }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay: 0.8 }}
+    className="mb-6"
+  >
+    <div className="flex flex-wrap gap-2">
+      {alertTypes.map((type, index) => (
+        <motion.button
+          key={type.key}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 1 + index * 0.1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setFilter(type.key)}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+            filter === type.key
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 shadow-lg'
+              : 'bg-white/50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-gray-700/80'
+          }`}
+        >
+          <span className="text-lg">{type.icon}</span>
+          <span>{type.label}</span>
+          <motion.span 
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              filter === type.key 
+                ? 'bg-primary-200 dark:bg-primary-800' 
+                : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+            animate={{ scale: filter === type.key ? [1, 1.1, 1] : 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {type.count}
+          </motion.span>
+        </motion.button>
+      ))}
     </div>
   </motion.div>
 );
+
+// Componente de estadísticas de alertas
+const AlertStats = ({ alerts }) => {
+  const stats = [
+    { label: 'Total', value: alerts.length, color: 'text-gray-600' },
+    { label: 'Críticas', value: alerts.filter(a => a.type === 'error').length, color: 'text-red-600' },
+    { label: 'Advertencias', value: alerts.filter(a => a.type === 'warning').length, color: 'text-yellow-600' },
+    { label: 'Éxitos', value: alerts.filter(a => a.type === 'success').length, color: 'text-green-600' }
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 1.4 }}
+      className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
+    >
+      {stats.map((stat, index) => (
+        <motion.div
+          key={stat.label}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 1.5 + index * 0.1 }}
+          className="text-center"
+        >
+          <AdvancedGlassCard intensity="low" variant="default" className="p-3">
+            <div className={`text-2xl font-bold ${stat.color}`}>
+              {stat.value}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {stat.label}
+            </div>
+          </AdvancedGlassCard>
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+};
 
 const AlertsPanel = ({ filtros }) => {
   const { t } = useTranslation();
@@ -72,7 +186,8 @@ const AlertsPanel = ({ filtros }) => {
       icon: '✅',
       title: 'Certificado Emitido',
       message: 'Se ha emitido exitosamente el certificado de Blockchain Development',
-      time: 'Hace 2 minutos'
+      time: 'Hace 2 minutos',
+      action: 'Ver'
     },
     {
       id: 2,
@@ -80,7 +195,8 @@ const AlertsPanel = ({ filtros }) => {
       icon: '⚠️',
       title: 'Gas Elevado',
       message: 'Los precios del gas están por encima del promedio recomendado',
-      time: 'Hace 5 minutos'
+      time: 'Hace 5 minutos',
+      action: 'Optimizar'
     },
     {
       id: 3,
@@ -88,7 +204,8 @@ const AlertsPanel = ({ filtros }) => {
       icon: 'ℹ️',
       title: 'Nueva Actualización',
       message: 'BrainSafes ha sido actualizado a la versión 2.1.0',
-      time: 'Hace 10 minutos'
+      time: 'Hace 10 minutos',
+      action: 'Actualizar'
     },
     {
       id: 4,
@@ -96,7 +213,26 @@ const AlertsPanel = ({ filtros }) => {
       icon: '❌',
       title: 'Error de Conexión',
       message: 'Problema temporal con el oráculo de datos',
-      time: 'Hace 15 minutos'
+      time: 'Hace 15 minutos',
+      action: 'Reintentar'
+    },
+    {
+      id: 5,
+      type: 'success',
+      icon: '🎓',
+      title: 'Curso Completado',
+      message: 'Has completado exitosamente el curso de Smart Contracts',
+      time: 'Hace 20 minutos',
+      action: 'Certificar'
+    },
+    {
+      id: 6,
+      type: 'info',
+      icon: '💰',
+      title: 'Préstamo Disponible',
+      message: 'Tienes una nueva oferta de préstamo disponible',
+      time: 'Hace 25 minutos',
+      action: 'Revisar'
     }
   ]);
 
@@ -109,6 +245,11 @@ const AlertsPanel = ({ filtros }) => {
 
   const dismissAlert = (id) => {
     setAlerts(alerts.filter(alert => alert.id !== id));
+  };
+
+  const handleAction = (id) => {
+    console.log(`Acción ejecutada para alerta ${id}`);
+    // Aquí se ejecutaría la acción específica
   };
 
   const alertTypes = [
@@ -133,7 +274,7 @@ const AlertsPanel = ({ filtros }) => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl font-bold text-gray-900 dark:text-white"
+            className="text-2xl font-bold text-gray-900 dark:text-white"
           >
             Alertas y Notificaciones
           </motion.h3>
@@ -141,7 +282,7 @@ const AlertsPanel = ({ filtros }) => {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-2xl"
+            className="text-3xl"
           >
             🔔
           </motion.div>
@@ -157,38 +298,11 @@ const AlertsPanel = ({ filtros }) => {
         </motion.p>
       </motion.div>
 
+      {/* Estadísticas */}
+      <AlertStats alerts={alerts} />
+
       {/* Filter Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
-        className="mb-6"
-      >
-        <div className="flex flex-wrap gap-2">
-          {alertTypes.map((type, index) => (
-            <motion.button
-              key={type.key}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 1 + index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setFilter(type.key)}
-              className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-                filter === type.key
-                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span>{type.icon}</span>
-              <span>{type.label}</span>
-              <span className="bg-gray-200 dark:bg-gray-700 rounded-full px-1.5 py-0.5 text-xs">
-                {type.count}
-              </span>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
+      <AlertFilter filter={filter} setFilter={setFilter} alertTypes={alertTypes} />
 
       {/* Alerts List */}
       <motion.div
@@ -204,6 +318,7 @@ const AlertsPanel = ({ filtros }) => {
               alert={alert}
               index={index}
               onDismiss={dismissAlert}
+              onAction={handleAction}
             />
           ))}
         </AnimatePresence>
@@ -212,12 +327,17 @@ const AlertsPanel = ({ filtros }) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-8"
+            className="text-center py-12"
           >
-            <div className="text-4xl mb-4">🎉</div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              No hay alertas para mostrar
-            </p>
+            <AdvancedGlassCard intensity="low" variant="default" className="p-8">
+              <div className="text-6xl mb-4">🎉</div>
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
+                No hay alertas para mostrar
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                ¡Todo está funcionando perfectamente!
+              </p>
+            </AdvancedGlassCard>
           </motion.div>
         )}
       </motion.div>
@@ -229,19 +349,31 @@ const AlertsPanel = ({ filtros }) => {
         transition={{ duration: 0.6, delay: 1.4 }}
         className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700"
       >
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <span>Total: {alerts.length} alertas</span>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200"
-          >
-            Ver todas
-          </motion.button>
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            <span>Total: {alerts.length} alertas</span>
+            <span className="mx-2">•</span>
+            <span>Última actualización: {new Date().toLocaleTimeString()}</span>
+          </div>
+          <div className="flex space-x-2">
+            <GlassButton
+              variant="secondary"
+              size="small"
+              onClick={() => setAlerts([])}
+            >
+              Limpiar Todo
+            </GlassButton>
+            <GlassButton
+              variant="primary"
+              size="small"
+            >
+              Ver Todas
+            </GlassButton>
+          </div>
         </div>
       </motion.div>
     </div>
   );
 };
 
-export default AlertsPanel; 
+export default AlertsPanel;

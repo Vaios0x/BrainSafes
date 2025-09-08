@@ -8,11 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title SmartLaborContracts
- * @dev Sistema de contratos laborales inteligentes para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant CONTRACT_MANAGER = keccak256("CONTRACT_MANAGER");
@@ -146,9 +142,7 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
     event ComplianceCheckCompleted(uint256 indexed contractId, bool passed);
     event TemplateCreated(string indexed name, ContractType contractType);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(
         address _brainSafes,
         address _securityManager,
@@ -166,9 +160,7 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         _setupRole(CONTRACT_MANAGER, msg.sender);
     }
 
-    /**
-     * @dev Crear nuevo contrato laboral
-     */
+    
     function createContract(
         address employee,
         string memory title,
@@ -192,21 +184,21 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
 
         contractCounter++;
         
-        LaborContract storage contract = contracts[contractCounter];
-        contract.id = contractCounter;
-        contract.employer = msg.sender;
-        contract.employee = employee;
-        contract.title = title;
-        contract.description = description;
-        contract.salary = salary;
-        contract.startDate = startDate;
-        contract.endDate = endDate;
-        contract.hoursPerWeek = hoursPerWeek;
-        contract.benefits = benefits;
-        contract.responsibilities = responsibilities;
-        contract.contractType = contractType;
-        contract.status = ContractStatus.Draft;
-        contract.paymentSchedule = paymentSchedule;
+        LaborContract storage contract_ = contracts[contractCounter];
+        contract_.id = contractCounter;
+        contract_.employer = msg.sender;
+        contract_.employee = employee;
+        contract_.title = title;
+        contract_.description = description;
+        contract_.salary = salary;
+        contract_.startDate = startDate;
+        contract_.endDate = endDate;
+        contract_.hoursPerWeek = hoursPerWeek;
+        contract_.benefits = benefits;
+        contract_.responsibilities = responsibilities;
+        contract_.contractType = contractType;
+        contract_.status = ContractStatus.Draft;
+        contract_.paymentSchedule = paymentSchedule;
 
         employerContracts[msg.sender].push(contractCounter);
         employeeContracts[employee].push(contractCounter);
@@ -214,100 +206,92 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         emit ContractCreated(contractCounter, msg.sender, employee);
     }
 
-    /**
-     * @dev Firmar contrato
-     */
+    
     function signContract(uint256 contractId) external whenNotPaused {
-        LaborContract storage contract = contracts[contractId];
+        LaborContract storage contract_ = contracts[contractId];
         require(
-            msg.sender == contract.employer || 
-            msg.sender == contract.employee,
+            msg.sender == contract_.employer || 
+            msg.sender == contract_.employee,
             "Not authorized"
         );
-        require(contract.status == ContractStatus.Draft, "Invalid status");
+        require(contract_.status == ContractStatus.Draft, "Invalid status");
         require(!contractSignatures[contractId][msg.sender], "Already signed");
 
         contractSignatures[contractId][msg.sender] = true;
 
         // Si ambas partes han firmado
         if (
-            contractSignatures[contractId][contract.employer] &&
-            contractSignatures[contractId][contract.employee]
+            contractSignatures[contractId][contract_.employer] &&
+            contractSignatures[contractId][contract_.employee]
         ) {
-            contract.status = ContractStatus.Pending;
+            contract_.status = ContractStatus.Pending;
         }
 
-        string memory role = msg.sender == contract.employer ? "employer" : "employee";
+        string memory role = msg.sender == contract_.employer ? "employer" : "employee";
         emit ContractSigned(contractId, msg.sender, role);
     }
 
-    /**
-     * @dev Activar contrato
-     */
+    
     function activateContract(
         uint256 contractId
     ) external onlyRole(CONTRACT_MANAGER) whenNotPaused {
-        LaborContract storage contract = contracts[contractId];
-        require(contract.status == ContractStatus.Pending, "Invalid status");
-        require(block.timestamp <= contract.startDate, "Start date passed");
+        LaborContract storage contract_ = contracts[contractId];
+        require(contract_.status == ContractStatus.Pending, "Invalid status");
+        require(block.timestamp <= contract_.startDate, "Start date passed");
 
-        contract.status = ContractStatus.Active;
-        contract.lastPayment = block.timestamp;
+        contract_.status = ContractStatus.Active;
+        contract_.lastPayment = block.timestamp;
 
         emit ContractActivated(contractId, block.timestamp);
     }
 
-    /**
-     * @dev Procesar pago
-     */
+    
     function processPayment(
         uint256 contractId,
         string memory description
     ) external whenNotPaused nonReentrant {
-        LaborContract storage contract = contracts[contractId];
-        require(contract.status == ContractStatus.Active, "Contract not active");
-        require(msg.sender == contract.employer, "Not authorized");
+        LaborContract storage contract_ = contracts[contractId];
+        require(contract_.status == ContractStatus.Active, "Contract not active");
+        require(msg.sender == contract_.employer, "Not authorized");
 
-        uint256 nextPayment = _calculateNextPayment(contract);
+        uint256 nextPayment = _calculateNextPayment(contract_);
         require(block.timestamp >= nextPayment, "Too early for payment");
 
         // Transferir pago
         require(
-            paymentToken.transferFrom(msg.sender, contract.employee, contract.salary),
+            paymentToken.transferFrom(msg.sender, contract_.employee, contract_.salary),
             "Payment failed"
         );
 
-        contract.lastPayment = block.timestamp;
+        contract_.lastPayment = block.timestamp;
 
         // Registrar pago
         paymentHistory[contractId].push(PaymentRecord({
             contractId: contractId,
-            amount: contract.salary,
+            amount: contract_.salary,
             timestamp: block.timestamp,
             description: description,
             isPenalty: false
         }));
 
-        emit PaymentProcessed(contractId, contract.salary, description);
+        emit PaymentProcessed(contractId, contract_.salary, description);
     }
 
-    /**
-     * @dev Añadir milestone
-     */
+    
     function addMilestone(
         uint256 contractId,
         string memory description,
         uint256 deadline,
         uint256 bonus
     ) external whenNotPaused {
-        LaborContract storage contract = contracts[contractId];
-        require(msg.sender == contract.employer, "Not authorized");
-        require(contract.status == ContractStatus.Active, "Contract not active");
+        LaborContract storage contract_ = contracts[contractId];
+        require(msg.sender == contract_.employer, "Not authorized");
+        require(contract_.status == ContractStatus.Active, "Contract not active");
         require(deadline > block.timestamp, "Invalid deadline");
-        require(deadline <= contract.endDate, "Deadline after contract end");
+        require(deadline <= contract_.endDate, "Deadline after contract end");
 
-        contract.milestoneCount++;
-        contract.milestones[contract.milestoneCount] = Milestone({
+        contract_.milestoneCount++;
+        contract_.milestones[contract_.milestoneCount] = Milestone({
             description: description,
             deadline: deadline,
             bonus: bonus,
@@ -316,18 +300,16 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         });
     }
 
-    /**
-     * @dev Completar milestone
-     */
+    
     function completeMilestone(
         uint256 contractId,
         uint256 milestoneId
     ) external whenNotPaused nonReentrant {
-        LaborContract storage contract = contracts[contractId];
-        require(msg.sender == contract.employer, "Not authorized");
-        require(contract.status == ContractStatus.Active, "Contract not active");
+        LaborContract storage contract_ = contracts[contractId];
+        require(msg.sender == contract_.employer, "Not authorized");
+        require(contract_.status == ContractStatus.Active, "Contract not active");
 
-        Milestone storage milestone = contract.milestones[milestoneId];
+        Milestone storage milestone = contract_.milestones[milestoneId];
         require(!milestone.completed, "Already completed");
         require(block.timestamp <= milestone.deadline, "Deadline passed");
 
@@ -337,7 +319,7 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         // Pagar bonus
         if (milestone.bonus > 0) {
             require(
-                paymentToken.transferFrom(msg.sender, contract.employee, milestone.bonus),
+                paymentToken.transferFrom(msg.sender, contract_.employee, milestone.bonus),
                 "Bonus payment failed"
             );
 
@@ -353,9 +335,7 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         emit MilestoneCompleted(contractId, milestoneId);
     }
 
-    /**
-     * @dev Enviar review de desempeño
-     */
+    
     function submitPerformanceReview(
         uint256 contractId,
         uint256 score,
@@ -363,13 +343,13 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         string[] memory strengths,
         string[] memory improvements
     ) external whenNotPaused {
-        LaborContract storage contract = contracts[contractId];
-        require(msg.sender == contract.employer, "Not authorized");
-        require(contract.status == ContractStatus.Active, "Contract not active");
+        LaborContract storage contract_ = contracts[contractId];
+        require(msg.sender == contract_.employer, "Not authorized");
+        require(contract_.status == ContractStatus.Active, "Contract not active");
         require(score <= 100, "Invalid score");
 
-        contract.reviewCount++;
-        contract.performanceReviews[contract.reviewCount] = Review({
+        contract_.reviewCount++;
+        contract_.performanceReviews[contract_.reviewCount] = Review({
             date: block.timestamp,
             score: score,
             feedback: feedback,
@@ -378,20 +358,18 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
             acknowledged: false
         });
 
-        emit ReviewSubmitted(contractId, contract.reviewCount);
+        emit ReviewSubmitted(contractId, contract_.reviewCount);
     }
 
-    /**
-     * @dev Realizar verificación de cumplimiento
-     */
+    
     function performComplianceCheck(
         uint256 contractId,
         bool passed,
         string[] memory violations,
         string memory recommendation
     ) external onlyRole(COMPLIANCE_OFFICER) whenNotPaused {
-        LaborContract storage contract = contracts[contractId];
-        require(contract.status == ContractStatus.Active, "Contract not active");
+        LaborContract storage contract_ = contracts[contractId];
+        require(contract_.status == ContractStatus.Active, "Contract not active");
 
         ComplianceCheck memory check = ComplianceCheck({
             contractId: contractId,
@@ -407,29 +385,25 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         emit ComplianceCheckCompleted(contractId, passed);
     }
 
-    /**
-     * @dev Terminar contrato
-     */
+    
     function terminateContract(
         uint256 contractId,
         string memory reason
     ) external whenNotPaused {
-        LaborContract storage contract = contracts[contractId];
+        LaborContract storage contract_ = contracts[contractId];
         require(
-            msg.sender == contract.employer || 
+            msg.sender == contract_.employer || 
             hasRole(CONTRACT_MANAGER, msg.sender),
             "Not authorized"
         );
-        require(contract.status == ContractStatus.Active, "Contract not active");
+        require(contract_.status == ContractStatus.Active, "Contract not active");
 
-        contract.status = ContractStatus.Terminated;
+        contract_.status = ContractStatus.Terminated;
 
         emit ContractTerminated(contractId, reason);
     }
 
-    /**
-     * @dev Crear template de contrato
-     */
+    
     function createContractTemplate(
         string memory name,
         string memory description,
@@ -452,26 +426,22 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         emit TemplateCreated(name, contractType);
     }
 
-    /**
-     * @dev Calcular siguiente fecha de pago
-     */
+    
     function _calculateNextPayment(
-        LaborContract storage contract
+        LaborContract storage contract_
     ) internal view returns (uint256) {
-        if (contract.paymentSchedule == PaymentSchedule.Monthly) {
-            return contract.lastPayment + 30 days;
-        } else if (contract.paymentSchedule == PaymentSchedule.Biweekly) {
-            return contract.lastPayment + 14 days;
-        } else if (contract.paymentSchedule == PaymentSchedule.Weekly) {
-            return contract.lastPayment + 7 days;
+        if (contract_.paymentSchedule == PaymentSchedule.Monthly) {
+            return contract_.lastPayment + 30 days;
+        } else if (contract_.paymentSchedule == PaymentSchedule.Biweekly) {
+            return contract_.lastPayment + 14 days;
+        } else if (contract_.paymentSchedule == PaymentSchedule.Weekly) {
+            return contract_.lastPayment + 7 days;
         } else {
-            return contract.lastPayment;
+            return contract_.lastPayment;
         }
     }
 
-    /**
-     * @dev Obtener detalles de contrato
-     */
+    
     function getContractDetails(uint256 contractId) external view returns (
         address employer,
         address employee,
@@ -484,59 +454,47 @@ contract SmartLaborContracts is AccessControl, Pausable, ReentrancyGuard {
         ContractStatus status,
         PaymentSchedule paymentSchedule
     ) {
-        LaborContract storage contract = contracts[contractId];
+        LaborContract storage contract_ = contracts[contractId];
         return (
-            contract.employer,
-            contract.employee,
-            contract.title,
-            contract.salary,
-            contract.startDate,
-            contract.endDate,
-            contract.hoursPerWeek,
-            contract.contractType,
-            contract.status,
-            contract.paymentSchedule
+            contract_.employer,
+            contract_.employee,
+            contract_.title,
+            contract_.salary,
+            contract_.startDate,
+            contract_.endDate,
+            contract_.hoursPerWeek,
+            contract_.contractType,
+            contract_.status,
+            contract_.paymentSchedule
         );
     }
 
-    /**
-     * @dev Obtener historial de pagos
-     */
+    
     function getPaymentHistory(uint256 contractId) external view returns (PaymentRecord[] memory) {
         return paymentHistory[contractId];
     }
 
-    /**
-     * @dev Obtener historial de cumplimiento
-     */
+    
     function getComplianceHistory(uint256 contractId) external view returns (ComplianceCheck[] memory) {
         return complianceHistory[contractId];
     }
 
-    /**
-     * @dev Obtener contratos de empleador
-     */
+    
     function getEmployerContracts(address employer) external view returns (uint256[] memory) {
         return employerContracts[employer];
     }
 
-    /**
-     * @dev Obtener contratos de empleado
-     */
+    
     function getEmployeeContracts(address employee) external view returns (uint256[] memory) {
         return employeeContracts[employee];
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }

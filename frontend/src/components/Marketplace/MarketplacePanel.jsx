@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import NeuralBackground from '../NeuralBackground';
 import NFTGallery from './NFTGallery';
 import MarketplaceFilters from './MarketplaceFilters';
 
@@ -104,45 +105,172 @@ const filtrosIniciales = {
   precioMax: '',
 };
 
-// Componente de partículas para el marketplace
-const MarketplaceParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(20)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-1 h-1 bg-primary-400/20 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.6, 0.2],
-        }}
-        transition={{
-          duration: 5 + Math.random() * 3,
-          repeat: Infinity,
-          delay: Math.random() * 4,
-        }}
-      />
-    ))}
-  </div>
-);
+// Componente de partículas neurales avanzadas para el marketplace
+const NeuralMarketplaceParticles = () => {
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const particlesRef = useRef([]);
 
-// Componente de estadísticas animadas
-const AnimatedStats = ({ label, value, icon, delay = 0 }) => (
+  const createParticle = useCallback(() => {
+    return {
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: Math.random() * 3 + 1,
+      opacity: Math.random() * 0.6 + 0.2,
+      color: `hsl(${Math.random() * 60 + 200}, 70%, 60%)`,
+      connections: [],
+    };
+  }, []);
+
+  const animate = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Actualizar y dibujar partículas
+    particlesRef.current.forEach((particle, i) => {
+      // Actualizar posición
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+
+      // Rebote en bordes
+      if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+      if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+
+      // Mantener en canvas
+      particle.x = Math.max(0, Math.min(canvas.width, particle.x));
+      particle.y = Math.max(0, Math.min(canvas.height, particle.y));
+
+      // Dibujar partícula
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fillStyle = particle.color;
+      ctx.globalAlpha = particle.opacity;
+      ctx.fill();
+
+      // Dibujar conexiones neurales
+      particlesRef.current.forEach((otherParticle, j) => {
+        if (i !== j) {
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(otherParticle.x, otherParticle.y);
+            ctx.strokeStyle = particle.color;
+            ctx.globalAlpha = (120 - distance) / 120 * 0.2;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      });
+    });
+
+    animationRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  useEffect(() => {
+    // Crear partículas
+    particlesRef.current = Array.from({ length: 50 }, createParticle);
+    
+    // Iniciar animación
+    animate();
+
+    // Limpiar al desmontar
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animate, createParticle]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 1 }}
+    />
+  );
+};
+
+// Componente de estadísticas con glassmorphism 3D avanzado
+const NeuralAnimatedStats = ({ label, value, icon, delay = 0, color = "blue" }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay }}
-    className="text-center"
+    initial={{ opacity: 0, y: 20, scale: 0.8 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.8, delay, type: "spring", stiffness: 100 }}
+    whileHover={{ 
+      scale: 1.05, 
+      rotateY: 5,
+      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+    }}
+    className="relative group"
   >
-    <div className="text-2xl mb-1">{icon}</div>
-    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-      {value}
-    </div>
-    <div className="text-sm text-gray-500 dark:text-gray-400">
-      {label}
+    <div className="relative p-6 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
+      {/* Efecto de brillo animado */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+      
+      {/* Partículas flotantes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/40 rounded-full"
+            style={{
+              left: `${20 + i * 15}%`,
+              top: `${30 + (i % 2) * 40}%`,
+            }}
+            animate={{
+              y: [0, -10, 0],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 2 + i * 0.3,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 text-center">
+        <motion.div 
+          className="text-4xl mb-3"
+          animate={{ 
+            rotate: [0, 5, -5, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            duration: 3, 
+            repeat: Infinity,
+            delay: delay * 0.5
+          }}
+        >
+          {icon}
+        </motion.div>
+        <motion.div 
+          className="text-3xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent mb-2"
+          style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.5)' }}
+        >
+          {value}
+        </motion.div>
+        <div className="text-sm text-white/80 font-medium">
+          {label}
+        </div>
+      </div>
+
+      {/* Borde animado */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     </div>
   </motion.div>
 );
@@ -188,34 +316,37 @@ export default function MarketplacePanel() {
   const averagePrice = filteredNFTs.length > 0 ? totalValue / filteredNFTs.length : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      <MarketplaceParticles />
+    <div className="min-h-screen relative overflow-hidden">
+      <NeuralBackground theme="marketplace" particleCount={55} waveCount={8} intensity="high" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        {/* Header Section */}
+        {/* Header Section con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="mb-8"
+          className="mb-12"
         >
-          <div className="text-center lg:text-left">
+          <div className="text-center lg:text-left relative">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-flex items-center px-4 py-2 bg-primary-100/80 dark:bg-primary-900/30 backdrop-blur-sm text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium border border-primary-200/50 dark:border-primary-700/50 mb-4"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600/90 to-purple-600/90 backdrop-blur-xl text-white rounded-full text-sm font-bold border-2 border-white/50 mb-6 shadow-2xl"
             >
-              🎨 NFT Marketplace
+              <span className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse shadow-lg shadow-green-400/50"></span>
+              🚀 Arbitrum Sepolia
             </motion.div>
             
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6"
+              style={{ textShadow: '0 0 30px rgba(0, 0, 0, 0.8)' }}
             >
-              <span className="bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Marketplace
               </span>
             </motion.h1>
@@ -224,84 +355,198 @@ export default function MarketplacePanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto lg:mx-0"
+              className="text-xl text-white/90 max-w-3xl mx-auto lg:mx-0 font-medium"
+              style={{ textShadow: '0 0 10px rgba(0, 0, 0, 0.8)' }}
             >
-              Descubre, compra y vende NFTs únicos de la colección BrainSafes
+              Plataforma descentralizada en Arbitrum Sepolia - Descubre, compra y vende NFTs únicos de la colección BrainSafes
             </motion.p>
           </div>
         </motion.div>
 
-        {/* Quick Stats */}
+        {/* Marketplace Navigation con Glassmorphism 3D */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="mb-12"
+        >
+          <div className="relative p-8 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
+            {/* Efecto de brillo animado */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-pulse"></div>
+            
+            <h3 className="text-2xl font-bold text-white mb-6 text-center" style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.5)' }}>
+              Funcionalidades del Marketplace
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <motion.a
+                href="/marketplace/jobs"
+                whileHover={{ scale: 1.05, rotateY: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="group relative flex flex-col items-center p-6 bg-gradient-to-br from-blue-500/20 to-blue-600/30 backdrop-blur-xl rounded-2xl border-2 border-blue-400/30 hover:border-blue-400/60 transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative z-10 text-center">
+                  <motion.div 
+                    className="text-4xl mb-3"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  >
+                    💼
+                  </motion.div>
+                  <h4 className="font-bold text-white text-center mb-2">Publicación de Empleos</h4>
+                  <p className="text-sm text-white/80 text-center">
+                    Publica y encuentra empleos descentralizados
+                  </p>
+                </div>
+              </motion.a>
+
+              <motion.a
+                href="/marketplace/matching"
+                whileHover={{ scale: 1.05, rotateY: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="group relative flex flex-col items-center p-6 bg-gradient-to-br from-purple-500/20 to-purple-600/30 backdrop-blur-xl rounded-2xl border-2 border-purple-400/30 hover:border-purple-400/60 transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative z-10 text-center">
+                  <motion.div 
+                    className="text-4xl mb-3"
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🤖
+                  </motion.div>
+                  <h4 className="font-bold text-white text-center mb-2">Matching con IA</h4>
+                  <p className="text-sm text-white/80 text-center">
+                    Emparejamiento automático inteligente
+                  </p>
+                </div>
+              </motion.a>
+
+              <motion.a
+                href="/marketplace/reputation"
+                whileHover={{ scale: 1.05, rotateY: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="group relative flex flex-col items-center p-6 bg-gradient-to-br from-green-500/20 to-green-600/30 backdrop-blur-xl rounded-2xl border-2 border-green-400/30 hover:border-green-400/60 transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative z-10 text-center">
+                  <motion.div 
+                    className="text-4xl mb-3"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  >
+                    ⭐
+                  </motion.div>
+                  <h4 className="font-bold text-white text-center mb-2">Sistema de Reputación</h4>
+                  <p className="text-sm text-white/80 text-center">
+                    Reputación transparente y verificable
+                  </p>
+                </div>
+              </motion.a>
+
+              <motion.a
+                href="/marketplace"
+                whileHover={{ scale: 1.05, rotateY: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="group relative flex flex-col items-center p-6 bg-gradient-to-br from-orange-500/20 to-orange-600/30 backdrop-blur-xl rounded-2xl border-2 border-orange-400/30 hover:border-orange-400/60 transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative z-10 text-center">
+                  <motion.div 
+                    className="text-4xl mb-3"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    🎨
+                  </motion.div>
+                  <h4 className="font-bold text-white text-center mb-2">NFT Marketplace</h4>
+                  <p className="text-sm text-white/80 text-center">
+                    Compra y vende NFTs únicos
+                  </p>
+                </div>
+              </motion.a>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Quick Stats con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="mb-8"
+          className="mb-12"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <AnimatedStats 
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <NeuralAnimatedStats 
               label="NFTs Totales" 
               value={filteredNFTs.length} 
               icon="🎨" 
               delay={1.0}
+              color="blue"
             />
-            <AnimatedStats 
+            <NeuralAnimatedStats 
               label="Valor Total" 
               value={`${totalValue.toFixed(2)} ETH`} 
               icon="💰" 
               delay={1.1}
+              color="green"
             />
-            <AnimatedStats 
+            <NeuralAnimatedStats 
               label="Precio Promedio" 
               value={`${averagePrice.toFixed(2)} ETH`} 
               icon="📊" 
               delay={1.2}
+              color="purple"
             />
-            <AnimatedStats 
+            <NeuralAnimatedStats 
               label="En Venta" 
               value={filteredNFTs.filter(nft => nft.status === 'en venta').length} 
               icon="🛒" 
               delay={1.3}
+              color="orange"
             />
           </div>
         </motion.div>
 
-        {/* Controls Section */}
+        {/* Controls Section con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0 }}
-          className="mb-8"
+          className="mb-12"
         >
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 p-6">
+          <div className="relative p-8 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
+            {/* Efecto de brillo animado */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-pulse"></div>
+            
             <MarketplaceFilters filtros={filtros} setFiltros={setFiltros} />
             
             {/* View Controls */}
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mt-8 pt-8 border-t border-white/20">
               <div className="flex items-center space-x-4">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-all duration-300 ${
+                  className={`p-4 rounded-2xl transition-all duration-300 border-2 ${
                     viewMode === 'grid' 
-                      ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border-blue-400/50 shadow-lg shadow-blue-500/25'
+                      : 'bg-white/10 text-white/70 border-white/20 hover:bg-white/20 hover:border-white/40'
                   }`}
                 >
-                  📱
+                  <span className="text-2xl">📱</span>
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-all duration-300 ${
+                  className={`p-4 rounded-2xl transition-all duration-300 border-2 ${
                     viewMode === 'list' 
-                      ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border-blue-400/50 shadow-lg shadow-blue-500/25'
+                      : 'bg-white/10 text-white/70 border-white/20 hover:bg-white/20 hover:border-white/40'
                   }`}
                 >
-                  📋
+                  <span className="text-2xl">📋</span>
                 </motion.button>
               </div>
               
@@ -309,24 +554,27 @@ export default function MarketplacePanel() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="px-6 py-3 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-300"
                 >
-                  <option value="recent">Más Recientes</option>
-                  <option value="price">Por Precio</option>
-                  <option value="popularity">Más Populares</option>
+                  <option value="recent" className="bg-gray-800 text-white">Más Recientes</option>
+                  <option value="price" className="bg-gray-800 text-white">Por Precio</option>
+                  <option value="popularity" className="bg-gray-800 text-white">Más Populares</option>
                 </select>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Gallery Section */}
+        {/* Gallery Section con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.2 }}
         >
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 overflow-hidden">
+          <div className="relative bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
+            {/* Efecto de brillo animado */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-pulse"></div>
+            
             <NFTGallery 
               nfts={filteredNFTs} 
               viewMode={viewMode}
@@ -335,15 +583,18 @@ export default function MarketplacePanel() {
           </div>
         </motion.div>
 
-        {/* Footer Stats */}
+        {/* Footer Stats con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.4 }}
-          className="mt-8 text-center"
+          className="mt-12 text-center"
         >
-          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-700/20">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="relative p-6 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-2xl border-2 border-white/30 shadow-2xl overflow-hidden">
+            {/* Efecto de brillo animado */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-pulse"></div>
+            
+            <p className="text-lg text-white/90 font-medium relative z-10" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
               Mostrando {filteredNFTs.length} de {nfts.length} NFTs disponibles
             </p>
           </div>

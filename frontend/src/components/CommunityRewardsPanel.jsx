@@ -1,46 +1,184 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import NeuralBackground from './NeuralBackground';
 
-// Componente de partículas para la comunidad
-const CommunityParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(15)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-1 h-1 bg-community-400/20 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-        animate={{
-          y: [0, -30, 0],
-          opacity: [0.2, 0.6, 0.2],
-        }}
-        transition={{
-          duration: 8 + Math.random() * 4,
-          repeat: Infinity,
-          delay: Math.random() * 8,
-        }}
-      />
-    ))}
-  </div>
-);
+// Componente de partículas neurales avanzadas para la comunidad
+const NeuralCommunityParticles = () => {
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const particlesRef = useRef([]);
 
-// Componente de estadísticas animadas
-const AnimatedCommunityStats = ({ label, value, icon, delay = 0 }) => (
+  const createParticle = useCallback(() => {
+    return {
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: Math.random() * 4 + 2,
+      opacity: Math.random() * 0.8 + 0.2,
+      color: `hsl(${Math.random() * 60 + 280}, 80%, 60%)`, // Púrpura a rosa
+      connections: [],
+      pulse: Math.random() * Math.PI * 2,
+    };
+  }, []);
+
+  const animate = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Actualizar y dibujar partículas
+    particlesRef.current.forEach((particle, i) => {
+      // Actualizar posición
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+
+      // Rebote en bordes
+      if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+      if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+
+      // Mantener en canvas
+      particle.x = Math.max(0, Math.min(canvas.width, particle.x));
+      particle.y = Math.max(0, Math.min(canvas.height, particle.y));
+
+      // Efecto de pulso
+      particle.pulse += 0.03;
+      const pulseSize = particle.size + Math.sin(particle.pulse) * 1;
+
+      // Dibujar partícula con glow
+      const gradient = ctx.createRadialGradient(
+        particle.x, particle.y, 0,
+        particle.x, particle.y, pulseSize * 4
+      );
+      gradient.addColorStop(0, particle.color);
+      gradient.addColorStop(1, 'transparent');
+      
+      ctx.fillStyle = gradient;
+      ctx.globalAlpha = particle.opacity;
+      ctx.fillRect(particle.x - pulseSize * 4, particle.y - pulseSize * 4, pulseSize * 8, pulseSize * 8);
+
+      // Dibujar conexiones neurales
+      particlesRef.current.forEach((otherParticle, j) => {
+        if (i !== j) {
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(otherParticle.x, otherParticle.y);
+            ctx.strokeStyle = particle.color;
+            ctx.globalAlpha = (150 - distance) / 150 * 0.5;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+      });
+    });
+
+    animationRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  useEffect(() => {
+    // Crear partículas
+    particlesRef.current = Array.from({ length: 40 }, createParticle);
+    
+    // Iniciar animación
+    animate();
+
+    // Limpiar al desmontar
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animate, createParticle]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 1 }}
+    />
+  );
+};
+
+// Componente de estadísticas con glassmorphism 3D avanzado
+const NeuralAnimatedCommunityStats = ({ label, value, icon, delay = 0, color = "purple" }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay }}
-    className="text-center"
+    initial={{ opacity: 0, y: 20, scale: 0.8 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.8, delay, type: "spring", stiffness: 100 }}
+    whileHover={{ 
+      scale: 1.05, 
+      rotateY: 5,
+      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+    }}
+    className="relative group"
   >
-    <div className="text-2xl mb-1">{icon}</div>
-    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-      {value}
-    </div>
-    <div className="text-sm text-gray-500 dark:text-gray-400">
-      {label}
+    <div className="relative p-6 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
+      {/* Efecto de brillo animado */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+      
+      {/* Partículas flotantes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/40 rounded-full"
+            style={{
+              left: `${20 + i * 10}%`,
+              top: `${30 + (i % 2) * 40}%`,
+            }}
+            animate={{
+              y: [0, -15, 0],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 2 + i * 0.3,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 text-center">
+        <motion.div 
+          className="text-5xl mb-3"
+          animate={{ 
+            rotate: [0, 10, -10, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ 
+            duration: 4, 
+            repeat: Infinity,
+            delay: delay * 0.5
+          }}
+        >
+          {icon}
+        </motion.div>
+        <motion.div 
+          className="text-4xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent mb-2"
+          style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.5)' }}
+        >
+          {value}
+        </motion.div>
+        <div className="text-sm text-white/80 font-medium">
+          {label}
+        </div>
+      </div>
+
+      {/* Borde animado */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     </div>
   </motion.div>
 );
@@ -73,48 +211,80 @@ const RewardCard = ({ reward, onClaim, onShare, onDetails, claimingId }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
+      initial={{ opacity: 0, y: 20, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ 
+        scale: 1.05, 
+        rotateY: 5,
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+      }}
       whileTap={{ scale: 0.98 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 p-6 transition-all duration-300 ${
+      className={`relative bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden group transition-all duration-300 p-8 ${
         reward.claimed ? 'opacity-75' : ''
       }`}
     >
+      {/* Efecto de brillo animado */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+      
+      {/* Partículas flotantes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(5)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/40 rounded-full"
+            style={{
+              left: `${20 + i * 20}%`,
+              top: `${30 + (i % 2) * 40}%`,
+            }}
+            animate={{
+              y: [0, -10, 0],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 2 + i * 0.3,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </div>
       {/* Badge de estado */}
       {reward.claimed && (
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+          className="absolute -top-2 -right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full border-2 border-white/30 shadow-lg"
         >
           ✅
         </motion.div>
       )}
 
       {/* Icono de recompensa */}
-      <div className="text-center mb-4">
+      <div className="text-center mb-6 relative z-10">
         <motion.div
-          animate={{ rotate: isHovered ? 360 : 0 }}
+          animate={{ 
+            rotate: isHovered ? 360 : 0,
+            scale: isHovered ? 1.2 : 1
+          }}
           transition={{ duration: 0.6 }}
-          className={`text-4xl mb-2 ${reward.claimed ? 'opacity-50' : ''}`}
+          className={`text-6xl mb-4 ${reward.claimed ? 'opacity-50' : ''}`}
         >
           {getRewardIcon(reward.type)}
         </motion.div>
-        <h3 className={`text-lg font-bold mb-2 ${reward.claimed ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+        <h3 className={`text-2xl font-bold mb-3 text-white ${reward.claimed ? 'opacity-50' : ''}`} style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
           {reward.name}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-base text-white/80 mb-6 leading-relaxed">
           {reward.description}
         </p>
       </div>
 
       {/* Puntos */}
       {reward.points && (
-        <div className="text-center mb-4">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-community-500 to-community-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+        <div className="text-center mb-6 relative z-10">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-xl text-white px-5 py-3 rounded-2xl text-base font-bold border border-white/30 shadow-lg">
             <span>💎</span>
             <span>{reward.points} pts</span>
           </div>
@@ -122,22 +292,22 @@ const RewardCard = ({ reward, onClaim, onShare, onDetails, claimingId }) => {
       )}
 
       {/* Botones de acción */}
-      <div className="flex justify-center gap-2">
+      <div className="flex flex-col gap-3 relative z-10">
         {!reward.claimed && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onClaim(reward.id)}
             disabled={claimingId === reward.id}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+            className={`flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all duration-300 border-2 ${
               claimingId === reward.id
-                ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-community-500 to-community-600 text-white hover:from-community-600 hover:to-community-700'
+                ? 'bg-gray-300/20 backdrop-blur-xl text-gray-400 cursor-not-allowed border-gray-500/30'
+                : 'bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-xl text-white border-purple-400/50 hover:from-purple-700/90 hover:to-pink-700/90 shadow-lg'
             }`}
           >
             {claimingId === reward.id ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Reclamando...
               </>
             ) : (
@@ -149,40 +319,43 @@ const RewardCard = ({ reward, onClaim, onShare, onDetails, claimingId }) => {
           </motion.button>
         )}
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onDetails(reward.id)}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300"
-        >
-          <span>ℹ️</span>
-          Detalles
-        </motion.button>
+        <div className="flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onDetails(reward.id)}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/10 backdrop-blur-xl text-white/80 rounded-2xl font-bold border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300"
+          >
+            <span>ℹ️</span>
+            Detalles
+          </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onShare(reward.id)}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300"
-        >
-          <span>📤</span>
-          Compartir
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onShare(reward.id)}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/10 backdrop-blur-xl text-white/80 rounded-2xl font-bold border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300"
+          >
+            <span>📤</span>
+            Compartir
+          </motion.button>
+        </div>
       </div>
 
       {/* Progreso de recompensa */}
       {reward.progress && (
-        <div className="mt-4">
-          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+        <div className="mt-6 relative z-10">
+          <div className="flex justify-between text-base text-white/80 mb-3 font-medium">
             <span>Progreso</span>
             <span>{reward.progress.current}/{reward.progress.total}</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-white/20 backdrop-blur-xl rounded-full h-4 border border-white/30">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(reward.progress.current / reward.progress.total) * 100}%` }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="bg-gradient-to-r from-community-500 to-community-600 h-2 rounded-full"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 h-4 rounded-full shadow-lg"
+              style={{ boxShadow: '0 0 10px rgba(168, 85, 247, 0.5)' }}
             />
           </div>
         </div>
@@ -630,11 +803,12 @@ export default function CommunityRewardsPanel() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      <CommunityParticles />
+    <div className="min-h-screen relative overflow-hidden">
+      <NeuralBackground theme="community" particleCount={50} waveCount={7} intensity="medium" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-500/20 via-transparent to-transparent"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        {/* Header Section */}
+        {/* Header Section con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -646,8 +820,9 @@ export default function CommunityRewardsPanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-flex items-center px-4 py-2 bg-community-100/80 dark:bg-community-900/30 backdrop-blur-sm text-community-700 dark:text-community-300 rounded-full text-sm font-medium border border-community-200/50 dark:border-community-700/50 mb-4"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-xl text-white rounded-full text-sm font-bold border-2 border-white/50 mb-6 shadow-2xl"
             >
+              <span className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse shadow-lg shadow-green-400/50"></span>
               👥 Comunidad
             </motion.div>
             
@@ -655,9 +830,10 @@ export default function CommunityRewardsPanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6"
+              style={{ textShadow: '0 0 30px rgba(0, 0, 0, 0.8)' }}
             >
-              <span className="bg-gradient-to-r from-community-600 via-primary-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
                 Community
               </span>
             </motion.h1>
@@ -666,70 +842,78 @@ export default function CommunityRewardsPanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto lg:mx-0"
+              className="text-xl text-white/90 max-w-3xl mx-auto lg:mx-0 font-medium"
+              style={{ textShadow: '0 0 10px rgba(0, 0, 0, 0.8)' }}
             >
               Conecta, colabora y crece con nuestra comunidad. Gana recompensas, compite en rankings y participa en actividades.
             </motion.p>
           </div>
         </motion.div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           className="mb-8"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <AnimatedCommunityStats 
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <NeuralAnimatedCommunityStats 
               label="Miembros Activos" 
               value="1,247" 
               icon="👥" 
               delay={1.0}
+              color="purple"
             />
-            <AnimatedCommunityStats 
+            <NeuralAnimatedCommunityStats 
               label="Recompensas" 
               value="156" 
               icon="🎁" 
               delay={1.1}
+              color="pink"
             />
-            <AnimatedCommunityStats 
+            <NeuralAnimatedCommunityStats 
               label="Mentores" 
               value="23" 
               icon="🎓" 
               delay={1.2}
+              color="blue"
             />
-            <AnimatedCommunityStats 
+            <NeuralAnimatedCommunityStats 
               label="Actividades" 
               value="89" 
               icon="📊" 
               delay={1.3}
+              color="green"
             />
           </div>
         </motion.div>
 
-        {/* Tabs */}
+        {/* Tabs con Glassmorphism 3D */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0 }}
           className="mb-8"
         >
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 p-2">
-            <div className="flex flex-wrap gap-2">
+          <div className="relative bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-xl rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden p-4">
+            {/* Efecto de brillo animado */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full animate-pulse"></div>
+            
+            <div className="flex flex-wrap gap-3 relative z-10">
               {tabs.map((tab) => (
                 <motion.button
                   key={tab.id}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, rotateY: 5 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all duration-300 border-2 ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-community-500 to-community-600 text-white shadow-medium'
-                      : 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-xl text-white border-purple-400/50 shadow-lg'
+                      : 'bg-white/10 backdrop-blur-xl text-white/70 border-white/20 hover:bg-white/20 hover:border-white/40'
                   }`}
                 >
-                  <span>{tab.icon}</span>
+                  <span className="text-xl">{tab.icon}</span>
                   <span>{tab.label}</span>
                 </motion.button>
               ))}
@@ -796,7 +980,7 @@ export default function CommunityRewardsPanel() {
                       </p>
                     </motion.div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {rewards.map((reward, index) => (
                         <RewardCard
                           key={reward.id}

@@ -1,0 +1,20 @@
+{
+  "network": "arbitrumSepolia",
+  "chainId": 421614,
+  "deployer": "0x9EA237c51e63EfF7B03665A4e147878b52F730eC",
+  "timestamp": "2025-09-07T21:40:17.190Z",
+  "contracts": {
+    "SimpleEDUToken": "0xe529DE8450088EbEa7F2a33c20d578F6FE752933",
+    "SimpleCertificateNFT": "0x5d7748e5B73239EBbd6F85e5Ab129F811Df942F2",
+    "SimpleCourseNFT": "0xe8e88637905FC70f51c86fFe228D4661163D6f54",
+    "SimpleAIOracle": "0x8134e719Fc679A14395871f90844e9B23bFEbb4A",
+    "SimpleJobMarketplace": "0x9482Bc509FC308e7C8be0d7fA107326B38293cee"
+  },
+  "contractInterfaces": {
+    "SimpleEDUToken": "ERC20 token for BrainSafes platform",
+    "SimpleCertificateNFT": "NFT for course certificates",
+    "SimpleCourseNFT": "NFT representing courses",
+    "SimpleAIOracle": "AI Oracle for skill assessment and job matching",
+    "SimpleJobMarketplace": "Marketplace for freelance jobs"
+  }
+}

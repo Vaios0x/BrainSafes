@@ -1,7 +1,7 @@
 import React from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiProvider } from 'wagmi';
-import { arbitrum, mainnet, base, scroll, polygon } from '@reown/appkit/networks';
+import { arbitrum, mainnet, base, scroll, polygon, arbitrumSepolia } from '@reown/appkit/networks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
@@ -19,8 +19,8 @@ const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 };
 
-// 3. Set the networks
-const networks = [mainnet, arbitrum, base, scroll, polygon];
+// 3. Set the networks (including Arbitrum Sepolia for testnet)
+const networks = [arbitrumSepolia, arbitrum, mainnet, base, scroll, polygon];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({

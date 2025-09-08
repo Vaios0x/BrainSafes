@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-/**
- * @title IAIProcessor
- * @dev Interface for the Stylus-based AI Processor
- */
+
 interface IAIProcessor {
-    // Estructuras
     struct ModelConfig {
-        uint256 modelId;
         uint256 inputSize;
         uint256 outputSize;
         uint256 batchSize;
@@ -31,9 +26,6 @@ interface IAIProcessor {
         uint256 avgProcessingTime;
         uint256 successRate;
     }
-
-    // Eventos
-    event BatchProcessed(uint256 modelId, uint32 count, uint64 gasUsed);
 
     // Funciones
     function registerModel(

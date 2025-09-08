@@ -7,11 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title LaborDisputes
- * @dev Sistema de disputas laborales para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant ARBITRATOR_ROLE = keccak256("ARBITRATOR_ROLE");
@@ -121,9 +117,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
     event ArbitratorAssigned(uint256 indexed disputeId, address indexed arbitrator);
     event VoteCast(uint256 indexed disputeId, address indexed voter, bool inFavor);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(address _brainSafes, address _securityManager) {
         require(_brainSafes != address(0), "Invalid BrainSafes address");
         require(_securityManager != address(0), "Invalid SecurityManager address");
@@ -135,9 +129,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         _setupRole(ARBITRATOR_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Crear nueva disputa
-     */
+    
     function createDispute(
         address respondent,
         uint256 contractId,
@@ -168,9 +160,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeCreated(disputeCounter, msg.sender, respondent);
     }
 
-    /**
-     * @dev Asignar árbitro
-     */
+    
     function assignArbitrator(
         uint256 disputeId,
         address arbitrator
@@ -191,9 +181,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeStatusUpdated(disputeId, DisputeStatus.UnderReview);
     }
 
-    /**
-     * @dev Enviar evidencia
-     */
+    
     function submitEvidence(
         uint256 disputeId,
         string memory description,
@@ -221,9 +209,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit EvidenceSubmitted(disputeId, msg.sender, ipfsHash);
     }
 
-    /**
-     * @dev Proponer resolución
-     */
+    
     function proposeResolution(
         uint256 disputeId,
         string memory decision,
@@ -250,9 +236,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeStatusUpdated(disputeId, DisputeStatus.Mediation);
     }
 
-    /**
-     * @dev Aceptar resolución
-     */
+    
     function acceptResolution(
         uint256 disputeId
     ) external whenNotPaused nonReentrant {
@@ -288,9 +272,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Presentar apelación
-     */
+    
     function fileAppeal(
         uint256 disputeId,
         string memory reason
@@ -322,9 +304,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeStatusUpdated(disputeId, DisputeStatus.Appealed);
     }
 
-    /**
-     * @dev Votar en disputa
-     */
+    
     function voteOnDispute(
         uint256 disputeId,
         bool inFavor
@@ -349,9 +329,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Finalizar votación
-     */
+    
     function _finalizeVoting(uint256 disputeId) internal {
         Dispute storage dispute = disputes[disputeId];
         
@@ -367,9 +345,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeStatusUpdated(disputeId, dispute.status);
     }
 
-    /**
-     * @dev Cerrar disputa
-     */
+    
     function closeDispute(
         uint256 disputeId
     ) external onlyRole(ARBITRATOR_ROLE) whenNotPaused {
@@ -384,9 +360,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeStatusUpdated(disputeId, DisputeStatus.Closed);
     }
 
-    /**
-     * @dev Obtener detalles de disputa
-     */
+    
     function getDisputeDetails(uint256 disputeId) external view returns (
         address initiator,
         address respondent,
@@ -412,9 +386,7 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Obtener resolución
-     */
+    
     function getResolution(uint256 disputeId) external view returns (
         string memory decision,
         string memory rationale,
@@ -436,16 +408,12 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Obtener evidencia
-     */
+    
     function getEvidence(uint256 disputeId) external view returns (Evidence[] memory) {
         return disputeEvidence[disputeId];
     }
 
-    /**
-     * @dev Obtener estadísticas de árbitro
-     */
+    
     function getArbitratorStats(address arbitrator) external view returns (
         uint256 totalCases,
         uint256 resolvedCases,
@@ -463,16 +431,12 @@ contract LaborDisputes is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }

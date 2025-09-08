@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const swaggerUi = require('swagger-ui-express');
@@ -10,14 +9,26 @@ const prometheusMiddleware = require('express-prometheus-middleware');
 const winston = require('winston');
 const expressWinston = require('express-winston');
 
+// Importar managers
+const securityManager = require('./middleware/security');
+const advancedSecurityManager = require('./middleware/advancedSecurity');
+const webhookManager = require('./services/webhookManager');
+const blockchainEventListener = require('./services/blockchainEventListener');
+const ipfsManager = require('./services/ipfsManager');
+const notificationManager = require('./services/notificationManager');
+const analyticsManager = require('./services/analyticsManager');
+const advancedAnalyticsManager = require('./services/advancedAnalyticsManager');
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Seguridad básica
 app.disable('x-powered-by');
 
-// Middlewares
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+// Aplicar middleware de seguridad avanzado
+app.use(advancedSecurityManager.getAdvancedSecurityMiddleware());
+
+// Middlewares adicionales
 app.use(morgan('dev'));
 // bodyParser.json solo para rutas que no sean /api/payments/webhook
 app.use((req, res, next) => {
@@ -47,17 +58,33 @@ app.use('/api/user', userRoutes);
 const kycRoutes = require('./routes/kyc');
 app.use('/api/kyc', kycRoutes);
 
+// Importar rutas
+const contractsRoutes = require('./routes/contracts');
 const ipfsRoutes = require('./api/ipfs');
-app.use('/api/ipfs', ipfsRoutes);
-
+const ipfsMetadataRoutes = require('./routes/ipfsMetadata');
 const nftRoutes = require('./api/nft');
-app.use('/api/nft', nftRoutes);
-
 const notificationsRoutes = require('./routes/notifications');
-app.use('/api/notifications', notificationsRoutes);
-
+const advancedNotificationsRoutes = require('./routes/advancedNotifications');
 const rolesRoutes = require('./routes/roles');
+const webhooksRoutes = require('./routes/webhooks');
+const blockchainWebhooksRoutes = require('./routes/blockchainWebhooks');
+const analyticsRoutes = require('./routes/analytics');
+
+// Aplicar rate limiting específico a rutas sensibles
+app.use('/api/contracts', advancedSecurityManager.getRateLimiter('contracts'), contractsRoutes);
+app.use('/api/ipfs', advancedSecurityManager.getRateLimiter('ipfs'), ipfsRoutes);
+app.use('/api/ipfs-metadata', advancedSecurityManager.getRateLimiter('ipfs'), ipfsMetadataRoutes);
+app.use('/api/nft', nftRoutes);
+app.use('/api/notifications', advancedSecurityManager.getRateLimiter('notifications'), notificationsRoutes);
+app.use('/api/advanced-notifications', advancedSecurityManager.getRateLimiter('notifications'), advancedNotificationsRoutes);
 app.use('/api/roles', rolesRoutes);
+app.use('/api/webhooks', webhooksRoutes);
+app.use('/api/blockchain-webhooks', blockchainWebhooksRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
+// Rutas de analytics avanzado
+const advancedAnalyticsRoutes = require('./routes/advancedAnalytics');
+app.use('/api/advanced-analytics', advancedSecurityManager.getRateLimiter('global'), advancedAnalyticsRoutes);
 
 app.use(Sentry.Handlers.requestHandler());
 app.use(prometheusMiddleware({
@@ -93,6 +120,70 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Fiat Payments Backend listening on port ${PORT}`);
-}); 
+// Inicializar servicios
+async function initializeServices() {
+  try {
+    // Inicializar blockchain event listener
+    await blockchainEventListener.startListening();
+    
+    // Configurar alertas de analytics básico
+    analyticsManager.configureAlert('high_error_rate', {
+      metric: 'performance.error_rate',
+      condition: 'gt',
+      threshold: 5,
+      message: 'Tasa de errores alta detectada',
+      channels: ['email', 'in-app']
+    });
+
+    analyticsManager.configureAlert('low_uptime', {
+      metric: 'performance.uptime',
+      condition: 'lt',
+      threshold: 95,
+      message: 'Uptime del sistema bajo',
+      channels: ['email', 'sms']
+    });
+
+    // Configurar alertas de analytics avanzado
+    advancedAnalyticsManager.configureAlert('performance_anomaly', {
+      metric: 'performance.response_time_p95',
+      condition: 'gt',
+      threshold: 2000,
+      message: 'Anomalía de performance detectada',
+      channels: ['email', 'in-app', 'slack']
+    });
+
+    advancedAnalyticsManager.configureAlert('blockchain_anomaly', {
+      metric: 'blockchain.gas_usage.average',
+      condition: 'gt',
+      threshold: 500000,
+      message: 'Uso de gas anormalmente alto',
+      channels: ['email', 'telegram']
+    });
+
+    advancedAnalyticsManager.configureAlert('ai_anomaly', {
+      metric: 'ai.prediction_accuracy.overall',
+      condition: 'lt',
+      threshold: 70,
+      message: 'Precisión de IA por debajo del umbral',
+      channels: ['email', 'in-app']
+    });
+
+    console.log('✅ Servicios inicializados correctamente');
+  } catch (error) {
+    console.error('❌ Error inicializando servicios:', error);
+  }
+}
+
+// Inicializar y arrancar servidor
+async function startServer() {
+  await initializeServices();
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 BrainSafes Backend ejecutándose en puerto ${PORT}`);
+    console.log(`📊 Analytics: http://localhost:${PORT}/api/analytics`);
+    console.log(`🔗 Webhooks: http://localhost:${PORT}/api/webhooks`);
+    console.log(`📚 Documentación: http://localhost:${PORT}/api/docs`);
+  });
+}
+
+startServer(); 

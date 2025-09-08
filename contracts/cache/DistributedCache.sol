@@ -5,11 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-/**
- * @title BrainSafes Distributed Cache
- * @dev Implements a distributed caching system with intelligent TTL and compression
- * @custom:security-contact security@brainsafes.com
- */
+
 contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant CACHE_ADMIN = keccak256("CACHE_ADMIN");
@@ -61,9 +57,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
     event CacheCompressed(bytes32 indexed key, uint256 savingsPercent);
     event ConfigUpdated(uint256 maxSize, uint256 defaultTTL);
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -80,9 +74,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         config.autoCompress = true;
     }
 
-    /**
-     * @dev Set a value in the cache
-     */
+    
     function set(
         bytes32 key,
         bytes calldata data,
@@ -127,9 +119,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return true;
     }
 
-    /**
-     * @dev Get a value from the cache
-     */
+    
     function get(bytes32 key) external view whenNotPaused returns (bytes memory, bool) {
         CacheEntry storage entry = cache[key];
 
@@ -150,9 +140,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return (new bytes(0), false);
     }
 
-    /**
-     * @dev Get cache entry details
-     */
+    
     function getEntryDetails(
         bytes32 key
     ) external view returns (
@@ -174,9 +162,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         );
     }
 
-    /**
-     * @dev Update cache configuration
-     */
+    
     function updateConfig(
         uint256 maxSize,
         uint256 defaultTTL,
@@ -196,23 +182,17 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit ConfigUpdated(maxSize, defaultTTL);
     }
 
-    /**
-     * @dev Add trusted source
-     */
+    
     function addTrustedSource(address source) external onlyRole(CACHE_ADMIN) {
         config.trustedSources[source] = true;
     }
 
-    /**
-     * @dev Remove trusted source
-     */
+    
     function removeTrustedSource(address source) external onlyRole(CACHE_ADMIN) {
         config.trustedSources[source] = false;
     }
 
-    /**
-     * @dev Clear expired entries
-     */
+    
     function clearExpired() external onlyRole(CACHE_ADMIN) returns (uint256) {
         uint256 cleared = 0;
         bytes32[] memory keys = _getAllKeys();
@@ -230,9 +210,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return cleared;
     }
 
-    /**
-     * @dev Get cache statistics
-     */
+    
     function getStats(
         address user
     ) external view returns (
@@ -252,18 +230,14 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         );
     }
 
-    /**
-     * @dev Check if cache entry is valid
-     */
+    
     function _isValidEntry(CacheEntry storage entry) internal view returns (bool) {
         return
             entry.data.length > 0 &&
             block.timestamp <= entry.expiryTime;
     }
 
-    /**
-     * @dev Update cache statistics
-     */
+    
     function _updateStats(
         address user,
         uint256 hits,
@@ -283,18 +257,14 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         }
     }
 
-    /**
-     * @dev Get all cache keys
-     */
+    
     function _getAllKeys() internal pure returns (bytes32[] memory) {
         // Implementation would depend on how we want to track keys
         // This is a placeholder
         return new bytes32[](0);
     }
 
-    /**
-     * @dev Compress data using RLE algorithm
-     */
+    
     function _compressData(bytes memory data) internal pure returns (bytes memory) {
         if (data.length < 3) return data;
 
@@ -325,9 +295,7 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return result;
     }
 
-    /**
-     * @dev Decompress RLE encoded data
-     */
+    
     function _decompressData(bytes memory compressed) internal pure returns (bytes memory) {
         if (compressed.length < 2) return compressed;
 
@@ -351,8 +319,6 @@ contract DistributedCache is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return decompressed;
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 

@@ -10,12 +10,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
-/**
- * @title CertificateNFT
- * @notice ERC721 NFT contract for educational certificates in BrainSafes
- * @dev Supports rich metadata, endorsements, and verification
- * @author BrainSafes Team
- */
+
 contract CertificateNFT is 
     ERC721, 
     ERC721URIStorage, 
@@ -38,9 +33,7 @@ contract CertificateNFT is
     string public constant CERTIFICATE_TYPE_HASH = "Certificate(address recipient,uint256 courseId,string courseName,uint256 score,uint256 completionDate,address instructor,string skills)";
     
     // ========== STRUCTURES ==========
-    /**
-     * @dev Structure for storing certificate data
-     */
+    
     struct CertificateData {
         uint256 certificateId;
         address recipient;
@@ -61,9 +54,7 @@ contract CertificateNFT is
         bytes32 certificateHash;
     }
 
-    /**
-     * @dev Structure for skill endorsements
-     */
+    
     struct SkillEndorsement {
         string skillName;
         address endorser;
@@ -73,9 +64,7 @@ contract CertificateNFT is
         string comments;
     }
 
-    /**
-     * @dev Structure for verification records
-     */
+    
     struct VerificationRecord {
         address verifier;
         uint256 verificationDate;
@@ -85,9 +74,7 @@ contract CertificateNFT is
     }
 
     // ========== ENUMS ==========
-    /**
-     * @dev Certificate proficiency levels
-     */
+    
     enum CertificateLevel {
         BEGINNER,
         INTERMEDIATE,
@@ -96,9 +83,7 @@ contract CertificateNFT is
         MASTER
     }
 
-    /**
-     * @dev Certificate validity states
-     */
+    
     enum CertificateStatus {
         ACTIVE,
         SUSPENDED,
@@ -167,18 +152,14 @@ contract CertificateNFT is
     event OnRampNFTMinted(address indexed to, uint256 tokenId, string txHash, string provider);
 
     // ========== MODIFIERS ==========
-    /**
-     * @dev Ensures the certificate exists and is active
-     */
+    
     modifier onlyValidCertificate(uint256 tokenId) {
         require(_exists(tokenId), "Certificate does not exist");
         require(certificateStatus[tokenId] == CertificateStatus.ACTIVE, "Certificate not active");
         _;
     }
 
-    /**
-     * @dev Ensures caller is the recipient or has proper authorization
-     */
+    
     modifier onlyRecipientOrAuthorized(uint256 tokenId) {
         require(
             ownerOf(tokenId) == msg.sender || 
@@ -190,11 +171,7 @@ contract CertificateNFT is
     }
 
     // ========== CONSTRUCTOR ==========
-    /**
-     * @dev Initializes the contract with institution details and sets up roles
-     * @param _institutionName Name of the issuing institution
-     * @param _institutionLogo IPFS hash of the institution logo
-     */
+    
     constructor(
         string memory _institutionName,
         string memory _institutionLogo
@@ -211,23 +188,7 @@ contract CertificateNFT is
     }
 
     // ========== EMITTING FUNCTIONS ==========
-    /**
-     * @dev Mint a new certificate
-     * @param recipient Address of the certificate recipient
-     * @param courseId ID of the completed course
-     * @param courseName Name of the course
-     * @param courseDescription Description of the course
-     * @param instructor Address of the course instructor
-     * @param instructorName Name of the instructor
-     * @param score Achievement score (0-100)
-     * @param completionDate Date when the course was completed
-     * @param skills Array of acquired skills
-     * @param creditsEarned Academic credits earned
-     * @param courseDuration Duration of the course in hours
-     * @param level Certificate proficiency level
-     * @param ipfsMetadata IPFS hash containing additional metadata
-     * @return tokenId The ID of the minted certificate
-     */
+    
     function mintCertificate(
         address recipient,
         uint256 courseId,
@@ -305,9 +266,7 @@ contract CertificateNFT is
         return tokenId;
     }
 
-    /**
-     * @dev Generate unique certificate hash
-     */
+    
     function _generateCertificateHash(
         address recipient,
         uint256 courseId,
@@ -317,6 +276,7 @@ contract CertificateNFT is
         address instructor,
         string[] memory skills
     ) internal pure returns (bytes32) {
+        bytes32 skillsHash = keccak256(abi.encode(skills));
         return keccak256(abi.encodePacked(
             recipient,
             courseId,
@@ -324,34 +284,54 @@ contract CertificateNFT is
             score,
             completionDate,
             instructor,
-            keccak256(abi.encodePacked(skills))
+            skillsHash
         ));
     }
 
-    /**
-     * @dev Emite un NFT tras compra on-ramp (solo backend autorizado)
-     * @param to Dirección del usuario
-     * @param txHash Hash de la transacción cripto
-     * @param provider Nombre del proveedor (moonpay, transak, etc.)
-     */
+    
     function mintOnRamp(address to, string memory txHash, string memory provider) public onlyRole(ONRAMP_MINTER_ROLE) returns (uint256) {
         require(!processedOnRampTx[txHash], "On-ramp ya procesado");
-        require(to != address(0), "Dirección inválida");
+        require(to != address(0), unicode"Dirección inválida");
         processedOnRampTx[txHash] = true;
-        uint256 tokenId = _mintNFT(to, provider, txHash); // Asume que tienes una función interna _mintNFT
+        uint256 tokenId = _mintNFT(to, provider, txHash);
         onRampTxToTokenId[txHash] = tokenId;
         emit OnRampNFTMinted(to, tokenId, txHash, provider);
         return tokenId;
     }
 
+    
+    function _mintNFT(address to, string memory provider, string memory txHash) internal returns (uint256) {
+        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
+        
+        certificates[tokenId] = CertificateData({
+            certificateId: tokenId,
+            recipient: to,
+            courseId: 0,
+            courseName: string(abi.encodePacked("On-Ramp Certificate - ", provider)),
+            courseDescription: "Blockchain on-ramp certification",
+            instructor: address(0),
+            instructorName: "BrainSafes System",
+            score: 100,
+            completionDate: block.timestamp,
+            issuanceDate: block.timestamp,
+            skills: new string[](0),
+            creditsEarned: "1.0",
+            courseDuration: 1,
+            level: CertificateLevel.BEGINNER,
+            isValid: true,
+            ipfsMetadata: txHash,
+            certificateHash: keccak256(abi.encodePacked(to, tokenId, block.timestamp))
+        });
+        
+        certificateStatus[tokenId] = CertificateStatus.ACTIVE;
+        _mint(to, tokenId);
+        
+        return tokenId;
+    }
+
     // ========== VERIFICATION FUNCTIONS ==========
-    /**
-     * @dev Verify certificate authenticity
-     * @param tokenId ID of the certificate to verify
-     * @return isValid Whether the certificate is valid
-     * @return certificateData Complete certificate data
-     * @return status Current status of the certificate
-     */
+    
     function verifyCertificate(uint256 tokenId) external view returns (
         bool isValid,
         CertificateData memory certificateData,
@@ -369,9 +349,7 @@ contract CertificateNFT is
         return (valid, data, currentStatus);
     }
 
-    /**
-     * @dev Verify certificate with digital signature
-     */
+    
     function verifyCertificateWithSignature(
         uint256 tokenId,
         bytes memory signature
@@ -380,14 +358,14 @@ contract CertificateNFT is
         
         CertificateData memory data = certificates[tokenId];
         bytes32 structHash = keccak256(abi.encode(
-            keccak256(CERTIFICATE_TYPE_HASH),
+            keccak256(abi.encodePacked(CERTIFICATE_TYPE_HASH)),
             data.recipient,
             data.courseId,
             keccak256(bytes(data.courseName)),
             data.score,
             data.completionDate,
             data.instructor,
-            keccak256(abi.encodePacked(data.skills))
+            keccak256(abi.encode(data.skills))
         ));
         
         bytes32 hash = _hashTypedDataV4(structHash);
@@ -396,13 +374,7 @@ contract CertificateNFT is
         return hasRole(MINTER_ROLE, signer);
     }
 
-    /**
-     * @dev Record external verification of a certificate
-     * @param tokenId ID of the certificate
-     * @param isValid Whether the verification was successful
-     * @param verificationMethod Method used for verification
-     * @param comments Additional verification notes
-     */
+    
     function recordVerification(
         uint256 tokenId,
         bool isValid,
@@ -420,22 +392,13 @@ contract CertificateNFT is
         emit CertificateVerified(tokenId, msg.sender, isValid);
     }
 
-    /**
-     * @dev Check if certificate has expired
-     */
+    
     function _isCertificateExpired(uint256 tokenId) internal view returns (bool) {
         return block.timestamp > certificates[tokenId].issuanceDate + certificateValidityPeriod;
     }
 
     // ========== ENDORSEMENTS FUNCTIONS ==========
-    /**
-     * @dev Endorse a skill on a certificate
-     * @param tokenId ID of the certificate
-     * @param skillName Name of the skill to endorse
-     * @param endorserCredentials Credentials of the endorser
-     * @param proficiencyLevel Skill proficiency level (1-5)
-     * @param comments Additional endorsement notes
-     */
+    
     function endorseSkill(
         uint256 tokenId,
         string memory skillName,
@@ -458,9 +421,7 @@ contract CertificateNFT is
         emit SkillEndorsed(tokenId, skillName, msg.sender, proficiencyLevel);
     }
 
-    /**
-     * @dev Check if a skill exists in the certificate
-     */
+    
     function _skillExistsInCertificate(uint256 tokenId, string memory skillName) internal view returns (bool) {
         string[] memory skills = certificates[tokenId].skills;
         for (uint256 i = 0; i < skills.length; i++) {
@@ -472,12 +433,7 @@ contract CertificateNFT is
     }
 
     // ========== ADMINISTRATION FUNCTIONS ==========
-    /**
-     * @dev Change certificate status
-     * @param tokenId ID of the certificate
-     * @param newStatus New status to set
-     * @param reason Reason for the status change
-     */
+    
     function changeCertificateStatus(
         uint256 tokenId,
         CertificateStatus newStatus,
@@ -497,9 +453,7 @@ contract CertificateNFT is
         emit CertificateStatusChanged(tokenId, oldStatus, newStatus, reason);
     }
 
-    /**
-     * @dev Update certificate metadata
-     */
+    
     function updateCertificateMetadata(
         uint256 tokenId,
         string memory newMetadataURI
@@ -512,24 +466,18 @@ contract CertificateNFT is
         emit CertificateMetadataUpdated(tokenId, newMetadataURI);
     }
 
-    /**
-     * @dev Configure if transfers are enabled
-     */
+    
     function setTransfersEnabled(bool enabled) external onlyRole(ADMIN_ROLE) {
         transfersEnabled = enabled;
     }
 
-    /**
-     * @dev Set certificate validity period
-     */
+    
     function setCertificateValidityPeriod(uint256 newPeriod) external onlyRole(ADMIN_ROLE) {
         require(newPeriod > 0, "Period must be greater than 0");
         certificateValidityPeriod = newPeriod;
     }
 
-    /**
-     * @dev Update institution information
-     */
+    
     function updateInstitutionInfo(
         string memory newName,
         string memory newLogo
@@ -538,9 +486,7 @@ contract CertificateNFT is
         institutionLogo = newLogo;
     }
 
-    /**
-     * @dev Pause/unpause the contract
-     */
+    
     function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
@@ -550,56 +496,37 @@ contract CertificateNFT is
     }
 
     // ========== QUERY FUNCTIONS ==========
-    /**
-     * @dev Get certificates by recipient
-     */
+    
     function getCertificatesByRecipient(address recipient) external view returns (uint256[] memory) {
         return recipientCertificates[recipient];
     }
 
-    /**
-     * @dev Get certificates by course
-     */
+    
     function getCertificatesByCourse(uint256 courseId) external view returns (uint256[] memory) {
         return courseCertificates[courseId];
     }
 
-    /**
-     * @dev Get certificates by instructor
-     */
+    
     function getCertificatesByInstructor(address instructor) external view returns (uint256[] memory) {
         return instructorCertificates[instructor];
     }
 
-    /**
-     * @dev Get certificates by skill
-     */
+    
     function getCertificatesBySkill(string memory skill) external view returns (uint256[] memory) {
         return skillCertificates[skill];
     }
 
-    /**
-     * @dev Get endorsements for a certificate
-     */
+    
     function getSkillEndorsements(uint256 tokenId) external view returns (SkillEndorsement[] memory) {
         return skillEndorsements[tokenId];
     }
 
-    /**
-     * @dev Get verification history
-     */
+    
     function getVerificationHistory(uint256 tokenId) external view returns (VerificationRecord[] memory) {
         return verificationHistory[tokenId];
     }
 
-    /**
-     * @dev Get certificate statistics
-     * @param tokenId ID of the certificate
-     * @return endorsementCount Number of skill endorsements
-     * @return verificationCount Number of verifications
-     * @return daysSinceIssuance Days elapsed since issuance
-     * @return isExpired Whether the certificate has expired
-     */
+    
     function getCertificateStats(uint256 tokenId) external view returns (
         uint256 endorsementCount,
         uint256 verificationCount,
@@ -618,15 +545,7 @@ contract CertificateNFT is
         );
     }
 
-    /**
-     * @dev Search certificates by multiple criteria
-     * @param recipient Address of the certificate recipient
-     * @param courseId ID of the course
-     * @param skill Specific skill to search for
-     * @param level Minimum certificate level required
-     * @param minScore Minimum score required
-     * @return Array of certificate IDs matching the criteria
-     */
+    
     function searchCertificates(
         address recipient,
         uint256 courseId,
@@ -683,11 +602,7 @@ contract CertificateNFT is
     }
 
     // ========== REPORT GENERATION FUNCTIONS ==========
-    /**
-     * @dev Generate certificate report for employers
-     * @param tokenId ID of the certificate
-     * @return certificateJSON JSON string containing certificate details
-     */
+    
     function generateEmployerReport(uint256 tokenId) external view returns (
         string memory certificateJSON
     ) {
@@ -713,12 +628,13 @@ contract CertificateNFT is
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
+        uint256 firstTokenId,
+        uint256 batchSize
     ) internal override(ERC721, ERC721Enumerable) whenNotPaused {
         if (from != address(0) && to != address(0)) {
             require(transfersEnabled, "Transfers disabled");
         }
-        super._beforeTokenTransfer(from, to, tokenId);
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
@@ -737,7 +653,7 @@ contract CertificateNFT is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721Enumerable, AccessControl)
+        override(ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -763,11 +679,7 @@ contract CertificateNFT is
         return string(buffer);
     }
 
-    /**
-     * @dev Convert address to ASCII string representation
-     * @param x Address to convert
-     * @return ASCII string representation of the address
-     */
+    
     function _toAsciiString(address x) internal pure returns (string memory) {
         bytes memory s = new bytes(40);
         for (uint i = 0; i < 20; i++) {
@@ -780,20 +692,13 @@ contract CertificateNFT is
         return string(s);
     }
 
-    /**
-     * @dev Convert byte to ASCII character
-     * @param b Byte to convert
-     * @return ASCII character
-     */
+    
     function _char(bytes1 b) internal pure returns (bytes1 c) {
         if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
         else return bytes1(uint8(b) + 0x57);
     }
 
-    /**
-     * @dev Get contract version
-     * @return Version string in semantic format
-     */
+    
     function version() external pure returns (string memory) {
         return "1.0.0";
     }

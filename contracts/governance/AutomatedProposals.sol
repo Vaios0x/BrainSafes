@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/**
- * @title AutomatedProposals
- * @dev Sistema de propuestas automáticas para BrainSafes Governance
- * @notice Genera, valida y ejecuta propuestas basadas en triggers, IA, métricas y eventos
- * @custom:security-contact security@brainsafes.com
- */
+
 contract AutomatedProposals is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant PROPOSAL_ADMIN = keccak256("PROPOSAL_ADMIN");
     bytes32 public constant PROPOSAL_BOT = keccak256("PROPOSAL_BOT");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import NeuralBackground from './NeuralBackground';
 
 // Componente de partículas para profile
 const ProfileParticles = () => (
@@ -572,9 +573,9 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-        <ProfileParticles />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className="min-h-screen relative overflow-hidden">
+        <NeuralBackground theme="profile" particleCount={45} waveCount={6} intensity="medium" />
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-profile-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -587,10 +588,10 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      <ProfileParticles />
+    <div className="min-h-screen relative overflow-hidden">
+      <NeuralBackground theme="profile" particleCount={45} waveCount={6} intensity="medium" />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}

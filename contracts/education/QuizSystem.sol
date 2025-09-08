@@ -3,11 +3,12 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+// Note: This interface is a placeholder for the actual implementation
 interface ICourseCatalog {
-    function courses(uint256 id) external view returns (
-        uint256, string memory, string memory, address, string memory, uint256, bool, uint256[] memory
-    );
+    function courses(uint256) external view returns (address, string memory, string memory, uint256, uint256, uint256, bool, uint256[] memory);
 }
+
+
 
 contract QuizSystem is AccessControl {
     bytes32 public constant INSTRUCTOR_ROLE = keccak256("INSTRUCTOR_ROLE");

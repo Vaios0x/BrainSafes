@@ -7,11 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./SecurityMonitor.sol";
 
-/**
- * @title BrainSafes Penetration Tester
- * @dev Advanced penetration testing and vulnerability analysis system
- * @custom:security-contact security@brainsafes.com
- */
+
 contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     // Roles
     bytes32 public constant PENTESTER = keccak256("PENTESTER");
@@ -77,9 +73,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
     event TestConfigUpdated(address indexed target, TestType testType, bool enabled);
     event TestResultRecorded(bytes32 indexed testId, bytes32 resultId, bool success);
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize(address _securityMonitor) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -92,9 +86,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         securityMonitor = SecurityMonitor(_securityMonitor);
     }
 
-    /**
-     * @dev Configure test settings
-     */
+    
     function configureTest(
         address target,
         uint256 maxGas,
@@ -114,9 +106,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         }
     }
 
-    /**
-     * @dev Start a penetration test
-     */
+    
     function startTest(
         address target,
         TestType testType,
@@ -145,9 +135,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return testId;
     }
 
-    /**
-     * @dev Execute reentrancy test
-     */
+    
     function testReentrancy(
         bytes32 testId,
         address target,
@@ -179,9 +167,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         );
     }
 
-    /**
-     * @dev Execute overflow test
-     */
+    
     function testOverflow(
         bytes32 testId,
         address target,
@@ -213,9 +199,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         );
     }
 
-    /**
-     * @dev Execute access control test
-     */
+    
     function testAccessControl(
         bytes32 testId,
         address target,
@@ -249,9 +233,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         );
     }
 
-    /**
-     * @dev Execute flash loan test
-     */
+    
     function testFlashLoan(
         bytes32 testId,
         address target,
@@ -283,9 +265,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         );
     }
 
-    /**
-     * @dev Complete a test
-     */
+    
     function completeTest(
         bytes32 testId,
         string calldata report
@@ -303,9 +283,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         emit TestCompleted(testId, test.isSuccessful);
     }
 
-    /**
-     * @dev Get test results
-     */
+    
     function getTestResults(
         bytes32 testId
     ) external view returns (
@@ -325,9 +303,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         );
     }
 
-    /**
-     * @dev Internal function to record test result
-     */
+    
     function _recordTestResult(
         bytes32 testId,
         bool success,
@@ -358,9 +334,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         emit TestResultRecorded(testId, resultId, success);
     }
 
-    /**
-     * @dev Check if test found vulnerabilities
-     */
+    
     function _hasVulnerabilities(bytes32 testId) internal view returns (bool) {
         PenTest storage test = tests[testId];
         TestResult[] memory results = new TestResult[](10); // Arbitrary limit
@@ -377,9 +351,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return false;
     }
 
-    /**
-     * @dev Execute reentrancy test (internal)
-     */
+    
     function executeReentrancyTest(
         address target,
         bytes calldata data
@@ -388,9 +360,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return (false, "");
     }
 
-    /**
-     * @dev Execute overflow test (internal)
-     */
+    
     function executeOverflowTest(
         address target,
         bytes calldata data
@@ -399,9 +369,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return (false, "");
     }
 
-    /**
-     * @dev Execute access control test (internal)
-     */
+    
     function executeAccessControlTest(
         address target,
         bytes4 method
@@ -410,9 +378,7 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return false;
     }
 
-    /**
-     * @dev Execute flash loan test (internal)
-     */
+    
     function executeFlashLoanTest(
         address target,
         address[] calldata tokens,
@@ -422,8 +388,6 @@ contract PenetrationTester is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return (false, "");
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 } 

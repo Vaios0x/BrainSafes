@@ -12,6 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@heroicons/react": "^2.2.0",
     "@mui/icons-material": "^5.14.0",
     "@mui/material": "^5.15.0",
     "@reown/appkit": "^1.7.17",
@@ -19,16 +20,21 @@
     "@tanstack/react-query": "^5.84.1",
     "axios": "^1.4.0",
     "ethers": "^5.7.2",
+    "express-prometheus-middleware": "^1.2.0",
+    "express-winston": "^4.2.0",
     "framer-motion": "^12.23.12",
+    "i18next-browser-languagedetector": "^8.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.6.1",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.14.1",
-    "recharts": "^2.7.2",
+    "recharts": "^2.15.4",
     "viem": "^2.33.2",
     "wagmi": "^2.16.1",
-    "web3": "^4.0.2"
+    "web3": "^4.0.2",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.11",

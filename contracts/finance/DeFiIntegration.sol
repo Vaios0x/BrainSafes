@@ -5,10 +5,13 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+// Note: This interface is a placeholder for Aave Lending Pool
 interface IAaveLendingPool {
     function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
     function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 }
+
+
 
 contract DeFiIntegration is AccessControl, ReentrancyGuard {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -16,8 +19,8 @@ contract DeFiIntegration is AccessControl, ReentrancyGuard {
 
     IERC20 public immutable token;
     IAaveLendingPool public aave;
-    uint64 public totalDeposits;
-    uint64 public totalYield;
+    uint96 public totalDeposits;
+    uint96 public totalYield;
     mapping(address => uint96) public deposits;
     mapping(address => uint96) public yieldEarned;
     address public guardian;
@@ -69,19 +72,19 @@ contract DeFiIntegration is AccessControl, ReentrancyGuard {
     }
 
     function withdraw() external nonReentrant {
-        uint96 deposit = deposits[msg.sender];
-        require(deposit > 0, "Nada para retirar");
+        uint96 userDeposit = deposits[msg.sender];
+        require(userDeposit > 0, "Nada para retirar");
         uint96 userYield = yieldEarned[msg.sender];
         deposits[msg.sender] = 0;
         yieldEarned[msg.sender] = 0;
-        unchecked { totalDeposits -= deposit; }
+        unchecked { totalDeposits -= userDeposit; }
         // Retirar de Aave si está configurado
         if (address(aave) != address(0)) {
-            aave.withdraw(address(token), deposit + userYield, address(this));
+            aave.withdraw(address(token), userDeposit + userYield, address(this));
         }
         // Assembly transfer
         address tokenAddr = address(token);
-        uint256 total = uint256(deposit) + uint256(userYield);
+        uint256 total = uint256(userDeposit) + uint256(userYield);
         assembly {
             let ptr := mload(0x40)
             mstore(ptr, 0xa9059cbb)
@@ -90,7 +93,7 @@ contract DeFiIntegration is AccessControl, ReentrancyGuard {
             let result := call(gas(), tokenAddr, 0, ptr, 68, 0, 0)
             if iszero(result) { revert(0, 0) }
         }
-        emit Withdrawn(msg.sender, deposit, userYield);
+        emit Withdrawn(msg.sender, userDeposit, userYield);
     }
 
     function getDeposit(address user) external view returns (uint96) {

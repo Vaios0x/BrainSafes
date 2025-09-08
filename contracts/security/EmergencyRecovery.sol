@@ -7,12 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./SecurityManager.sol";
 
-/**
- * @title EmergencyRecovery
- * @dev Sistema avanzado de recuperación de emergencia para BrainSafes
- * @notice Permite restaurar operaciones, recuperar fondos y restaurar estados críticos tras incidentes graves
- * @custom:security-contact security@brainsafes.com
- */
+
 contract EmergencyRecovery is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant RECOVERY_ADMIN = keccak256("RECOVERY_ADMIN");
     bytes32 public constant RECOVERY_APPROVER = keccak256("RECOVERY_APPROVER");

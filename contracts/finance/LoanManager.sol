@@ -5,9 +5,12 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+// Note: This interface is a placeholder for rate oracle
 interface IRateOracle {
     function getCurrentRate() external view returns (uint256);
 }
+
+
 
 contract LoanManager is AccessControl, ReentrancyGuard {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -91,7 +94,7 @@ contract LoanManager is AccessControl, ReentrancyGuard {
 
     function requestLoanWithOracle(uint128 amount, uint32 duration) external onlyRole(STUDENT_ROLE) returns (uint64) {
         uint64 oracleRate = rateOracle != IRateOracle(address(0)) ? uint64(rateOracle.getCurrentRate()) : 0;
-        return requestLoan(amount, oracleRate, duration);
+        return this.requestLoan(amount, oracleRate, duration);
     }
 
     function fundLoan(uint64 loanId) external onlyRole(LENDER_ROLE) nonReentrant {

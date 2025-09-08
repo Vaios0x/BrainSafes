@@ -5,10 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 
-/**
- * @title BrainSafesChainConfig
- * @dev Configuración personalizada de la cadena Arbitrum para BrainSafes
- */
+
 contract BrainSafesChainConfig is AccessControl {
     bytes32 public constant CHAIN_ADMIN_ROLE = keccak256("CHAIN_ADMIN_ROLE");
     
@@ -56,9 +53,7 @@ contract BrainSafesChainConfig is AccessControl {
         });
     }
 
-    /**
-     * @dev Actualizar la configuración completa de la cadena
-     */
+    
     function updateChainConfig(ChainConfig memory newConfig) external onlyRole(CHAIN_ADMIN_ROLE) {
         require(
             newConfig.challengePeriod >= MIN_CHALLENGE_PERIOD &&
@@ -74,9 +69,7 @@ contract BrainSafesChainConfig is AccessControl {
         currentConfig = newConfig;
     }
 
-    /**
-     * @dev Actualizar el token de gas (solo AnyTrust)
-     */
+    
     function updateGasToken(address newToken) external onlyRole(CHAIN_ADMIN_ROLE) {
         require(currentConfig.isAnyTrust, "Gas token only available in AnyTrust mode");
         require(newToken != address(0), "Invalid token address");
@@ -87,9 +80,7 @@ contract BrainSafesChainConfig is AccessControl {
         emit GasTokenChanged(oldToken, newToken);
     }
 
-    /**
-     * @dev Actualizar período de desafío
-     */
+    
     function updateChallengePeriod(uint256 newPeriod) external onlyRole(CHAIN_ADMIN_ROLE) {
         require(
             newPeriod >= MIN_CHALLENGE_PERIOD && 
@@ -103,25 +94,19 @@ contract BrainSafesChainConfig is AccessControl {
         emit ChallengePeriodUpdated(oldPeriod, newPeriod);
     }
 
-    /**
-     * @dev Habilitar/deshabilitar soporte para blobs
-     */
+    
     function toggleBlobSupport(bool enable) external onlyRole(CHAIN_ADMIN_ROLE) {
         currentConfig.enableBlobs = enable;
         emit BlobSupportToggled(enable);
     }
 
-    /**
-     * @dev Actualizar límite de crecimiento del estado
-     */
+    
     function updateStateGrowthLimit(uint256 newLimit) external onlyRole(CHAIN_ADMIN_ROLE) {
         require(newLimit > 0, "Invalid state growth limit");
         currentConfig.stateGrowthLimit = newLimit;
     }
 
-    /**
-     * @dev Actualizar límites de transacción
-     */
+    
     function updateTransactionLimits(
         uint256 newMaxBatchSize,
         uint256 newMaxTxGasLimit
@@ -133,16 +118,12 @@ contract BrainSafesChainConfig is AccessControl {
         currentConfig.maxTxGasLimit = newMaxTxGasLimit;
     }
 
-    /**
-     * @dev Obtener configuración actual
-     */
+    
     function getChainConfig() external view returns (ChainConfig memory) {
         return currentConfig;
     }
 
-    /**
-     * @dev Verificar si la configuración es válida
-     */
+    
     function validateConfig(ChainConfig memory config) public pure returns (bool, string memory) {
         if (config.challengePeriod < MIN_CHALLENGE_PERIOD) {
             return (false, "Challenge period too short");
@@ -159,9 +140,7 @@ contract BrainSafesChainConfig is AccessControl {
         return (true, "");
     }
 
-    /**
-     * @dev Obtener estadísticas de la cadena
-     */
+    
     function getChainStats() external view returns (
         uint256 currentStateSize,
         uint256 avgBlockTime,

@@ -1,12 +1,219 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import { NeuralEffects } from './NeuralEffects';
+import { AdvancedGlassCard, GlassButton } from './GlassmorphismEffects';
 
-// Componente de cursor personalizado
+// Componente de red neuronal animada con WebGL
+const NeuralNetwork = () => {
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !dimensions.width) return;
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = dimensions.width;
+    canvas.height = dimensions.height;
+
+    // Configuración de la red neuronal
+    const nodes = [];
+    const connections = [];
+    const numNodes = 50;
+    const maxDistance = 150;
+
+    // Crear nodos
+    for (let i = 0; i < numNodes; i++) {
+      nodes.push({
+        x: Math.random() * dimensions.width,
+        y: Math.random() * dimensions.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 3 + 1,
+        opacity: Math.random() * 0.8 + 0.2,
+        hue: Math.random() * 60 + 200 // Azul a púrpura
+      });
+    }
+
+    // Crear conexiones
+    for (let i = 0; i < numNodes; i++) {
+      for (let j = i + 1; j < numNodes; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < maxDistance) {
+          connections.push({
+            from: i,
+            to: j,
+            distance: distance,
+            opacity: (maxDistance - distance) / maxDistance
+          });
+        }
+      }
+    }
+
+    let time = 0;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+      time += 0.01;
+
+      // Actualizar nodos
+      nodes.forEach((node, i) => {
+        node.x += node.vx;
+        node.y += node.vy;
+
+        // Rebote en los bordes
+        if (node.x < 0 || node.x > dimensions.width) node.vx *= -1;
+        if (node.y < 0 || node.y > dimensions.height) node.vy *= -1;
+
+        // Mantener dentro de los límites
+        node.x = Math.max(0, Math.min(dimensions.width, node.x));
+        node.y = Math.max(0, Math.min(dimensions.height, node.y));
+
+        // Efecto de pulso
+        const pulse = Math.sin(time * 2 + i * 0.1) * 0.3 + 0.7;
+        node.currentSize = node.size * pulse;
+        node.currentOpacity = node.opacity * pulse;
+      });
+
+      // Dibujar conexiones
+      connections.forEach(conn => {
+        const fromNode = nodes[conn.from];
+        const toNode = nodes[conn.to];
+        
+        const dx = fromNode.x - toNode.x;
+        const dy = fromNode.y - toNode.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < maxDistance) {
+          const opacity = ((maxDistance - distance) / maxDistance) * 0.3;
+          const pulse = Math.sin(time * 3 + conn.from * 0.1) * 0.2 + 0.8;
+          
+          ctx.beginPath();
+          ctx.moveTo(fromNode.x, fromNode.y);
+          ctx.lineTo(toNode.x, toNode.y);
+          ctx.strokeStyle = `hsla(${fromNode.hue}, 70%, 60%, ${opacity * pulse})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      });
+
+      // Dibujar nodos
+      nodes.forEach(node => {
+        // Glow effect
+        const gradient = ctx.createRadialGradient(
+          node.x, node.y, 0,
+          node.x, node.y, node.currentSize * 3
+        );
+        gradient.addColorStop(0, `hsla(${node.hue}, 70%, 60%, ${node.currentOpacity})`);
+        gradient.addColorStop(1, `hsla(${node.hue}, 70%, 60%, 0)`);
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.currentSize * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nodo principal
+        ctx.fillStyle = `hsla(${node.hue}, 80%, 70%, ${node.currentOpacity})`;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.currentSize, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [dimensions]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none opacity-30"
+      style={{ zIndex: 1 }}
+    />
+  );
+};
+
+// Componente de partículas flotantes mejorado
+const FloatingParticles = () => {
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    const newParticles = Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 4 + 1,
+      speed: Math.random() * 0.5 + 0.1,
+      direction: Math.random() * Math.PI * 2,
+      opacity: Math.random() * 0.6 + 0.2,
+      hue: Math.random() * 60 + 200
+    }));
+    setParticles(newParticles);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute rounded-full"
+          style={{
+            left: particle.x,
+            top: particle.y,
+            width: particle.size,
+            height: particle.size,
+            backgroundColor: `hsl(${particle.hue}, 70%, 60%)`,
+            opacity: particle.opacity,
+            boxShadow: `0 0 ${particle.size * 2}px hsl(${particle.hue}, 70%, 60%)`
+          }}
+          animate={{
+            x: [0, Math.cos(particle.direction) * 50, 0],
+            y: [0, Math.sin(particle.direction) * 50, 0],
+            opacity: [particle.opacity, particle.opacity * 0.3, particle.opacity],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: 8 + Math.random() * 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Componente de cursor personalizado mejorado
 const CustomCursor = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  const [isClicking, setIsClicking] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -15,198 +222,214 @@ const CustomCursor = () => {
 
     const handleMouseEnter = () => setIsHovering(true);
     const handleMouseLeave = () => setIsHovering(false);
+    const handleMouseDown = () => setIsClicking(true);
+    const handleMouseUp = () => setIsClicking(false);
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseenter', handleMouseEnter);
     document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseenter', handleMouseEnter);
       document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
   return (
+    <>
+      {/* Cursor principal */}
+      <motion.div
+        className="fixed top-0 left-0 w-6 h-6 bg-gradient-to-r from-primary-500 to-brain-500 rounded-full pointer-events-none z-50 mix-blend-difference"
+        animate={{
+          x: mousePosition.x - 12,
+          y: mousePosition.y - 12,
+          scale: isHovering ? 1.5 : isClicking ? 0.8 : 1,
+        }}
+        transition={{ type: "spring", stiffness: 500, damping: 28 }}
+      />
+      
+      {/* Cursor trail */}
+      <motion.div
+        className="fixed top-0 left-0 w-12 h-12 bg-gradient-to-r from-primary-400/30 to-brain-400/30 rounded-full pointer-events-none z-49"
+        animate={{
+          x: mousePosition.x - 24,
+          y: mousePosition.y - 24,
+          scale: isHovering ? 1.2 : 0.8,
+        }}
+        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+      />
+    </>
+  );
+};
+
+// Componente de scroll indicator mejorado
+const ScrollIndicator = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
+  
+  return (
     <motion.div
-      className="fixed top-0 left-0 w-6 h-6 bg-primary-500/50 rounded-full pointer-events-none z-50 mix-blend-difference"
-      animate={{
-        x: mousePosition.x - 12,
-        y: mousePosition.y - 12,
-        scale: isHovering ? 1.5 : 1,
-      }}
-      transition={{ type: "spring", stiffness: 500, damping: 28 }}
+      className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 via-brain-500 to-purple-500 origin-left z-50"
+      style={{ scaleX, opacity }}
     />
   );
 };
 
-// Componente de partículas animadas mejorado
-const ParticleBackground = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(30)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-1 h-1 bg-primary-400/20 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.3, 0.8, 0.3],
-        }}
-        transition={{
-          duration: 3 + Math.random() * 2,
-          repeat: Infinity,
-          delay: Math.random() * 2,
-        }}
-      />
-    ))}
-  </div>
+// Componente de tarjeta con glassmorphism avanzado
+const GlassCard = ({ children, className = "", delay = 0, ...props }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.8, delay, type: "spring", stiffness: 100 }}
+    viewport={{ once: true }}
+    whileHover={{ 
+      scale: 1.02,
+      y: -5,
+      transition: { duration: 0.3 }
+    }}
+    className={`relative group ${className}`}
+    {...props}
+  >
+    {/* Fondo con múltiples capas de glassmorphism */}
+    <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent rounded-3xl backdrop-blur-xl border border-white/20 dark:border-gray-700/30" />
+    <div className="absolute inset-0 bg-gradient-to-tl from-primary-500/5 via-transparent to-brain-500/5 rounded-3xl" />
+    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent rounded-3xl" />
+    
+    {/* Efecto de brillo en hover */}
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-brain-500/10 to-purple-500/10 rounded-3xl opacity-0 group-hover:opacity-100"
+      transition={{ duration: 0.5 }}
+    />
+    
+    {/* Contenido */}
+    <div className="relative z-10 p-8">
+      {children}
+    </div>
+  </motion.div>
 );
 
 // Componente de estadísticas animadas mejorado
-const AnimatedCounter = ({ end, duration = 2000, suffix = "+" }) => {
+const AnimatedCounter = ({ end, duration = 2000, suffix = "+", prefix = "" }) => {
   const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const element = document.getElementById(`counter-${end}`);
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [end]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
     let startTime = null;
     const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      setCount(Math.floor(end * progress));
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(end * easeOutQuart));
       
       if (progress < 1) {
         requestAnimationFrame(animate);
       }
     };
     requestAnimationFrame(animate);
-  }, [end, duration]);
+  }, [end, duration, isVisible]);
 
   return (
     <motion.span 
-      className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-brain-600 bg-clip-text text-transparent"
-      initial={{ scale: 0.8 }}
-      animate={{ scale: 1 }}
-      transition={{ duration: 0.5 }}
+      id={`counter-${end}`}
+      className="text-5xl font-bold bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600 bg-clip-text text-transparent"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
     >
-      {count}{suffix}
+      {prefix}{count}{suffix}
     </motion.span>
   );
 };
 
-// Componente de tarjeta de característica con glassmorphism
-const FeatureCard = ({ icon, title, description, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 50 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay }}
-    viewport={{ once: true }}
-    whileHover={{ 
-      scale: 1.05,
-      y: -10,
-      transition: { duration: 0.3 }
-    }}
-    className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-8 rounded-2xl shadow-soft border border-white/20 dark:border-gray-700/20 hover:shadow-large transition-all duration-500"
-  >
-    <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-brain-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-    <div className="relative z-10">
-      <motion.div 
-        className="text-4xl mb-6 group-hover:scale-110 transition-transform duration-300"
-        whileHover={{ rotate: 5 }}
-      >
-        {icon}
-      </motion.div>
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-primary-600 transition-colors duration-300">
-        {title}
-      </h3>
-      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-        {description}
-      </p>
-    </div>
-  </motion.div>
-);
-
-// Componente de testimonio con glassmorphism
-const TestimonialCard = ({ name, role, content, avatar, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.5, delay }}
-    viewport={{ once: true }}
-    whileHover={{ 
-      scale: 1.02,
-      transition: { duration: 0.2 }
-    }}
-    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-6 rounded-xl shadow-medium border border-white/20 dark:border-gray-700/20"
-  >
-    <div className="flex items-center mb-4">
-      <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-brain-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
-        {avatar}
-      </div>
-      <div>
-        <h4 className="font-semibold text-gray-900 dark:text-white">{name}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{role}</p>
-      </div>
-    </div>
-    <p className="text-gray-600 dark:text-gray-300 italic">"{content}"</p>
-  </motion.div>
-);
-
-// Componente de scroll indicator
-const ScrollIndicator = () => {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
-  
+// Componente de botón interactivo mejorado usando GlassButton
+const InteractiveButton = ({ children, className = "", variant = "primary", ...props }) => {
   return (
-    <motion.div
-      className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-brain-500 origin-left z-50"
-      style={{ scaleX }}
-    />
+    <GlassButton
+      variant={variant}
+      size="large"
+      className={className}
+      {...props}
+    >
+      {children}
+      <motion.span
+        animate={{ x: 0 }}
+        whileHover={{ x: 5 }}
+        transition={{ duration: 0.3 }}
+      >
+        →
+      </motion.span>
+    </GlassButton>
   );
 };
 
-// Componente de botón interactivo
-const InteractiveButton = ({ children, className = "", ...props }) => (
-  <motion.button
-    className={`relative overflow-hidden ${className}`}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    {...props}
-  >
-    <motion.div
-      className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-brain-500/20"
-      initial={{ x: "-100%" }}
-      whileHover={{ x: "0%" }}
-      transition={{ duration: 0.3 }}
-    />
-    <span className="relative z-10">{children}</span>
-  </motion.button>
-);
-
+// Componente principal de la landing page
 export default function Landing() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Seguimiento del mouse para efectos parallax
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const benefits = [
     {
       icon: '🔒',
       title: 'Seguridad Blockchain',
-      description: 'Credenciales verificables e inmutables en la blockchain con criptografía de última generación',
+      description: 'Credenciales verificables e inmutables en la blockchain con criptografía de última generación y auditorías automáticas',
       color: 'from-blue-500 to-cyan-500',
       bgColor: 'bg-blue-50/80 dark:bg-blue-900/20'
     },
     {
       icon: '⚡',
       title: 'IA Integrada',
-      description: 'Aprendizaje personalizado con inteligencia artificial y recomendaciones adaptativas',
+      description: 'Aprendizaje personalizado con inteligencia artificial avanzada, recomendaciones adaptativas y análisis predictivo',
       color: 'from-green-500 to-emerald-500',
       bgColor: 'bg-green-50/80 dark:bg-green-900/20'
     },
     {
       icon: '🌐',
       title: 'Interoperabilidad',
-      description: 'Conecta con múltiples cadenas y plataformas para máxima flexibilidad',
+      description: 'Conecta con múltiples cadenas y plataformas para máxima flexibilidad y compatibilidad cross-chain',
       color: 'from-purple-500 to-pink-500',
       bgColor: 'bg-purple-50/80 dark:bg-purple-900/20'
     }
@@ -216,27 +439,27 @@ export default function Landing() {
     {
       icon: '🎓',
       title: 'Certificaciones NFT',
-      description: 'Emite y verifica certificados académicos de forma segura en la blockchain con tecnología NFT'
+      description: 'Emite y verifica certificados académicos de forma segura en la blockchain con tecnología NFT y metadatos enriquecidos'
     },
     {
       icon: '💼',
       title: 'Portfolio Profesional',
-      description: 'Construye tu reputación profesional con credenciales verificables y un portfolio descentralizado'
+      description: 'Construye tu reputación profesional con credenciales verificables y un portfolio descentralizado inmutable'
     },
     {
       icon: '🤝',
       title: 'Mentoría Descentralizada',
-      description: 'Conecta con mentores y expertos en tu campo de estudio a través de smart contracts'
+      description: 'Conecta con mentores y expertos en tu campo de estudio a través de smart contracts y sistemas de reputación'
     },
     {
       icon: '💰',
       title: 'Préstamos DeFi',
-      description: 'Accede a financiamiento educativo con garantías descentralizadas y tasas competitivas'
+      description: 'Accede a financiamiento educativo con garantías descentralizadas, tasas competitivas y liquidez automática'
     },
     {
       icon: '🏆',
       title: 'Sistema de Recompensas',
-      description: 'Gana tokens por tu participación y contribuciones a la comunidad educativa'
+      description: 'Gana tokens por tu participación y contribuciones a la comunidad educativa con gamificación avanzada'
     },
     {
       icon: '🔐',
@@ -249,38 +472,55 @@ export default function Landing() {
     {
       name: 'María González',
       role: 'Estudiante de IA',
-      content: 'BrainSafes revolucionó mi forma de aprender. Las certificaciones NFT me dieron credibilidad real.',
-      avatar: 'MG'
+      content: 'BrainSafes revolucionó mi forma de aprender. Las certificaciones NFT me dieron credibilidad real en el mercado laboral.',
+      avatar: 'MG',
+      rating: 5
     },
     {
       name: 'Carlos Rodríguez',
       role: 'Desarrollador Blockchain',
-      content: 'La interoperabilidad cross-chain es increíble. Puedo usar mis credenciales en múltiples plataformas.',
-      avatar: 'CR'
+      content: 'La interoperabilidad cross-chain es increíble. Puedo usar mis credenciales en múltiples plataformas sin problemas.',
+      avatar: 'CR',
+      rating: 5
     },
     {
       name: 'Ana Martínez',
       role: 'Mentora Senior',
-      content: 'El sistema de mentoría descentralizada me permite ayudar a más estudiantes de forma transparente.',
-      avatar: 'AM'
+      content: 'El sistema de mentoría descentralizada me permite ayudar a más estudiantes de forma transparente y eficiente.',
+      avatar: 'AM',
+      rating: 5
     }
   ];
 
   const stats = [
-    { label: 'Estudiantes Activos', value: 15000, icon: '👥' },
-    { label: 'Certificados Emitidos', value: 25000, icon: '🎓' },
-    { label: 'Mentores Verificados', value: 500, icon: '🤝' },
-    { label: 'Transacciones Diarias', value: 5000, icon: '⚡' }
+    { label: 'Estudiantes Activos', value: 15000, icon: '👥', color: 'from-blue-500 to-cyan-500' },
+    { label: 'Certificados Emitidos', value: 25000, icon: '🎓', color: 'from-green-500 to-emerald-500' },
+    { label: 'Mentores Verificados', value: 500, icon: '🤝', color: 'from-purple-500 to-pink-500' },
+    { label: 'Transacciones Diarias', value: 5000, icon: '⚡', color: 'from-orange-500 to-red-500' }
   ];
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
       <CustomCursor />
       <ScrollIndicator />
-      <ParticleBackground />
+      <NeuralEffects 
+        showNetwork={true}
+        showParticles={true}
+        showWaves={true}
+        showForceField={false}
+      />
+      
+      {/* Fondo con efectos parallax */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-brain-500/5"
+        animate={{
+          backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`
+        }}
+        transition={{ duration: 0.1 }}
+      />
       
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32">
+      <section className="relative py-20 lg:py-32 min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Text Content */}
@@ -295,8 +535,9 @@ export default function Landing() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="inline-flex items-center px-4 py-2 bg-primary-100/80 dark:bg-primary-900/30 backdrop-blur-sm text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium border border-primary-200/50 dark:border-primary-700/50"
+                  className="inline-flex items-center px-6 py-3 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium border border-white/30 dark:border-gray-700/30 shadow-lg"
                 >
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-3 animate-pulse"></span>
                   🚀 Plataforma Educativa Descentralizada
                 </motion.div>
                 
@@ -304,7 +545,7 @@ export default function Landing() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white leading-tight"
+                  className="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 dark:text-white leading-tight"
                 >
                   <span className="bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600 bg-clip-text text-transparent">
                     BrainSafes
@@ -315,7 +556,7 @@ export default function Landing() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.6 }}
-                  className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed"
+                  className="text-2xl md:text-3xl text-gray-600 dark:text-gray-300 leading-relaxed"
                 >
                   La plataforma descentralizada que revoluciona la educación con{' '}
                   <span className="font-semibold text-primary-600">blockchain</span>,{' '}
@@ -337,17 +578,15 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 1 }}
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-6"
               >
-                <Link
-                  to="/dashboard"
-                  className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary-600 to-brain-600 text-white font-semibold rounded-xl shadow-large hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-                >
-                  Comenzar Ahora
-                  <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                <Link to="/dashboard">
+                  <InteractiveButton variant="primary" className="w-full sm:w-auto">
+                    Comenzar Ahora
+                  </InteractiveButton>
                 </Link>
                 
-                <InteractiveButton className="inline-flex items-center justify-center px-8 py-4 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300">
+                <InteractiveButton variant="secondary" className="w-full sm:w-auto">
                   Ver Demo
                 </InteractiveButton>
               </motion.div>
@@ -360,54 +599,61 @@ export default function Landing() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="relative"
             >
-              <div className="relative z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 dark:border-gray-700/20">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-4">
+              <AdvancedGlassCard intensity="high" variant="primary" className="p-8">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-6">
                     <motion.div 
-                      className="bg-gradient-to-br from-primary-500 to-brain-500 p-4 rounded-xl text-white"
-                      whileHover={{ scale: 1.05 }}
+                      className="bg-gradient-to-br from-primary-500 to-brain-500 p-6 rounded-2xl text-white shadow-lg"
+                      whileHover={{ scale: 1.05, rotate: 2 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <div className="text-2xl mb-2">🎓</div>
+                      <div className="text-3xl mb-3">🎓</div>
                       <div className="text-sm font-medium">Certificados NFT</div>
+                      <div className="text-xs opacity-80 mt-1">Verificables</div>
                     </motion.div>
                     <motion.div 
-                      className="bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-xl text-white"
-                      whileHover={{ scale: 1.05 }}
+                      className="bg-gradient-to-br from-green-500 to-emerald-500 p-6 rounded-2xl text-white shadow-lg"
+                      whileHover={{ scale: 1.05, rotate: -2 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <div className="text-2xl mb-2">🤖</div>
+                      <div className="text-3xl mb-3">🤖</div>
                       <div className="text-sm font-medium">IA Integrada</div>
+                      <div className="text-xs opacity-80 mt-1">Personalizada</div>
                     </motion.div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <motion.div 
-                      className="bg-gradient-to-br from-purple-500 to-pink-500 p-4 rounded-xl text-white"
-                      whileHover={{ scale: 1.05 }}
+                      className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-2xl text-white shadow-lg"
+                      whileHover={{ scale: 1.05, rotate: 2 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <div className="text-2xl mb-2">🔗</div>
+                      <div className="text-3xl mb-3">🔗</div>
                       <div className="text-sm font-medium">Cross-Chain</div>
+                      <div className="text-xs opacity-80 mt-1">Interoperable</div>
                     </motion.div>
                     <motion.div 
-                      className="bg-gradient-to-br from-orange-500 to-red-500 p-4 rounded-xl text-white"
-                      whileHover={{ scale: 1.05 }}
+                      className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl text-white shadow-lg"
+                      whileHover={{ scale: 1.05, rotate: -2 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <div className="text-2xl mb-2">💰</div>
+                      <div className="text-3xl mb-3">💰</div>
                       <div className="text-sm font-medium">DeFi Loans</div>
+                      <div className="text-xs opacity-80 mt-1">Descentralizado</div>
                     </motion.div>
                   </div>
                 </div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-brain-400/20 rounded-3xl blur-3xl"></div>
+              </AdvancedGlassCard>
+              
+              {/* Efectos de fondo */}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-brain-400/20 rounded-3xl blur-3xl -z-10"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-3xl blur-2xl -z-10"></div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+      <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -425,11 +671,13 @@ export default function Landing() {
                 viewport={{ once: true }}
                 className="text-center"
               >
-                <div className="text-3xl mb-2">{stat.icon}</div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  <AnimatedCounter end={stat.value} />
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
+                <AdvancedGlassCard intensity="medium" variant="default" className="p-6">
+                  <div className="text-4xl mb-4">{stat.icon}</div>
+                  <div className="mb-2">
+                    <AnimatedCounter end={stat.value} />
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.label}</div>
+                </AdvancedGlassCard>
               </motion.div>
             ))}
           </motion.div>
@@ -437,16 +685,16 @@ export default function Landing() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 lg:py-32 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm">
+      <section className="py-20 lg:py-32 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-8">
               ¿Por qué elegir{' '}
               <span className="bg-gradient-to-r from-primary-600 to-brain-600 bg-clip-text text-transparent">
                 BrainSafes
@@ -471,23 +719,24 @@ export default function Landing() {
                   y: -10,
                   transition: { duration: 0.3 }
                 }}
-                className={`group relative p-8 rounded-2xl ${benefit.bgColor} backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:shadow-large transition-all duration-500`}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${benefit.color} rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-                <div className="relative z-10">
-                  <motion.div 
-                    className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300"
-                    whileHover={{ rotate: 5 }}
-                  >
-                    {benefit.icon}
-                  </motion.div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                    {benefit.description}
-                  </p>
-                </div>
+                <AdvancedGlassCard intensity="high" variant="default" delay={index * 0.2}>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${benefit.color} rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                  <div className="relative z-10">
+                    <motion.div 
+                      className="text-6xl mb-8 group-hover:scale-110 transition-transform duration-300"
+                      whileHover={{ rotate: 5 }}
+                    >
+                      {benefit.icon}
+                    </motion.div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                      {benefit.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                      {benefit.description}
+                    </p>
+                  </div>
+                </AdvancedGlassCard>
               </motion.div>
             ))}
           </div>
@@ -495,16 +744,16 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 lg:py-32 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+      <section className="py-20 lg:py-32 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-8">
               Características Principales
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -514,29 +763,42 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <FeatureCard
+              <AdvancedGlassCard
                 key={index}
-                icon={feature.icon}
-                title={feature.title}
-                description={feature.description}
                 delay={index * 0.1}
-              />
+                intensity="medium"
+                variant="default"
+                className="group"
+              >
+                <motion.div 
+                  className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300"
+                  whileHover={{ rotate: 5 }}
+                >
+                  {feature.icon}
+                </motion.div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-primary-600 transition-colors duration-300">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                  {feature.description}
+                </p>
+              </AdvancedGlassCard>
             ))}
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 lg:py-32 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm">
+      <section className="py-20 lg:py-32 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-8">
               Lo que dicen nuestros usuarios
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -546,22 +808,60 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <TestimonialCard
+              <motion.div
                 key={index}
-                name={testimonial.name}
-                role={testimonial.role}
-                content={testimonial.content}
-                avatar={testimonial.avatar}
-                delay={index * 0.2}
-              />
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                whileHover={{ 
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <AdvancedGlassCard delay={index * 0.2} intensity="medium" variant="default">
+                  <div className="flex items-center mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-brain-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                      {testimonial.avatar}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg">{testimonial.name}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{testimonial.role}</p>
+                      <div className="flex mt-1">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <span key={i} className="text-yellow-400 text-sm">⭐</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300 italic text-lg leading-relaxed">
+                    "{testimonial.content}"
+                  </p>
+                </AdvancedGlassCard>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 lg:py-32 bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
+      <section className="py-20 lg:py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600"></div>
+        <div className="absolute inset-0 bg-black/20"></div>
+        
+        {/* Efectos de fondo animados */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-primary-400/30 via-brain-400/30 to-purple-400/30"
+          animate={{
+            backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -569,21 +869,19 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8">
               ¿Listo para comenzar tu viaje?
             </h2>
-            <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-primary-100 mb-12 max-w-2xl mx-auto">
               Únete a miles de estudiantes y profesionales que ya confían en BrainSafes para su desarrollo educativo
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/dashboard"
-                className="group inline-flex items-center justify-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-large hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-              >
-                Crear Cuenta Gratis
-                <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Link to="/dashboard">
+                <InteractiveButton variant="secondary" className="w-full sm:w-auto">
+                  Crear Cuenta Gratis
+                </InteractiveButton>
               </Link>
-              <InteractiveButton className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-xl hover:bg-white hover:text-primary-600 transition-all duration-300">
+              <InteractiveButton variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary-600">
                 Ver Demo Interactivo
               </InteractiveButton>
             </div>
@@ -592,4 +890,4 @@ export default function Landing() {
       </section>
     </main>
   );
-} 
+}

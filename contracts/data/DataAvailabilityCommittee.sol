@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../optimizations/AddressCompressor.sol";
 
-/**
- * @title DataAvailabilityCommittee
- * @notice Data availability committee contract for BrainSafes
- * @dev Ensures data availability and integrity for the system
- * @author BrainSafes Team
- */
+
 contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
     bytes32 public constant DAC_MEMBER_ROLE = keccak256("DAC_MEMBER_ROLE");
     bytes32 public constant DATA_SUBMITTER_ROLE = keccak256("DATA_SUBMITTER_ROLE");
@@ -28,7 +23,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         uint256 timestamp;
         uint256 confirmations;
         bool isConfirmed;
-        mapping(address => bool) confirmations;
+        mapping(address => bool) confirmationsMap;
     }
 
     // Estado del comité
@@ -57,11 +52,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         requiredConfirmations = _requiredConfirmations;
     }
 
-    /**
-     * @dev Añadir un nuevo miembro al DAC
-     * @param member The address of the new member.
-     * @param endpoint The endpoint URL for the new member.
-     */
+    
     function addMember(
         address member,
         string calldata endpoint
@@ -83,10 +74,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         emit MemberAdded(member, endpoint, msg.value);
     }
 
-    /**
-     * @dev Remover un miembro del DAC
-     * @param member The address of the member to remove.
-     */
+    
     function removeMember(address member) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(members[member].isActive, "Member not active");
 
@@ -99,11 +87,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         emit MemberRemoved(member);
     }
 
-    /**
-     * @dev Enviar datos para confirmación
-     * @param data The data bytes to submit.
-     * @return The hash of the submitted data.
-     */
+    
     function submitData(
         bytes calldata data
     ) external onlyRole(DATA_SUBMITTER_ROLE) returns (bytes32) {
@@ -122,16 +106,13 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         return dataHash;
     }
 
-    /**
-     * @dev Confirmar disponibilidad de datos
-     * @param dataHash The hash of the data chunk to confirm.
-     */
+    
     function confirmData(bytes32 dataHash) external onlyRole(DAC_MEMBER_ROLE) {
         require(members[msg.sender].isActive, "Not an active member");
-        require(!dataChunks[dataHash].confirmations[msg.sender], "Already confirmed");
+        require(!dataChunks[dataHash].confirmationsMap[msg.sender], "Already confirmed");
 
         DataChunk storage chunk = dataChunks[dataHash];
-        chunk.confirmations[msg.sender] = true;
+        chunk.confirmationsMap[msg.sender] = true;
         chunk.confirmations++;
 
         emit DataConfirmed(dataHash, msg.sender);
@@ -142,50 +123,31 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Enviar heartbeat para mantener estado activo
-     */
+    
     function sendHeartbeat() external onlyRole(DAC_MEMBER_ROLE) {
         require(members[msg.sender].isActive, "Not an active member");
         members[msg.sender].lastHeartbeat = block.timestamp;
         emit HeartbeatReceived(msg.sender, block.timestamp);
     }
 
-    /**
-     * @dev Verificar si un miembro está activo
-     * @param member The address of the member to check.
-     * @return True if the member is active, false otherwise.
-     */
+    
     function isMemberActive(address member) public view returns (bool) {
         DACMember memory dacMember = members[member];
         return dacMember.isActive &&
             block.timestamp - dacMember.lastHeartbeat <= HEARTBEAT_INTERVAL;
     }
 
-    /**
-     * @dev Verificar si los datos están disponibles
-     * @param dataHash The hash of the data chunk to check.
-     * @return True if the data is available, false otherwise.
-     */
+    
     function isDataAvailable(bytes32 dataHash) external view returns (bool) {
         return dataChunks[dataHash].isConfirmed;
     }
 
-    /**
-     * @dev Obtener información de un miembro
-     * @param member The address of the member to get info for.
-     * @return A DACMember struct containing member information.
-     */
+    
     function getMemberInfo(address member) external view returns (DACMember memory) {
         return members[member];
     }
 
-    /**
-     * @dev Obtener estado del comité
-     * @return activeMembers The number of active members.
-     * @return totalStake The total stake of all members.
-     * @return confirmedDataChunks The number of confirmed data chunks.
-     */
+    
     function getCommitteeStatus() external view returns (
         uint256 activeMembers,
         uint256 totalStake,
@@ -199,11 +161,7 @@ contract DataAvailabilityCommittee is AccessControl, ReentrancyGuard {
         return (active, stake, confirmed);
     }
 
-    /**
-     * @dev Actualizar configuración del comité
-     * @param _minStake The new minimum stake required for a member.
-     * @param _requiredConfirmations The new number of confirmations required.
-     */
+    
     function updateConfig(
         uint256 _minStake,
         uint256 _requiredConfirmations

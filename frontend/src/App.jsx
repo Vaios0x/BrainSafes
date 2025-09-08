@@ -4,12 +4,14 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Landing from './components/Landing';
 import ProtectedRoute from './components/ProtectedRoute';
+import NeuralBackground from './components/NeuralBackground';
 
 import { ToastProvider } from './components/ToastContainer';
 import Dashboard from "./components/Dashboard/Dashboard";
 import AIChatWidget from './components/AIChatWidget';
 import { AppKitProvider } from './config/reown.jsx';
 import { LoadingSpinner } from './components/Spinner';
+import ContractStatus from './components/ContractStatus';
 
 const Profile = lazy(() => import('./components/Profile'));
 const Certificates = lazy(() => import('./components/Certificates'));
@@ -21,15 +23,30 @@ const LoanManagerDashboard = lazy(() => import('./components/LoanManagerDashboar
 const GovernancePanel = lazy(() => import('./components/Governance').then(m => ({ default: m.GovernancePanel })));
 const MarketplacePanel = lazy(() => import('./components/Marketplace/MarketplacePanel'));
 
+// Nuevos componentes del Marketplace
+const JobPostingManager = lazy(() => import('./components/Marketplace/JobPostingManager'));
+const AIMatchingSystem = lazy(() => import('./components/Marketplace/AIMatchingSystem'));
+const ReputationSystem = lazy(() => import('./components/Marketplace/ReputationSystem'));
+
 const AIChatPanel = lazy(() => import('./components/AIChatPanel'));
 const LearningPanel = lazy(() => import('./components/Learning/LearningPanel'));
 const SupportPanel = lazy(() => import('./components/SupportPanel'));
 
+// Nuevos componentes educativos
+const CourseManagement = lazy(() => import('./components/Learning/CourseManagement'));
+const AutomatedAssessment = lazy(() => import('./components/Learning/AutomatedAssessment'));
+const CertificateNFTManager = lazy(() => import('./components/Learning/CertificateNFTManager'));
+const ProgressTracker = lazy(() => import('./components/Learning/ProgressTracker'));
+const ScholarshipManager = lazy(() => import('./components/Learning/ScholarshipManager'));
+const AIPerformancePredictor = lazy(() => import('./components/Learning/AIPerformancePredictor'));
+const ContractLearningPanel = lazy(() => import('./components/Learning/ContractLearningPanel'));
 
 function CommunityPage() {
   const [tab, setTab] = useState(0);
   return (
-    <div className="w-full mt-8">
+    <div className="min-h-screen relative overflow-hidden">
+      <NeuralBackground theme="community" particleCount={50} waveCount={7} intensity="medium" />
+      <div className="relative z-10 w-full mt-8">
       <div className="flex justify-center mb-8">
         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button
@@ -65,6 +82,7 @@ function CommunityPage() {
             <GovernancePanel />
           </Suspense>
         )}
+      </div>
       </div>
     </div>
   );
@@ -156,6 +174,32 @@ export default function App() {
                       </Suspense>
                     } 
                   />
+                  
+                  {/* Nuevas rutas del Marketplace de Empleos */}
+                  <Route 
+                    path="/marketplace/jobs" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando gestión de empleos..." className="h-64" />}>
+                        <JobPostingManager />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/marketplace/matching" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando matching con IA..." className="h-64" />}>
+                        <AIMatchingSystem />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/marketplace/reputation" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando sistema de reputación..." className="h-64" />}>
+                        <ReputationSystem />
+                      </Suspense>
+                    } 
+                  />
                   <Route 
                     path="/profile" 
                     element={
@@ -173,12 +217,84 @@ export default function App() {
                       </Suspense>
                     } 
                   />
+                  
+                  {/* Nuevas rutas educativas */}
+                  <Route 
+                    path="/learning/courses" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando gestión de cursos..." className="h-64" />}>
+                        <CourseManagement />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/learning/assessment" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando evaluación automatizada..." className="h-64" />}>
+                        <AutomatedAssessment />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/learning/certificates" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando certificados NFT..." className="h-64" />}>
+                        <CertificateNFTManager />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/learning/progress" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando seguimiento de progreso..." className="h-64" />}>
+                        <ProgressTracker />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/learning/scholarships" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando gestión de becas..." className="h-64" />}>
+                        <ScholarshipManager />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="/learning/predictions" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando predictor de rendimiento..." className="h-64" />}>
+                        <AIPerformancePredictor />
+                      </Suspense>
+                    } 
+                  />
+                  
+                  {/* Contract Learning Panel */}
+                  <Route 
+                    path="/learning/contracts" 
+                    element={
+                      <Suspense fallback={<LoadingSpinner text="Cargando interacción con contratos..." className="h-64" />}>
+                        <ContractLearningPanel />
+                      </Suspense>
+                    } 
+                  />
+                  
                   <Route 
                     path="/support" 
                     element={
                       <Suspense fallback={<LoadingSpinner text="Cargando soporte..." className="h-64" />}>
                         <SupportPanel />
                       </Suspense>
+                    } 
+                  />
+                  
+                  {/* Contract Status Route */}
+                  <Route 
+                    path="/contracts" 
+                    element={
+                      <div className="container mx-auto px-4 py-8">
+                        <h1 className="text-3xl font-bold mb-6">Contract Status</h1>
+                        <ContractStatus />
+                      </div>
                     } 
                   />
                 </Routes>

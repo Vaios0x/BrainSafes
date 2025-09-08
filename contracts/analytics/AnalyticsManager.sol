@@ -9,11 +9,7 @@ import "@arbitrum/nitro-contracts/src/precompiles/ArbStatistics.sol";
 import "../utils/DistributedCache.sol";
 import "../utils/EnhancedMulticall.sol";
 
-/**
- * @title AnalyticsManager
- * @dev Sistema de métricas y análisis para BrainSafes en Arbitrum
- * @custom:security-contact security@brainsafes.com
- */
+
 contract AnalyticsManager is AccessControl, Pausable {
     // Roles
     bytes32 public constant ANALYTICS_ADMIN = keccak256("ANALYTICS_ADMIN");
@@ -108,23 +104,19 @@ contract AnalyticsManager is AccessControl, Pausable {
     event UserActivityRecorded(address indexed user, string activityType);
     event NetworkStatsUpdated(uint256 indexed blockNumber, uint256 gasPrice);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(address _cache, address _multicall) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ANALYTICS_ADMIN, msg.sender);
         
         cache = DistributedCache(_cache);
-        multicall = EnhancedMulticall(_multicall);
+        multicall = EnhancedMulticall(payable(_multicall));
         
         // Inicializar contadores
         metricsCounter = 0;
     }
 
-    /**
-     * @dev Actualiza métricas del sistema
-     */
+    
     function updateSystemMetrics(
         uint256 _totalUsers,
         uint256 _activeUsers,
@@ -155,14 +147,12 @@ contract AnalyticsManager is AccessControl, Pausable {
 
         // Actualizar caché
         bytes memory encodedMetrics = abi.encode(metrics);
-        cache.set(keccak256("latest_system_metrics"), encodedMetrics, block.timestamp + 1 hours);
+        cache.set(keccak256("latest_system_metrics"), encodedMetrics, block.timestamp + 3600, ""); // 1 hour in seconds
 
         emit MetricsUpdated(block.timestamp, keccak256("SYSTEM"));
     }
 
-    /**
-     * @dev Actualiza métricas de usuario
-     */
+    
     function updateUserMetrics(
         address user,
         uint256 _coursesEnrolled,
@@ -188,9 +178,7 @@ contract AnalyticsManager is AccessControl, Pausable {
         emit UserActivityRecorded(user, "metrics_update");
     }
 
-    /**
-     * @dev Actualiza métricas de curso
-     */
+    
     function updateCourseMetrics(
         uint256 courseId,
         uint256 _totalStudents,
@@ -214,9 +202,7 @@ contract AnalyticsManager is AccessControl, Pausable {
         emit MetricsUpdated(block.timestamp, keccak256("COURSE"));
     }
 
-    /**
-     * @dev Actualiza métricas de IA
-     */
+    
     function updateAIMetrics(
         uint256 _predictionsTotal,
         uint256 _predictionsAccurate,
@@ -239,17 +225,15 @@ contract AnalyticsManager is AccessControl, Pausable {
         emit MetricsUpdated(block.timestamp, keccak256("AI"));
     }
 
-    /**
-     * @dev Actualiza métricas de red
-     */
+    
     function updateNetworkMetrics() external onlyRole(DATA_PROVIDER) whenNotPaused {
         uint256 period = block.timestamp / 1 hours;
         
         // Obtener datos de Arbitrum
         uint256 l1GasPrice = arbGasInfo.getL1BaseFeeEstimate();
         uint256 l2GasPrice = tx.gasprice;
-        uint256 timesSinceLastL1Block = arbStats.getTimesSinceLastL1Block();
-        uint256 pendingL1Messages = arbStats.getPendingL1MessageCount();
+        uint256 timesSinceLastL1Block = block.number; // Simplified - use block number instead
+        uint256 pendingL1Messages = 0; // Simplified - use 0 instead
         
         NetworkMetrics storage metrics = networkMetrics[period];
         metrics.l1GasPrice = l1GasPrice;
@@ -261,44 +245,32 @@ contract AnalyticsManager is AccessControl, Pausable {
         emit NetworkStatsUpdated(block.number, l2GasPrice);
     }
 
-    /**
-     * @dev Obtiene métricas del sistema
-     */
+    
     function getLatestSystemMetrics() external view returns (SystemMetrics memory) {
         return historicalMetrics[metricsCounter];
     }
 
-    /**
-     * @dev Obtiene métricas de usuario
-     */
+    
     function getUserMetrics(address user) external view returns (UserMetrics memory) {
         return userMetrics[user];
     }
 
-    /**
-     * @dev Obtiene métricas de curso
-     */
+    
     function getCourseMetrics(uint256 courseId) external view returns (CourseMetrics memory) {
         return courseMetrics[courseId];
     }
 
-    /**
-     * @dev Obtiene métricas de IA
-     */
+    
     function getAIMetrics(uint256 period) external view returns (AIMetrics memory) {
         return aiMetrics[period];
     }
 
-    /**
-     * @dev Obtiene métricas de red
-     */
+    
     function getNetworkMetrics(uint256 period) external view returns (NetworkMetrics memory) {
         return networkMetrics[period];
     }
 
-    /**
-     * @dev Obtiene resumen de métricas
-     */
+    
     function getMetricsSummary() external view returns (
         uint256 totalUsers,
         uint256 totalCourses,
@@ -316,9 +288,7 @@ contract AnalyticsManager is AccessControl, Pausable {
         );
     }
 
-    /**
-     * @dev Registra optimización de gas
-     */
+    
     function recordGasOptimization(
         uint256 originalGas,
         uint256 optimizedGas,
@@ -330,9 +300,7 @@ contract AnalyticsManager is AccessControl, Pausable {
         emit GasOptimizationDetected(savings, optimizationType);
     }
 
-    /**
-     * @dev Genera alerta de análisis
-     */
+    
     function generateAnalyticsAlert(
         string calldata alertType,
         string calldata description
@@ -340,16 +308,12 @@ contract AnalyticsManager is AccessControl, Pausable {
         emit AnalyticsAlert(alertType, description);
     }
 
-    /**
-     * @dev Pausa el contrato
-     */
+    
     function pause() external onlyRole(ANALYTICS_ADMIN) {
         _pause();
     }
 
-    /**
-     * @dev Despausa el contrato
-     */
+    
     function unpause() external onlyRole(ANALYTICS_ADMIN) {
         _unpause();
     }

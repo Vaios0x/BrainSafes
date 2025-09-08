@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/**
- * @title DistributedCacheV2
- * @dev Cache distribuido mejorado para BrainSafes (multi-nodo, cross-chain, invalidación inteligente)
- * @notice Permite almacenamiento temporal eficiente, sincronización entre nodos y contratos, e invalidación flexible
- * @custom:security-contact security@brainsafes.com
- */
+
 contract DistributedCacheV2 is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant CACHE_ADMIN = keccak256("CACHE_ADMIN");
     bytes32 public constant CACHE_NODE = keccak256("CACHE_NODE");

@@ -63,7 +63,7 @@ contract StudyGroups is AccessControl {
         Group storage group = groups[groupId];
         require(group.admin != address(0), "Grupo no existe");
         require(!isMember[groupId][msg.sender], "Ya es miembro");
-        require(group.open || invited[groupId][msg.sender], "Solo por invitación");
+        require(group.open || invited[groupId][msg.sender], unicode"Solo por invitación");
         isMember[groupId][msg.sender] = true;
         groupMembers[groupId].push(msg.sender);
         unchecked { group.memberCount++; }

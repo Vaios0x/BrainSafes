@@ -2,118 +2,777 @@
   "openapi": "3.0.0",
   "info": {
     "title": "BrainSafes API",
+    "description": "API completa para el ecosistema BrainSafes - Educación descentralizada con IA, NFTs y DeFi",
     "version": "1.0.0",
-    "description": "Documentación OpenAPI de los endpoints principales del backend BrainSafes."
-  },
-  "paths": {
-    "/api/auth/register": {
-      "post": {
-        "summary": "Registro de usuario",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
-                },
-                "required": ["email", "password"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Usuario registrado" }
-        }
-      }
-    },
-    "/api/auth/login": {
-      "post": {
-        "summary": "Login tradicional",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
-                },
-                "required": ["email", "password"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Login exitoso" },
-          "401": { "description": "Credenciales inválidas" }
-        }
-      }
-    },
-    "/api/auth/login-wallet": {
-      "post": {
-        "summary": "Login con wallet Web3",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "address": { "type": "string" },
-                  "signature": { "type": "string" },
-                  "message": { "type": "string" }
-                },
-                "required": ["address", "signature", "message"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Login exitoso" },
-          "401": { "description": "Firma inválida" }
-        }
-      }
-    },
-    "/api/auth/me": {
-      "get": {
-        "summary": "Obtener perfil del usuario autenticado",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Perfil de usuario" },
-          "401": { "description": "No autenticado" }
-        }
-      }
-    },
-    "/api/roles/onchain/{address}": {
-      "get": {
-        "summary": "Consultar roles on-chain de un address",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "address",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Roles on-chain" },
-          "500": { "description": "Error consultando roles" }
-        }
-      }
+    "contact": {
+      "name": "BrainSafes Team",
+      "email": "support@brainsafes.com"
     }
   },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Servidor de desarrollo"
+    },
+    {
+      "url": "https://api.brainsafes.com",
+      "description": "Servidor de producción"
+    }
+  ],
   "components": {
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "Introduce tu token JWT aquí. Ejemplo: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "walletAddress": {
+            "type": "string"
+          },
+          "reputation": {
+            "type": "number"
+          },
+          "totalEarned": {
+            "type": "number"
+          },
+          "totalSpent": {
+            "type": "number"
+          },
+          "joinTimestamp": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "instructor": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "maxStudents": {
+            "type": "number"
+          },
+          "currentStudents": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Certificate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "courseId": {
+            "type": "number"
+          },
+          "student": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "issuedAt": {
+            "type": "number"
+          },
+          "tokenId": {
+            "type": "number"
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "totalCalls": {
+                "type": "number"
+              },
+              "successfulCalls": {
+                "type": "number"
+              },
+              "failedCalls": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "AnalyticsMetrics": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "active": {
+                "type": "number"
+              },
+              "new_today": {
+                "type": "number"
+              }
+            }
+          },
+          "courses": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "active": {
+                "type": "number"
+              },
+              "completed_today": {
+                "type": "number"
+              }
+            }
+          },
+          "revenue": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "today": {
+                "type": "number"
+              },
+              "week": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Verificar el estado del servidor",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Servidor funcionando correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/contracts/users": {
+      "post": {
+        "summary": "Registrar nuevo usuario",
+        "description": "Crear un nuevo usuario en el sistema",
+        "tags": ["Users"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "walletAddress"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "walletAddress": {
+                    "type": "string",
+                    "pattern": "^0x[a-fA-F0-9]{40}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "429": {
+            "description": "Rate limit excedido"
+          }
+        }
+      }
+    },
+    "/api/contracts/users/{address}": {
+      "get": {
+        "summary": "Obtener perfil de usuario",
+        "description": "Obtener información detallada de un usuario",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Dirección de wallet del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Perfil de usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          }
+        }
+      }
+    },
+    "/api/contracts/courses": {
+      "post": {
+        "summary": "Crear nuevo curso",
+        "description": "Crear un nuevo curso en el sistema",
+        "tags": ["Courses"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "description", "price", "duration", "maxStudents", "skills", "difficulty"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 1000
+                  },
+                  "price": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "duration": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 365
+                  },
+                  "maxStudents": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 1000
+                  },
+                  "skills": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  },
+                  "difficulty": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Curso creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Course"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar cursos",
+        "description": "Obtener lista paginada de cursos",
+        "tags": ["Courses"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Número de página"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Elementos por página"
+          },
+          {
+            "name": "instructor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filtrar por instructor"
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por dificultad"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cursos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "courses": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Course"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "limit": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "pages": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhooks": {
+      "post": {
+        "summary": "Registrar webhook",
+        "description": "Registrar un nuevo webhook para recibir eventos",
+        "tags": ["Webhooks"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url", "secret", "events"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "secret": {
+                    "type": "string",
+                    "minLength": 16
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "timeout": {
+                        "type": "number",
+                        "minimum": 1000,
+                        "maximum": 30000
+                      },
+                      "retries": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 10
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook registrado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Webhook"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar webhooks",
+        "description": "Obtener lista de webhooks registrados",
+        "tags": ["Webhooks"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalWebhooks": {
+                          "type": "number"
+                        },
+                        "activeWebhooks": {
+                          "type": "number"
+                        },
+                        "webhooks": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Webhook"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/metrics": {
+      "get": {
+        "summary": "Obtener métricas",
+        "description": "Obtener métricas del sistema",
+        "tags": ["Analytics"],
+        "parameters": [
+          {
+            "name": "metricKeys",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Claves de métricas específicas (separadas por coma)"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Fecha desde la cual obtener métricas"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Métricas del sistema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AnalyticsMetrics"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/dashboard": {
+      "get": {
+        "summary": "Dashboard principal",
+        "description": "Obtener dashboard con métricas principales",
+        "tags": ["Analytics"],
+        "responses": {
+          "200": {
+            "description": "Dashboard con métricas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "timestamp": {
+                          "type": "number"
+                        },
+                        "userActivity": {
+                          "type": "object"
+                        },
+                        "coursePerformance": {
+                          "type": "object"
+                        },
+                        "financialSummary": {
+                          "type": "object"
+                        },
+                        "systemHealth": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ipfs/upload": {
+      "post": {
+        "summary": "Subir archivo a IPFS",
+        "description": "Subir un archivo al sistema IPFS",
+        "tags": ["IPFS"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "pin": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Archivo subido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "hash": {
+                          "type": "string"
+                        },
+                        "size": {
+                          "type": "number"
+                        },
+                        "url": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

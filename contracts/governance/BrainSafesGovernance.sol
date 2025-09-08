@@ -6,13 +6,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "../governance/DelegationManager.sol";
+import "../governance/AutomatedProposals.sol";
 
-/**
- * @title BrainSafesGovernance
- * @notice Governance contract for BrainSafes ecosystem
- * @dev Handles proposals, voting, and execution of governance actions
- * @author BrainSafes Team
- */
+
 contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
@@ -173,17 +170,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         _grantRole(ADMIN_ROLE, msg.sender);
     }
 
-    /**
-     * @notice Creates a new proposal for governance.
-     * @dev Only proposers with sufficient voting power can create proposals.
-     *      If the proposal is emergency, it must be initiated by a security council member.
-     * @param title The title of the proposal.
-     * @param description A detailed description of the proposal.
-     * @param callData The encoded function call data.
-     * @param target The contract address to call.
-     * @param emergency Whether the proposal is an emergency.
-     * @return The ID of the created proposal.
-     */
+    
     function createProposal(
         string memory title,
         string memory description,
@@ -227,14 +214,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         return proposalId;
     }
 
-    /**
-     * @notice Casts a vote on a proposal.
-     * @dev Voters must have voting power and must be within the voting period.
-     *      They cannot vote more than once on the same proposal.
-     * @param proposalId The ID of the proposal to vote on.
-     * @param voteType The type of vote (AGAINST, FOR, ABSTAIN).
-     * @param reason The reason for the vote.
-     */
+    
     function castVote(
         uint256 proposalId,
         VoteType voteType,
@@ -284,13 +264,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit VoteCast(msg.sender, proposalId, voteType, power, reason);
     }
 
-    /**
-     * @notice Registers a user as a delegate.
-     * @dev Only non-delegated users can register.
-     * @param name The name of the delegate.
-     * @param description A brief description of the delegate.
-     * @param profileIpfs The IPFS hash of the delegate's profile.
-     */
+    
     function registerAsDelegate(
         string memory name,
         string memory description,
@@ -315,13 +289,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit DelegateRegistered(msg.sender, name);
     }
 
-    /**
-     * @notice Delegates voting power from the caller to a specified address.
-     * @dev The caller must have sufficient voting power.
-     *      The delegate must be active or a security council member.
-     * @param to The address to delegate voting power to.
-     * @param amount The amount of voting power to delegate.
-     */
+    
     function delegate(address to, uint256 amount) external {
         require(amount > 0, "Amount must be greater than 0");
         require(
@@ -364,12 +332,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit DelegationUpdated(msg.sender, to, amount);
     }
 
-    /**
-     * @notice Adds a member to the security council.
-     * @dev Only administrators can add members.
-     *      The council cannot have more than SECURITY_COUNCIL_SIZE members.
-     * @param member The address of the member to add.
-     */
+    
     function addSecurityCouncilMember(address member) external onlyRole(ADMIN_ROLE) {
         require(
             securityCouncilMembers.length < SECURITY_COUNCIL_SIZE,
@@ -398,12 +361,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Removes a member from the security council.
-     * @dev Only administrators can remove members.
-     *      The member must be an active council member.
-     * @param member The address of the member to remove.
-     */
+    
     function removeSecurityCouncilMember(address member) external onlyRole(ADMIN_ROLE) {
         require(
             securityCouncil[member].isActive,
@@ -425,12 +383,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit SecurityCouncilMemberRemoved(member);
     }
 
-    /**
-     * @notice Activates the emergency mode.
-     * @dev Only security council members can activate emergency mode.
-     *      Requires a quorum of security council members to support.
-     * @param reason The reason for activating the emergency mode.
-     */
+    
     function activateEmergencyMode(string memory reason) external onlyRole(SECURITY_COUNCIL_ROLE) {
         require(!emergencyMode, "Already in emergency mode");
         
@@ -450,11 +403,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit EmergencyModeActivated(reason);
     }
 
-    /**
-     * @notice Deactivates the emergency mode.
-     * @dev Only security council members can deactivate emergency mode.
-     *      Requires a quorum of security council members to support.
-     */
+    
     function deactivateEmergencyMode() external onlyRole(SECURITY_COUNCIL_ROLE) {
         require(emergencyMode, "Not in emergency mode");
         
@@ -474,12 +423,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit EmergencyModeDeactivated();
     }
 
-    /**
-     * @notice Executes a proposal.
-     * @dev Only executed proposals can be executed.
-     *      The execution delay must be met.
-     * @param proposalId The ID of the proposal to execute.
-     */
+    
     function executeProposal(uint256 proposalId) external {
         Proposal storage proposal = proposals[proposalId];
         require(
@@ -502,12 +446,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit ProposalExecuted(proposalId);
     }
 
-    /**
-     * @notice Cancels a proposal.
-     * @dev Only the proposer or a security council member can cancel.
-     *      The proposal must be pending or active.
-     * @param proposalId The ID of the proposal to cancel.
-     */
+    
     function cancelProposal(uint256 proposalId) external {
         Proposal storage proposal = proposals[proposalId];
         require(
@@ -528,10 +467,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         emit ProposalCanceled(proposalId);
     }
 
-    /**
-     * @dev Internal function to update the status of a proposal.
-     * @param proposalId The ID of the proposal to update.
-     */
+    
     function _updateProposalStatus(uint256 proposalId) internal {
         Proposal storage proposal = proposals[proposalId];
         
@@ -556,20 +492,7 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
     }
 
     // Getters
-    /**
-     * @notice Retrieves details of a specific proposal.
-     * @param proposalId The ID of the proposal.
-     * @return proposer The address of the proposer.
-     * @return title The title of the proposal.
-     * @return description The description of the proposal.
-     * @return startTime The start time of the voting period.
-     * @return endTime The end time of the voting period.
-     * @return forVotes The number of FOR votes.
-     * @return againstVotes The number of AGAINST votes.
-     * @return abstainVotes The number of ABSTAIN votes.
-     * @return status The current status of the proposal.
-     * @return emergency Whether the proposal is an emergency.
-     */
+    
     function getProposal(uint256 proposalId) external view returns (
         address proposer,
         string memory title,
@@ -597,67 +520,44 @@ contract BrainSafesGovernance is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Retrieves details of a specific delegate.
-     * @param delegate The address of the delegate.
-     * @return Delegate The details of the delegate.
-     */
-    function getDelegate(address delegate) external view returns (Delegate memory) {
-        return delegates[delegate];
+    
+    function getDelegate(address delegateAddress) external view returns (Delegate memory) {
+        return delegates[delegateAddress];
     }
 
-    /**
-     * @notice Retrieves the list of current security council members.
-     * @return address[] memory The list of security council member addresses.
-     */
+    
     function getSecurityCouncilMembers() external view returns (address[] memory) {
         return securityCouncilMembers;
     }
 
-    /**
-     * @notice Retrieves the list of proposals created by a specific user.
-     * @param user The address of the user.
-     * @return uint256[] memory The list of proposal IDs.
-     */
+    
     function getUserProposals(address user) external view returns (uint256[] memory) {
         return userProposals[user];
     }
 
-    /**
-     * @notice Retrieves the list of votes cast by a specific user.
-     * @param user The address of the user.
-     * @return uint256[] memory The list of proposal IDs.
-     */
+    
     function getUserVotes(address user) external view returns (uint256[] memory) {
         return userVotes[user];
     }
 
-    /**
-     * @dev Setea el DelegationManager
-     */
+    
     function setDelegationManager(address _manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_manager != address(0), "Invalid address");
         delegationManager = DelegationManager(_manager);
         emit DelegationManagerSet(_manager);
     }
-    /**
-     * @dev Setea el AutomatedProposals
-     */
+    
     function setAutomatedProposals(address _proposals) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_proposals != address(0), "Invalid address");
         automatedProposals = AutomatedProposals(_proposals);
         emit AutomatedProposalsSet(_proposals);
     }
-    /**
-     * @dev Ejemplo: Delegar voto a otro usuario
-     */
+    
     function delegateVote(address delegatee, uint256 until, uint256 level) external {
         require(address(delegationManager) != address(0), "DelegationManager not set");
         delegationManager.delegate(delegatee, until, level);
     }
-    /**
-     * @dev Ejemplo: Ejecutar propuesta automática
-     */
+    
     function executeAutomatedProposal(uint256 proposalId) external {
         require(address(automatedProposals) != address(0), "AutomatedProposals not set");
         automatedProposals.executeProposal(proposalId);

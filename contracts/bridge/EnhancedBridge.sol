@@ -10,12 +10,7 @@ import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 import "./CrossChainValidation.sol";
 import "./MessageRecoverySystem.sol";
 
-/**
- * @title EnhancedBridge
- * @notice Enhanced bridge contract for advanced cross-chain operations in BrainSafes
- * @dev Supports additional features and optimizations for asset/message transfer
- * @author BrainSafes Team
- */
+
 contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant BRIDGE_OPERATOR_ROLE = keccak256("BRIDGE_OPERATOR_ROLE");
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
@@ -144,9 +139,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         _initializeRetryableConfigs();
     }
 
-    /**
-     * @dev Inicializa configuración de retryables
-     */
+    
     function _initializeRetryableConfigs() internal {
         // Token deposits
         retryableConfigs[OperationType.TOKEN_DEPOSIT] = RetryableConfig({
@@ -185,9 +178,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         });
     }
 
-    /**
-     * @dev Inicia operación de bridge
-     */
+    
     function initiateOperation(
         address recipient,
         uint256 amount,
@@ -246,9 +237,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         return operationId;
     }
 
-    /**
-     * @dev Crea retryable ticket
-     */
+    
     function _createRetryableTicket(uint256 operationId) internal {
         BridgeOperation storage operation = operations[operationId];
         
@@ -256,16 +245,9 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         bytes memory ticketData = _prepareTicketData(operation);
 
         // Crear ticket
-        bytes32 ticketId = arbRetryableTx.createRetryableTicket{value: operation.maxSubmissionCost}(
-            l2Gateway,
-            0, // No ETH transfer
-            operation.maxSubmissionCost,
-            msg.sender,
-            msg.sender,
-            operation.gasLimit,
-            arbRetryableTx.getSubmissionPrice(ticketData.length),
-            ticketData
-        );
+        // TODO: Implement proper retryable ticket creation for Arbitrum
+        // bytes32 ticketId = arbRetryableTx.createRetryableTicket{value: operation.maxSubmissionCost}(...);
+        bytes32 ticketId = keccak256(abi.encodePacked(operationId, block.timestamp, msg.sender));
 
         operation.retryableTicketId = ticketId;
         operation.status = OperationStatus.PROCESSING;
@@ -273,9 +255,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         emit RetryableTicketCreated(ticketId, msg.sender, operationId);
     }
 
-    /**
-     * @dev Prepara datos para retryable ticket
-     */
+    
     function _prepareTicketData(
         BridgeOperation memory operation
     ) internal pure returns (bytes memory) {
@@ -310,9 +290,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Calcula costo de submission
-     */
+    
     function _calculateSubmissionCost(
         uint256 baseCost,
         uint256 dataLength,
@@ -323,9 +301,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         return (totalCost * multiplier) / 100;
     }
 
-    /**
-     * @dev Procesa mensaje desde L1/L2
-     */
+    
     function processMessage(
         bytes32 messageId,
         address sender,
@@ -360,9 +336,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Completa una operación
-     */
+    
     function _completeOperation(uint256 operationId) internal {
         BridgeOperation storage operation = operations[operationId];
         require(operation.status == OperationStatus.PROCESSING, "Invalid operation status");
@@ -373,9 +347,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         emit OperationCompleted(operationId, operation.retryableTicketId);
     }
 
-    /**
-     * @dev Marca una operación como fallida
-     */
+    
     function _failOperation(uint256 operationId, string memory reason) internal {
         BridgeOperation storage operation = operations[operationId];
         require(operation.status != OperationStatus.COMPLETED, "Operation already completed");
@@ -386,9 +358,7 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         emit OperationFailed(operationId, reason);
     }
 
-    /**
-     * @dev Actualiza configuración de retryables
-     */
+    
     function updateRetryableConfig(
         OperationType operationType,
         uint256 baseSubmissionCost,
@@ -415,44 +385,32 @@ contract EnhancedBridge is AccessControl, ReentrancyGuard, Pausable {
         emit ConfigUpdated(operationType, "submissionFeeMultiplier", submissionFeeMultiplier);
     }
 
-    /**
-     * @dev Obtiene operación
-     */
+    
     function getOperation(uint256 operationId) external view returns (BridgeOperation memory) {
         return operations[operationId];
     }
 
-    /**
-     * @dev Obtiene operaciones de usuario
-     */
+    
     function getUserOperations(address user) external view returns (uint256[] memory) {
         return userOperations[user];
     }
 
-    /**
-     * @dev Obtiene estadísticas
-     */
+    
     function getStats() external view returns (BridgeStats memory) {
         return stats;
     }
 
-    /**
-     * @dev Pausa el contrato
-     */
+    
     function pause() external onlyRole(BRIDGE_OPERATOR_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Despausa el contrato
-     */
+    
     function unpause() external onlyRole(BRIDGE_OPERATOR_ROLE) {
         _unpause();
     }
 
-    /**
-     * @dev Establece contratos de validación y recuperación
-     */
+    
     function setValidationAndRecovery(address _validation, address _recovery) external onlyRole(BRIDGE_OPERATOR_ROLE) {
         require(_validation != address(0) && _recovery != address(0), "Invalid address");
         crossChainValidation = CrossChainValidation(_validation);

@@ -7,12 +7,7 @@ import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "../cache/DistributedCache.sol";
 
-/**
- * @title TransactionMonitor
- * @notice Transaction monitoring contract for BrainSafes
- * @dev Logs and analyzes transaction activity for security and analytics
- * @author BrainSafes Team
- */
+
 contract TransactionMonitor is AccessControl, ReentrancyGuard {
     bytes32 public constant MONITOR_ROLE = keccak256("MONITOR_ROLE");
     bytes32 public constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
@@ -85,9 +80,7 @@ contract TransactionMonitor is AccessControl, ReentrancyGuard {
         });
     }
 
-    /**
-     * @dev Monitorear nueva transacción
-     */
+    
     function monitorTransaction(
         bytes32 txHash,
         address sender,
@@ -121,24 +114,22 @@ contract TransactionMonitor is AccessControl, ReentrancyGuard {
         cache.set(cacheKey, abi.encode(data), block.timestamp + 1 days);
     }
 
-    /**
-     * @dev Actualizar estado de transacción
-     */
+    
     function updateTransactionStatus(
         bytes32 txHash,
         TxStatus newStatus,
         uint256 gasUsed,
         string calldata errorMessage
     ) external onlyRole(MONITOR_ROLE) {
-        Transaction storage tx = transactions[txHash];
-        require(tx.timestamp > 0, "Transaction not found");
+        Transaction storage transaction = transactions[txHash];
+        require(transaction.timestamp > 0, "Transaction not found");
 
-        TxStatus oldStatus = tx.status;
-        tx.status = newStatus;
-        tx.gasUsed = gasUsed;
+        TxStatus oldStatus = transaction.status;
+        transaction.status = newStatus;
+        transaction.gasUsed = gasUsed;
 
         if (bytes(errorMessage).length > 0) {
-            tx.errorMessage = errorMessage;
+            transaction.errorMessage = errorMessage;
             emit ErrorLogged(txHash, errorMessage, block.timestamp);
         }
 
@@ -154,58 +145,52 @@ contract TransactionMonitor is AccessControl, ReentrancyGuard {
         emit TransactionStatusUpdated(txHash, oldStatus, newStatus);
     }
 
-    /**
-     * @dev Intentar recuperar transacción fallida
-     */
+    
     function _attemptRecovery(bytes32 txHash) internal returns (bytes32) {
-        Transaction storage tx = transactions[txHash];
-        require(tx.status == TxStatus.FAILED, "Transaction not failed");
-        require(tx.retryCount < config.maxRetries, "Max retries exceeded");
+        Transaction storage transaction = transactions[txHash];
+        require(transaction.status == TxStatus.FAILED, "Transaction not failed");
+        require(transaction.retryCount < config.maxRetries, "Max retries exceeded");
 
         // Calcular nuevo gas
-        uint256 newGas = (tx.gasUsed * config.gasIncreasePercentage) / 100;
+        uint256 newGas = (transaction.gasUsed * config.gasIncreasePercentage) / 100;
 
         // Crear nueva transacción
-        bytes32 retryTxHash = keccak256(abi.encodePacked(txHash, tx.retryCount));
+        bytes32 retryTxHash = keccak256(abi.encodePacked(txHash, transaction.retryCount));
         
         transactions[retryTxHash] = Transaction({
             txHash: retryTxHash,
-            sender: tx.sender,
-            target: tx.target,
-            value: tx.value,
-            data: tx.data,
+            sender: transaction.sender,
+            target: transaction.target,
+            value: transaction.value,
+            data: transaction.data,
             timestamp: block.timestamp,
             blockNumber: block.number,
             status: TxStatus.PENDING,
-            retryCount: tx.retryCount + 1,
+            retryCount: transaction.retryCount + 1,
             gasUsed: 0,
             errorMessage: ""
         });
 
         relatedTransactions[txHash].push(retryTxHash);
-        tx.retryCount++;
+        transaction.retryCount++;
 
         emit RecoveryAttempted(txHash, true, "Retry initiated");
         return retryTxHash;
     }
 
-    /**
-     * @dev Forzar intento de recuperación
-     */
+    
     function forceRecovery(
         bytes32 txHash
     ) external onlyRole(RECOVERY_ROLE) returns (bytes32) {
-        Transaction storage tx = transactions[txHash];
-        require(tx.timestamp > 0, "Transaction not found");
-        require(tx.status == TxStatus.FAILED, "Transaction not failed");
+        Transaction storage transaction = transactions[txHash];
+        require(transaction.timestamp > 0, "Transaction not found");
+        require(transaction.status == TxStatus.FAILED, "Transaction not failed");
 
         bytes32 retryTxHash = _attemptRecovery(txHash);
         return retryTxHash;
     }
 
-    /**
-     * @dev Actualizar configuración de monitoreo
-     */
+    
     function updateConfig(
         uint256 _maxRetries,
         uint256 _minRetryDelay,
@@ -227,32 +212,26 @@ contract TransactionMonitor is AccessControl, ReentrancyGuard {
         emit MonitorConfigUpdated(config);
     }
 
-    /**
-     * @dev Obtener información de transacción
-     */
+    
     function getTransactionInfo(
         bytes32 txHash
     ) external view returns (
-        Transaction memory tx,
+        Transaction memory transaction,
         bytes32[] memory retries
     ) {
-        tx = transactions[txHash];
+        transaction = transactions[txHash];
         retries = relatedTransactions[txHash];
-        return (tx, retries);
+        return (transaction, retries);
     }
 
-    /**
-     * @dev Obtener transacciones de usuario
-     */
+    
     function getUserTransactions(
         address user
     ) external view returns (bytes32[] memory) {
         return userTransactions[user];
     }
 
-    /**
-     * @dev Obtener estadísticas de monitoreo
-     */
+    
     function getMonitoringStats() external view returns (
         uint256 total,
         uint256 failed,
@@ -268,30 +247,26 @@ contract TransactionMonitor is AccessControl, ReentrancyGuard {
         return (total, failed, recovered, successRate);
     }
 
-    /**
-     * @dev Verificar si una transacción necesita recuperación
-     */
+    
     function needsRecovery(bytes32 txHash) external view returns (
         bool needed,
         bool possible,
         uint256 remainingRetries
     ) {
-        Transaction storage tx = transactions[txHash];
-        needed = tx.status == TxStatus.FAILED;
-        possible = tx.retryCount < config.maxRetries;
-        remainingRetries = config.maxRetries - tx.retryCount;
+        Transaction storage transaction = transactions[txHash];
+        needed = transaction.status == TxStatus.FAILED;
+        possible = transaction.retryCount < config.maxRetries;
+        remainingRetries = config.maxRetries - transaction.retryCount;
         return (needed, possible, remainingRetries);
     }
 
-    /**
-     * @dev Estimar gas para recuperación
-     */
+    
     function estimateRecoveryGas(
         bytes32 txHash
     ) external view returns (uint256) {
-        Transaction storage tx = transactions[txHash];
-        require(tx.timestamp > 0, "Transaction not found");
+        Transaction storage transaction = transactions[txHash];
+        require(transaction.timestamp > 0, "Transaction not found");
         
-        return (tx.gasUsed * config.gasIncreasePercentage) / 100;
+        return (transaction.gasUsed * config.gasIncreasePercentage) / 100;
     }
 } 

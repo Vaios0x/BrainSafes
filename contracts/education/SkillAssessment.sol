@@ -3,15 +3,18 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+// Note: These interfaces are placeholders for the actual implementations
 interface IBadgeNFT {
-    function mintBadge(address to, string memory tokenURI) external returns (uint256);
+    function mintBadge(address, string memory) external returns (uint256);
 }
 
 interface ICurriculumValidator {
-    function curriculums(uint256) external view returns (
-        uint256, string memory, string memory, address, bool, address, uint256
-    );
+    function curriculums(uint256) external view returns (uint256, string memory, string memory, address, bool, address, uint256);
 }
+
+
+
+
 
 contract SkillAssessment is AccessControl {
     bytes32 public constant ASSESSOR_ROLE = keccak256("ASSESSOR_ROLE");
@@ -44,7 +47,7 @@ contract SkillAssessment is AccessControl {
     function assessSkill(address student, string memory skill, string memory evidence, uint256 score, bool passed, string memory badgeURI, uint256 curriculumId) external onlyRole(ASSESSOR_ROLE) returns (uint256) {
         // Validar que el currículo esté validado
         (, , , , bool validated, , ) = curriculumValidator.curriculums(curriculumId);
-        require(validated, "Currículo no validado");
+        require(validated, unicode"Currículo no validado");
         uint256 id = ++nextAssessmentId;
         assessments[id] = Assessment({
             id: id,

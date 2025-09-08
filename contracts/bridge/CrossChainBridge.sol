@@ -10,11 +10,7 @@ import "@arbitrum/nitro-contracts/src/bridge/ISequencerInbox.sol";
 import "./CrossChainValidation.sol";
 import "./MessageRecoverySystem.sol";
 
-/**
- * @title BrainSafes Cross-Chain Bridge
- * @dev Handles cross-chain operations between Arbitrum and other L2s
- * @custom:security-contact security@brainsafes.com
- */
+
 contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant BRIDGE_ADMIN = keccak256("BRIDGE_ADMIN");
@@ -79,9 +75,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
     CrossChainValidation public crossChainValidation;
     MessageRecoverySystem public messageRecovery;
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize(
         address _arbBridge,
         address _sequencerInbox
@@ -101,9 +95,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         _configureChain(ARBITRUM_NOVA, "Arbitrum Nova", _arbBridge);
     }
 
-    /**
-     * @dev Configure a new chain
-     */
+    
     function configureChain(
         uint256 chainId,
         string calldata name,
@@ -128,9 +120,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit ChainConfigured(chainId, name, bridgeContract);
     }
 
-    /**
-     * @dev Initiate a bridge operation
-     */
+    
     function initiateBridge(
         uint256 targetChain,
         address recipient,
@@ -163,9 +153,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return operationId;
     }
 
-    /**
-     * @dev Send message to another chain
-     */
+    
     function sendMessage(
         uint256 targetChain,
         bytes calldata message
@@ -193,9 +181,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return messageId;
     }
 
-    /**
-     * @dev Receive message from another chain
-     */
+    
     function receiveMessage(
         uint256 sourceChain,
         bytes32 messageId,
@@ -221,9 +207,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit MessageReceived(messageId, sourceChain, message);
     }
 
-    /**
-     * @dev Submit proof for a message
-     */
+    
     function submitProof(
         bytes32 messageId,
         bytes32[] calldata proof,
@@ -239,9 +223,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit ProofSubmitted(messageId, blockNumber);
     }
 
-    /**
-     * @dev Complete a bridge operation
-     */
+    
     function completeBridge(
         bytes32 operationId,
         bytes calldata proof
@@ -261,9 +243,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit BridgeOperationCompleted(operationId, operation.recipient, operation.amount);
     }
 
-    /**
-     * @dev Get chain configuration
-     */
+    
     function getChainConfig(
         uint256 chainId
     ) external view returns (
@@ -285,9 +265,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         );
     }
 
-    /**
-     * @dev Get operation details
-     */
+    
     function getOperation(
         bytes32 operationId
     ) external view returns (
@@ -313,9 +291,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         );
     }
 
-    /**
-     * @dev Internal function to configure a chain
-     */
+    
     function _configureChain(
         uint256 chainId,
         string memory name,
@@ -332,9 +308,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         emit ChainConfigured(chainId, name, bridgeContract);
     }
 
-    /**
-     * @dev Verify message proof
-     */
+    
     function _verifyMessageProof(
         bytes32 messageId,
         bytes memory message,
@@ -345,9 +319,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return true;
     }
 
-    /**
-     * @dev Verify operation proof
-     */
+    
     function _verifyOperationProof(
         bytes32 operationId,
         bytes memory proof
@@ -357,9 +329,7 @@ contract CrossChainBridge is UUPSUpgradeable, AccessControlUpgradeable, Pausable
         return true;
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function setValidationAndRecovery(address _validation, address _recovery) external onlyRole(BRIDGE_ADMIN) {

@@ -5,10 +5,7 @@ import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "./BrainSafesArbitrum.sol";
 
-/**
- * @title BrainSafesCustomSTF
- * @dev Implementación personalizada de la Función de Transición de Estado para BrainSafes
- */
+
 contract BrainSafesCustomSTF is BrainSafesArbitrum {
     // Precompilados de Arbitrum
     ArbSys constant arbsys = ArbSys(address(0x64));
@@ -60,9 +57,7 @@ contract BrainSafesCustomSTF is BrainSafesArbitrum {
         });
     }
 
-    /**
-     * @dev Override para optimizar la creación de certificados
-     */
+    
     function _beforeCertificateCreation(
         address user,
         uint256 certId
@@ -75,9 +70,7 @@ contract BrainSafesCustomSTF is BrainSafesArbitrum {
         }
     }
 
-    /**
-     * @dev Usar precompilado optimizado para certificados
-     */
+    
     function _useCertificatePrecompile(address user, uint256 certId) internal {
         uint256 startGas = gasleft();
 
@@ -95,9 +88,7 @@ contract BrainSafesCustomSTF is BrainSafesArbitrum {
         emit OptimizationApplied("certificate_creation", gasUsed);
     }
 
-    /**
-     * @dev Procesar lote de operaciones educativas
-     */
+    
     function processBatch(
         address[] calldata users,
         uint256[] calldata courseIds
@@ -121,9 +112,7 @@ contract BrainSafesCustomSTF is BrainSafesArbitrum {
         return true;
     }
 
-    /**
-     * @dev Actualizar configuración de precompilado
-     */
+    
     function updatePrecompileConfig(
         address precompile,
         bool enabled,
@@ -146,18 +135,14 @@ contract BrainSafesCustomSTF is BrainSafesArbitrum {
         emit PrecompileConfigUpdated(precompile, precompileConfigs[precompile]);
     }
 
-    /**
-     * @dev Obtener estadísticas de optimización
-     */
+    
     function getOptimizationStats(
         string calldata optimizationType
     ) external view returns (uint256) {
         return optimizationStats[keccak256(bytes(optimizationType))];
     }
 
-    /**
-     * @dev Verificar si una operación puede ser optimizada
-     */
+    
     function canOptimize(
         address precompile,
         uint256 estimatedGas
@@ -166,13 +151,12 @@ contract BrainSafesCustomSTF is BrainSafesArbitrum {
         return config.enabled && estimatedGas >= GAS_OPTIMIZATION_THRESHOLD;
     }
 
-    /**
-     * @dev Estimar gas para una operación
-     */
+    
     function estimateOperationGas(
         address precompile,
         bytes calldata data
     ) external view returns (uint256) {
-        return arbGasInfo.getL1GasUsed(data);
+        // Mock implementation - replace with correct ArbGasInfo function
+        return data.length * 16; // Approximate gas cost per byte
     }
 } 

@@ -42,11 +42,11 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4 }}
-          className="space-y-4"
+          className="space-y-6"
         >
           {/* Basic Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search Filter */}
+            {/* Search Filter con Glassmorphism */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -60,15 +60,15 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                   value={filtros.nombre}
                   onChange={handleChange}
                   placeholder="Buscar NFTs..."
-                  className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                  className="w-full px-6 py-4 pl-14 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white placeholder-white/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-300 shadow-lg"
                 />
-                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <span className="absolute left-5 top-1/2 transform -translate-y-1/2 text-white/80 text-lg">
                   🔍
                 </span>
               </div>
             </motion.div>
 
-            {/* Rarity Filter */}
+            {/* Rarity Filter con Glassmorphism */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -79,23 +79,23 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 name="rareza"
                 value={filtros.rareza}
                 onChange={handleChange}
-                className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 appearance-none"
+                className="w-full px-6 py-4 pl-14 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-300 appearance-none shadow-lg"
               >
                 {rarezas.map((r) => (
-                  <option key={r.value} value={r.value}>
+                  <option key={r.value} value={r.value} className="bg-gray-800 text-white">
                     {r.icon} {r.label}
                   </option>
                 ))}
               </select>
-              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <span className="absolute left-5 top-1/2 transform -translate-y-1/2 text-white/80 text-lg">
                 ⭐
               </span>
-              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <span className="absolute right-5 top-1/2 transform -translate-y-1/2 text-white/80 text-lg">
                 ▼
               </span>
             </motion.div>
 
-            {/* Status Filter */}
+            {/* Status Filter con Glassmorphism */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -106,33 +106,33 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 name="estado"
                 value={filtros.estado}
                 onChange={handleChange}
-                className="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 appearance-none"
+                className="w-full px-6 py-4 pl-14 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-300 appearance-none shadow-lg"
               >
                 {estados.map((e) => (
-                  <option key={e.value} value={e.value}>
+                  <option key={e.value} value={e.value} className="bg-gray-800 text-white">
                     {e.icon} {e.label}
                   </option>
                 ))}
               </select>
-              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <span className="absolute left-5 top-1/2 transform -translate-y-1/2 text-white/80 text-lg">
                 🏷️
               </span>
-              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <span className="absolute right-5 top-1/2 transform -translate-y-1/2 text-white/80 text-lg">
                 ▼
               </span>
             </motion.div>
 
-            {/* Advanced Toggle */}
+            {/* Advanced Toggle con Glassmorphism */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.4 }}
             >
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-brain-500 text-white rounded-xl font-medium hover:from-primary-600 hover:to-brain-600 transition-all duration-300 shadow-medium hover:shadow-large"
+                className="w-full px-6 py-4 bg-gradient-to-r from-blue-600/90 to-purple-600/90 backdrop-blur-xl text-white rounded-2xl font-bold border-2 border-white/50 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {showAdvanced ? 'Ocultar' : 'Avanzado'} ⚙️
               </motion.button>
@@ -149,10 +149,10 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 transition={{ duration: 0.3 }}
                 className="overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-white/20">
                   {/* Price Range */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-white" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
                       Precio Mínimo (ETH)
                     </label>
                     <input
@@ -163,12 +163,12 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                       placeholder="0.0"
                       step="0.1"
                       min="0"
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white placeholder-white/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-300 shadow-lg"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-white" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>
                       Precio Máximo (ETH)
                     </label>
                     <input
@@ -179,21 +179,21 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                       placeholder="10.0"
                       step="0.1"
                       min="0"
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl text-white placeholder-white/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-300 shadow-lg"
                     />
                   </div>
 
                   {/* Clear Filters */}
                   <div className="flex items-end">
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.05, rotate: -2 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={clearFilters}
                       disabled={!hasActiveFilters}
-                      className={`w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                      className={`w-full px-6 py-4 rounded-2xl font-bold transition-all duration-300 border-2 ${
                         hasActiveFilters
-                          ? 'bg-red-500 text-white hover:bg-red-600 shadow-medium hover:shadow-large'
-                          : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          ? 'bg-gradient-to-r from-red-600/90 to-red-700/90 backdrop-blur-xl text-white border-red-400/50 shadow-lg hover:shadow-xl'
+                          : 'bg-white/10 backdrop-blur-xl text-white/50 border-white/20 cursor-not-allowed'
                       }`}
                     >
                       Limpiar Filtros 🗑️
@@ -204,20 +204,20 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
             )}
           </AnimatePresence>
 
-          {/* Active Filters Display */}
+          {/* Active Filters Display con Glassmorphism */}
           {hasActiveFilters && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-wrap gap-2"
+              className="flex flex-wrap gap-3"
             >
-              <span className="text-sm text-gray-600 dark:text-gray-400">Filtros activos:</span>
+              <span className="text-sm font-bold text-white" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}>Filtros activos:</span>
               
               {filtros.nombre && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="inline-flex items-center px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-xl text-white rounded-2xl text-sm font-bold border border-white/30 shadow-lg"
                 >
                   Buscar: {filtros.nombre} ✖️
                 </motion.span>
@@ -227,7 +227,7 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="inline-flex items-center px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-sm"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 backdrop-blur-xl text-white rounded-2xl text-sm font-bold border border-white/30 shadow-lg"
                 >
                   Rareza: {rarezas.find(r => r.value === filtros.rareza)?.label} ✖️
                 </motion.span>
@@ -237,7 +237,7 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500/30 to-emerald-500/30 backdrop-blur-xl text-white rounded-2xl text-sm font-bold border border-white/30 shadow-lg"
                 >
                   Estado: {estados.find(e => e.value === filtros.estado)?.label} ✖️
                 </motion.span>
@@ -247,7 +247,7 @@ export default function MarketplaceFilters({ filtros, setFiltros, visible = true
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 backdrop-blur-xl text-white rounded-2xl text-sm font-bold border border-white/30 shadow-lg"
                 >
                   Precio: {filtros.precioMin || '0'} - {filtros.precioMax || '∞'} ETH ✖️
                 </motion.span>

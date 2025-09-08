@@ -7,11 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title AcademicReputation
- * @dev Sistema de reputación académica para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
@@ -84,9 +80,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
     event SkillUpdated(address indexed user, string skill, uint256 newScore);
     event ReputationMilestoneAchieved(address indexed user, string milestone, uint256 score);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(address _brainSafes, address _securityManager) {
         require(_brainSafes != address(0), "Invalid BrainSafes address");
         require(_securityManager != address(0), "Invalid SecurityManager address");
@@ -97,9 +91,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Crear perfil de reputación
-     */
+    
     function createProfile() external whenNotPaused nonReentrant {
         require(!profiles[msg.sender].isVerified, "Profile already exists");
         require(securityManager.isSecure(msg.sender), "Security check failed");
@@ -119,9 +111,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         emit ProfileCreated(msg.sender, block.timestamp);
     }
 
-    /**
-     * @dev Actualizar puntuación académica
-     */
+    
     function updateAcademicScore(
         address user,
         uint256 newScore,
@@ -143,9 +133,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         emit ProfileUpdated(user, newScore);
     }
 
-    /**
-     * @dev Añadir endorsement
-     */
+    
     function addEndorsement(
         address endorsed,
         string memory category,
@@ -178,9 +166,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         emit EndorsementAdded(endorsementCounter, msg.sender, endorsed);
     }
 
-    /**
-     * @dev Verificar certificación
-     */
+    
     function verifyCertification(
         address user,
         string memory name,
@@ -209,9 +195,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         emit CertificationVerified(certificationCounter, msg.sender);
     }
 
-    /**
-     * @dev Registrar institución
-     */
+    
     function registerInstitution(
         address institution,
         string memory name,
@@ -233,9 +217,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         emit InstitutionRegistered(institution, name);
     }
 
-    /**
-     * @dev Actualizar habilidad
-     */
+    
     function updateSkill(
         address user,
         string memory skill,
@@ -252,9 +234,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         emit SkillUpdated(user, skill, score);
     }
 
-    /**
-     * @dev Añadir publicación
-     */
+    
     function addPublication(
         string memory publicationHash
     ) external whenNotPaused nonReentrant {
@@ -267,9 +247,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         _updateResearchScore(msg.sender);
     }
 
-    /**
-     * @dev Actualizar puntuación de pares
-     */
+    
     function _updatePeerScore(address user) internal {
         ReputationProfile storage profile = profiles[user];
         uint256 totalWeight = 0;
@@ -288,9 +266,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Actualizar puntuación académica
-     */
+    
     function _updateAcademicScore(address user) internal {
         ReputationProfile storage profile = profiles[user];
         uint256 totalScore = 0;
@@ -310,9 +286,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Actualizar puntuación de contribución
-     */
+    
     function _updateContributionScore(address user) internal {
         ReputationProfile storage profile = profiles[user];
         uint256 totalSkillScore = 0;
@@ -322,9 +296,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         profile.contributionScore = (profile.contributionScore + totalSkillScore) / 2;
     }
 
-    /**
-     * @dev Actualizar puntuación de investigación
-     */
+    
     function _updateResearchScore(address user) internal {
         ReputationProfile storage profile = profiles[user];
         profile.researchScore = (profile.researchScore + profile.publications.length * 100) / 2;
@@ -333,9 +305,7 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Obtener perfil completo
-     */
+    
     function getProfile(address user) external view returns (
         uint256 academicScore,
         uint256 peerScore,
@@ -361,30 +331,22 @@ contract AcademicReputation is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Obtener endorsements de usuario
-     */
+    
     function getUserEndorsements(address user) external view returns (uint256[] memory) {
         return userEndorsements[user];
     }
 
-    /**
-     * @dev Obtener certificaciones de usuario
-     */
+    
     function getUserCertifications(address user) external view returns (uint256[] memory) {
         return userCertifications[user];
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }

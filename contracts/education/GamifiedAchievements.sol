@@ -8,11 +8,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title GamifiedAchievements
- * @dev Sistema de logros gamificado para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC1155 {
     // Roles
     bytes32 public constant ACHIEVEMENT_MANAGER = keccak256("ACHIEVEMENT_MANAGER");
@@ -94,9 +90,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
     event BadgeAwarded(address indexed user, uint256 indexed achievementId, uint256 rarity);
     event ProgressUpdated(address indexed user, string category, uint256 progress);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(
         address _brainSafes,
         address _securityManager,
@@ -112,9 +106,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         _setupRole(GAME_MASTER, msg.sender);
     }
 
-    /**
-     * @dev Crear nuevo logro
-     */
+    
     function createAchievement(
         string memory name,
         string memory description,
@@ -150,9 +142,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         emit AchievementCreated(achievementCounter, name, points);
     }
 
-    /**
-     * @dev Crear nuevo desafío
-     */
+    
     function createChallenge(
         string memory name,
         string memory description,
@@ -180,9 +170,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         emit ChallengeCreated(challengeCounter, name, reward);
     }
 
-    /**
-     * @dev Desbloquear logro
-     */
+    
     function unlockAchievement(
         address user,
         uint256 achievementId
@@ -221,9 +209,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         emit BadgeAwarded(user, achievementId, achievement.rarity);
     }
 
-    /**
-     * @dev Actualizar progreso de desafío
-     */
+    
     function updateChallengeProgress(
         address user,
         uint256 challengeId,
@@ -243,9 +229,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         emit ProgressUpdated(user, challenge.name, progress);
     }
 
-    /**
-     * @dev Completar desafío
-     */
+    
     function _completeChallenge(address user, uint256 challengeId) internal {
         Challenge storage challenge = challenges[challengeId];
         UserProgress storage progress = userProgress[user];
@@ -260,9 +244,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         emit ChallengeCompleted(user, challengeId, challenge.reward);
     }
 
-    /**
-     * @dev Actualizar nivel
-     */
+    
     function _updateLevel(address user) internal {
         UserProgress storage progress = userProgress[user];
         uint256 newLevel = progress.totalPoints / POINTS_PER_LEVEL;
@@ -273,9 +255,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         }
     }
 
-    /**
-     * @dev Actualizar leaderboard
-     */
+    
     function _updateLeaderboard(
         string memory category,
         address user,
@@ -312,16 +292,12 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         }
     }
 
-    /**
-     * @dev Obtener logros de usuario
-     */
+    
     function getUserAchievements(address user) external view returns (uint256[] memory) {
         return userProgress[user].unlockedAchievements;
     }
 
-    /**
-     * @dev Obtener progreso de usuario
-     */
+    
     function getUserProgress(address user) external view returns (
         uint256 totalPoints,
         uint256 level,
@@ -339,9 +315,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         );
     }
 
-    /**
-     * @dev Obtener leaderboard
-     */
+    
     function getLeaderboard(string memory category) external view returns (
         address[] memory users,
         uint256[] memory scores,
@@ -351,9 +325,7 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         return (board.topUsers, board.topScores, board.lastUpdated);
     }
 
-    /**
-     * @dev Verificar elegibilidad para logro
-     */
+    
     function checkAchievementEligibility(
         address user,
         uint256 achievementId
@@ -380,23 +352,17 @@ contract GamifiedAchievements is AccessControl, Pausable, ReentrancyGuard, ERC11
         return (true, "Eligible");
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
 
-    /**
-     * @dev Override required by Solidity
-     */
+    
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(AccessControl, ERC1155) returns (bool) {

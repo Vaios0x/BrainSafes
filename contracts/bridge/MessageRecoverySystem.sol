@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/**
- * @title MessageRecoverySystem
- * @dev Sistema de recuperación de mensajes cross-chain para BrainSafes
- * @notice Maneja mensajes perdidos, retrasados o fallidos con retries, logs y alertas
- * @custom:security-contact security@brainsafes.com
- */
+
 contract MessageRecoverySystem is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant RECOVERY_ADMIN = keccak256("RECOVERY_ADMIN");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");

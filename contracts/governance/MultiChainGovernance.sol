@@ -7,12 +7,10 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "../bridge/CrossChainBridge.sol";
+import "../governance/DelegationManager.sol";
+import "../governance/AutomatedProposals.sol";
 
-/**
- * @title BrainSafes Multi-Chain Governance
- * @dev Handles governance across multiple chains
- * @custom:security-contact security@brainsafes.com
- */
+
 contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     using ECDSAUpgradeable for bytes32;
 
@@ -104,9 +102,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
     event DelegationManagerSet(address indexed manager);
     event AutomatedProposalsSet(address indexed proposals);
 
-    /**
-     * @dev Initialize the contract
-     */
+    
     function initialize(address _bridge) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -118,9 +114,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         bridge = CrossChainBridge(_bridge);
     }
 
-    /**
-     * @dev Configure voting for a chain
-     */
+    
     function configureChainVoting(
         uint256 chainId,
         address votingToken,
@@ -153,9 +147,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         emit ChainVotingConfigured(chainId, votingToken);
     }
 
-    /**
-     * @dev Create a proposal
-     */
+    
     function propose(
         address[] memory targets,
         uint256[] memory values,
@@ -177,7 +169,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
             "Insufficient votes"
         );
 
-        bytes32 proposalId = keccak256(abi.encodePacked(
+        bytes32 proposalId = keccak256(abi.encode(
             block.chainid,
             block.number,
             targets,
@@ -213,9 +205,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         return proposalId;
     }
 
-    /**
-     * @dev Cast a vote
-     */
+    
     function castVote(
         bytes32 proposalId,
         uint8 support,
@@ -252,9 +242,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         return weight;
     }
 
-    /**
-     * @dev Execute a proposal
-     */
+    
     function execute(
         bytes32 proposalId
     ) external payable returns (bytes[] memory) {
@@ -277,9 +265,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         return results;
     }
 
-    /**
-     * @dev Cancel a proposal
-     */
+    
     function cancel(bytes32 proposalId) external {
         require(state(proposalId) != ProposalState.Executed, "Cannot cancel executed proposal");
 
@@ -295,9 +281,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         emit ProposalCanceled(proposalId);
     }
 
-    /**
-     * @dev Get proposal state
-     */
+    
     function state(bytes32 proposalId) public view returns (ProposalState) {
         Proposal storage proposal = proposals[proposalId];
         require(proposal.proposer != address(0), "Proposal doesn't exist");
@@ -331,9 +315,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         return ProposalState.Defeated;
     }
 
-    /**
-     * @dev Get proposal votes
-     */
+    
     function proposalVotesCount(
         bytes32 proposalId
     ) public view returns (
@@ -345,9 +327,7 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
         return (votes.againstVotes, votes.forVotes, votes.abstainVotes);
     }
 
-    /**
-     * @dev Check if quorum is reached
-     */
+    
     function _quorumReached(bytes32 proposalId) internal view returns (bool) {
         ProposalVote storage votes = proposalVotes[proposalId];
         uint256 totalSupply = IVotesUpgradeable(
@@ -358,48 +338,36 @@ contract MultiChainGovernance is UUPSUpgradeable, AccessControlUpgradeable, Paus
             (totalSupply * chainVotings[block.chainid].quorumNumerator) / 100;
     }
 
-    /**
-     * @dev Check if vote succeeded
-     */
+    
     function _voteSucceeded(bytes32 proposalId) internal view returns (bool) {
         ProposalVote storage votes = proposalVotes[proposalId];
         return votes.forVotes > votes.againstVotes;
     }
 
-    /**
-     * @dev Setea el DelegationManager
-     */
+    
     function setDelegationManager(address _manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_manager != address(0), "Invalid address");
         delegationManager = DelegationManager(_manager);
         emit DelegationManagerSet(_manager);
     }
-    /**
-     * @dev Setea el AutomatedProposals
-     */
+    
     function setAutomatedProposals(address _proposals) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_proposals != address(0), "Invalid address");
         automatedProposals = AutomatedProposals(_proposals);
         emit AutomatedProposalsSet(_proposals);
     }
-    /**
-     * @dev Ejemplo: Delegar voto a otro usuario
-     */
+    
     function delegateVote(address delegatee, uint256 until, uint256 level) external {
         require(address(delegationManager) != address(0), "DelegationManager not set");
         delegationManager.delegate(delegatee, until, level);
     }
-    /**
-     * @dev Ejemplo: Ejecutar propuesta automática
-     */
+    
     function executeAutomatedProposal(uint256 proposalId) external {
         require(address(automatedProposals) != address(0), "AutomatedProposals not set");
         automatedProposals.executeProposal(proposalId);
     }
 
-    /**
-     * @dev Required by UUPS
-     */
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 }
 

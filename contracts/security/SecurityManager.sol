@@ -36,6 +36,7 @@ contract SecurityManager is AccessControl, ReentrancyGuard, Pausable {
     mapping(address => uint256) public securityScores;
     mapping(uint256 => SecurityIncident) public incidents;
     uint256 public incidentCount;
+    uint256 public lastPauseTime;
     
     // Timeouts y delays
     uint256 public constant MIN_TIMEOUT = 1 hours;
@@ -113,6 +114,7 @@ contract SecurityManager is AccessControl, ReentrancyGuard, Pausable {
         
         if (severity >= 80) {
             _pause();
+            lastPauseTime = block.timestamp;
         }
         
         emit IncidentReported(incidentCount, target, incidentType);
@@ -166,6 +168,7 @@ contract SecurityManager is AccessControl, ReentrancyGuard, Pausable {
     
     function emergencyShutdown() external onlyRole(SECURITY_ADMIN_ROLE) {
         _pause();
+        lastPauseTime = block.timestamp;
         emit SecurityAlert(address(0), "EMERGENCY_SHUTDOWN", 100);
     }
     

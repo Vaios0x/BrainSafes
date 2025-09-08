@@ -6,11 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "./BrainSafesMetrics.sol";
 
-/**
- * @title Advanced Analytics System for BrainSafes
- * @dev Provides advanced analytics and insights using platform metrics
- * @custom:security-contact security@brainsafes.com
- */
+
 contract AdvancedAnalytics is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant ANALYTICS_ADMIN_ROLE = keccak256("ANALYTICS_ADMIN_ROLE");
@@ -54,9 +50,7 @@ contract AdvancedAnalytics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
     event PredictionGenerated(address indexed user, bytes32 predictionHash, uint256 timestamp);
     event TrendIdentified(string trendType, bytes32 trendHash, uint256 confidence);
 
-    /**
-     * @dev Initializes the contract
-     */
+    
     function initialize(address admin, address _metricsContract) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -68,11 +62,7 @@ contract AdvancedAnalytics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         metricsContract = BrainSafesMetrics(_metricsContract);
     }
 
-    /**
-     * @dev Analyzes learning path for a user
-     * @param user Address of the user
-     * @return LearningPathAnalysis containing personalized learning insights
-     */
+    
     function analyzeLearningPath(address user) 
         external 
         onlyRole(DATA_SCIENTIST_ROLE) 
@@ -91,11 +81,7 @@ contract AdvancedAnalytics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return analysis;
     }
 
-    /**
-     * @dev Analyzes market trends for courses and skills
-     * @param courseId ID of the course
-     * @return MarketTrendAnalysis containing market insights
-     */
+    
     function analyzeMarketTrends(uint256 courseId) 
         external 
         onlyRole(DATA_SCIENTIST_ROLE) 
@@ -114,11 +100,7 @@ contract AdvancedAnalytics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return analysis;
     }
 
-    /**
-     * @dev Predicts user performance
-     * @param user Address of the user
-     * @return PerformancePrediction containing performance predictions
-     */
+    
     function predictPerformance(address user) 
         external 
         onlyRole(DATA_SCIENTIST_ROLE) 
@@ -259,9 +241,7 @@ contract AdvancedAnalytics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return keccak256(abi.encodePacked(user, "prediction", timestamp));
     }
 
-    /**
-     * @dev Required by the OZ UUPS module
-     */
+    
     function _authorizeUpgrade(address newImplementation)
         internal
         override

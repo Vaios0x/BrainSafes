@@ -7,11 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title EmployerReputation
- * @dev Sistema de reputación para empleadores en BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
@@ -88,9 +84,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
     event ReputationUpdated(address indexed employer, uint256 newScore);
     event BadgeAwarded(address indexed employer, string badge);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(address _brainSafes, address _securityManager) {
         require(_brainSafes != address(0), "Invalid BrainSafes address");
         require(_securityManager != address(0), "Invalid SecurityManager address");
@@ -102,9 +96,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         _setupRole(VALIDATOR_ROLE, msg.sender);
     }
 
-    /**
-     * @dev Registrar nuevo empleador
-     */
+    
     function registerEmployer(
         string memory name,
         string memory description,
@@ -133,9 +125,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit EmployerRegistered(msg.sender, name);
     }
 
-    /**
-     * @dev Solicitar verificación
-     */
+    
     function requestVerification(
         string memory companyDocs,
         string memory legalDocs
@@ -155,9 +145,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit VerificationRequested(msg.sender, block.timestamp);
     }
 
-    /**
-     * @dev Actualizar estado de verificación
-     */
+    
     function updateVerificationStatus(
         address employer,
         VerificationStatus status
@@ -173,9 +161,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit VerificationStatusUpdated(employer, status);
     }
 
-    /**
-     * @dev Enviar review
-     */
+    
     function submitReview(
         address employer,
         uint256 rating,
@@ -208,9 +194,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit ReviewSubmitted(reviewCounter, msg.sender, employer);
     }
 
-    /**
-     * @dev Registrar violación de cumplimiento
-     */
+    
     function recordComplianceViolation(
         address employer,
         string memory violation
@@ -226,9 +210,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit ComplianceViolationRecorded(employer, violation);
     }
 
-    /**
-     * @dev Resolver violación de cumplimiento
-     */
+    
     function resolveComplianceViolation(
         address employer,
         uint256 violationIndex
@@ -242,9 +224,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         _updateReputationScore(employer);
     }
 
-    /**
-     * @dev Actualizar estadísticas de contrato
-     */
+    
     function updateContractStats(
         address employer,
         bool isCompleted
@@ -262,9 +242,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         profile.lastUpdated = block.timestamp;
     }
 
-    /**
-     * @dev Otorgar badge
-     */
+    
     function awardBadge(
         address employer,
         string memory badge
@@ -275,9 +253,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit BadgeAwarded(employer, badge);
     }
 
-    /**
-     * @dev Actualizar puntuación promedio
-     */
+    
     function _updateAverageRating(address employer) internal {
         uint256[] storage employerReviewIds = employerReviews[employer];
         uint256 totalRating = 0;
@@ -297,9 +273,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Actualizar puntuación de reputación
-     */
+    
     function _updateReputationScore(address employer) internal {
         EmployerProfile storage profile = employers[employer];
         ComplianceRecord storage compliance = complianceRecords[employer];
@@ -334,9 +308,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         emit ReputationUpdated(employer, uint256(finalScore));
     }
 
-    /**
-     * @dev Obtener perfil de empleador
-     */
+    
     function getEmployerProfile(address employer) external view returns (
         string memory name,
         string memory industry,
@@ -362,16 +334,12 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Obtener reviews de empleador
-     */
+    
     function getEmployerReviews(address employer) external view returns (uint256[] memory) {
         return employerReviews[employer];
     }
 
-    /**
-     * @dev Obtener registro de cumplimiento
-     */
+    
     function getComplianceRecord(address employer) external view returns (
         uint256 totalViolations,
         uint256 resolvedViolations,
@@ -389,9 +357,7 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Verificar elegibilidad para contratar
-     */
+    
     function checkHiringEligibility(address employer) external view returns (
         bool eligible,
         string memory reason
@@ -411,16 +377,12 @@ contract EmployerReputation is AccessControl, Pausable, ReentrancyGuard {
         return (true, "Eligible to hire");
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }

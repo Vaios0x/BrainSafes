@@ -5,10 +5,7 @@ import "./BrainSafes.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "@arbitrum/nitro-contracts/src/libraries/AddressAliasHelper.sol";
 
-/**
- * @title BrainSafesL2
- * @dev Versión L2 (Arbitrum) del contrato BrainSafes
- */
+
 contract BrainSafesL2 is BrainSafes {
     // Precompilados de Arbitrum
     ArbSys constant arbsys = ArbSys(address(0x64));
@@ -60,9 +57,7 @@ contract BrainSafesL2 is BrainSafes {
         l1Bridge = _l1Bridge;
     }
 
-    /**
-     * @dev Recibe tokens desde L1
-     */
+    
     function receiveFromL1(
         address sender,
         address recipient,
@@ -82,9 +77,7 @@ contract BrainSafesL2 is BrainSafes {
         }
     }
 
-    /**
-     * @dev Inicia un retiro hacia L1
-     */
+    
     function initiateWithdrawal(
         address sender,
         address recipient,
@@ -95,7 +88,7 @@ contract BrainSafesL2 is BrainSafes {
         require(amount > 0, "Invalid amount");
 
         // Quemar tokens
-        eduToken.burn(sender, amount);
+        eduToken.burn(amount); // Standard ERC20 burn function takes only amount
 
         // Crear solicitud de retiro
         withdrawalCounter++;
@@ -121,9 +114,7 @@ contract BrainSafesL2 is BrainSafes {
         arbsys.sendTxToL1(l1BrainSafes, data);
     }
 
-    /**
-     * @dev Mintea tokens desde L1
-     */
+    
     function mintFromL1(
         address recipient,
         uint256 amount
@@ -135,9 +126,7 @@ contract BrainSafesL2 is BrainSafes {
         eduToken.mint(recipient, amount);
     }
 
-    /**
-     * @dev Recibe certificado desde L1
-     */
+    
     function receiveCertificateFromL1(
         address recipient,
         uint256 tokenId,
@@ -155,9 +144,7 @@ contract BrainSafesL2 is BrainSafes {
         );
     }
 
-    /**
-     * @dev Mintea certificado desde L1
-     */
+    
     function mintCertificateFromL1(
         address recipient,
         uint256 tokenId,
@@ -174,9 +161,7 @@ contract BrainSafesL2 is BrainSafes {
         );
     }
 
-    /**
-     * @dev Procesa mensaje desde L1
-     */
+    
     function processL1Message(
         bytes32 messageId,
         address sender,
@@ -193,9 +178,7 @@ contract BrainSafesL2 is BrainSafes {
         _processL1Message(sender, data);
     }
 
-    /**
-     * @dev Envía mensaje a L1
-     */
+    
     function sendMessageToL1(
         address target,
         bytes calldata data
@@ -203,16 +186,12 @@ contract BrainSafesL2 is BrainSafes {
         arbsys.sendTxToL1(target, data);
     }
 
-    /**
-     * @dev Verifica si un mensaje ha sido procesado
-     */
+    
     function isMessageProcessed(bytes32 messageId) external view returns (bool) {
         return processedMessages[messageId];
     }
 
-    /**
-     * @dev Obtiene el estado de un retiro
-     */
+    
     function getWithdrawalStatus(uint256 withdrawalId) external view returns (
         address sender,
         address recipient,
@@ -230,9 +209,7 @@ contract BrainSafesL2 is BrainSafes {
         );
     }
 
-    /**
-     * @dev Procesa datos adicionales de L1
-     */
+    
     function _processL1Data(
         address sender,
         address recipient,
@@ -242,9 +219,7 @@ contract BrainSafesL2 is BrainSafes {
         // Por ejemplo, actualizar reputación, logros, etc.
     }
 
-    /**
-     * @dev Procesa mensaje de L1
-     */
+    
     function _processL1Message(
         address sender,
         bytes memory data
@@ -261,9 +236,7 @@ contract BrainSafesL2 is BrainSafes {
         }
     }
 
-    /**
-     * @dev Actualiza perfil de usuario
-     */
+    
     function _updateUserProfile(
         address user,
         string memory newProfile
@@ -271,9 +244,7 @@ contract BrainSafesL2 is BrainSafes {
         // Implementar actualización de perfil
     }
 
-    /**
-     * @dev Actualiza logro
-     */
+    
     function _updateAchievement(
         uint256 achievementId,
         string memory newData
@@ -281,9 +252,7 @@ contract BrainSafesL2 is BrainSafes {
         // Implementar actualización de logro
     }
 
-    /**
-     * @dev Actualiza dirección del contrato L1
-     */
+    
     function updateL1Contract(
         address newL1Contract
     ) external onlyRole(ADMIN_ROLE) {
@@ -291,9 +260,7 @@ contract BrainSafesL2 is BrainSafes {
         l1BrainSafes = newL1Contract;
     }
 
-    /**
-     * @dev Actualiza dirección del bridge
-     */
+    
     function updateBridge(
         address newBridge
     ) external onlyRole(ADMIN_ROLE) {

@@ -74,7 +74,7 @@ contract MentorshipProgram is AccessControl {
     function acceptMentorship(uint256 mentorshipId) external onlyRole(MENTOR_ROLE) {
         Mentorship storage m = mentorships[mentorshipId];
         require(m.mentor == msg.sender, "Solo el mentor puede aceptar");
-        require(m.status == uint8(MentorshipStatus.Requested), "No está pendiente");
+        require(m.status == uint8(MentorshipStatus.Requested), unicode"No está pendiente");
         m.status = uint8(MentorshipStatus.Active);
         m.startedAt = uint32(block.timestamp);
         emit MentorshipAccepted(mentorshipId);
@@ -83,14 +83,14 @@ contract MentorshipProgram is AccessControl {
     function rejectMentorship(uint256 mentorshipId) external onlyRole(MENTOR_ROLE) {
         Mentorship storage m = mentorships[mentorshipId];
         require(m.mentor == msg.sender, "Solo el mentor puede rechazar");
-        require(m.status == uint8(MentorshipStatus.Requested), "No está pendiente");
+        require(m.status == uint8(MentorshipStatus.Requested), unicode"No está pendiente");
         m.status = uint8(MentorshipStatus.Rejected);
         emit MentorshipRejected(mentorshipId);
     }
 
     function endMentorship(uint256 mentorshipId) external {
         Mentorship storage m = mentorships[mentorshipId];
-        require(m.status == uint8(MentorshipStatus.Active), "No está activa");
+        require(m.status == uint8(MentorshipStatus.Active), unicode"No está activa");
         require(msg.sender == m.mentor || msg.sender == m.student, "No autorizado");
         m.status = uint8(MentorshipStatus.Ended);
         m.endedAt = uint32(block.timestamp);
@@ -100,7 +100,7 @@ contract MentorshipProgram is AccessControl {
     function submitFeedback(uint256 mentorshipId, uint8 rating, string memory feedback) external onlyRole(STUDENT_ROLE) {
         Mentorship storage m = mentorships[mentorshipId];
         require(m.student == msg.sender, "Solo el estudiante puede calificar");
-        require(m.status == uint8(MentorshipStatus.Ended), "Mentoría no finalizada");
+        require(m.status == uint8(MentorshipStatus.Ended), unicode"Mentoría no finalizada");
         require(m.rating == 0, "Feedback ya enviado");
         require(rating >= 1 && rating <= 5, "Rating fuera de rango");
         m.rating = rating;

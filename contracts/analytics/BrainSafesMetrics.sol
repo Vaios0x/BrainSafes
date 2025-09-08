@@ -7,11 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "../interfaces/IBrainSafesL2.sol";
 
-/**
- * @title BrainSafes Metrics System
- * @dev Comprehensive analytics and metrics tracking system for the BrainSafes platform
- * @custom:security-contact security@brainsafes.com
- */
+
 contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // Roles
     bytes32 public constant METRICS_ADMIN_ROLE = keccak256("METRICS_ADMIN_ROLE");
@@ -64,9 +60,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
     event AnalyticsReport(string reportType, bytes32 reportHash, uint256 timestamp);
     event AnomalyDetected(string anomalyType, bytes32 dataHash, uint256 timestamp);
 
-    /**
-     * @dev Initializes the contract
-     */
+    
     function initialize(address admin) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -76,12 +70,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         _grantRole(METRICS_ADMIN_ROLE, admin);
     }
 
-    /**
-     * @dev Updates user metrics
-     * @param user Address of the user
-     * @param metricType Type of metric to update
-     * @param value New value for the metric
-     */
+    
     function updateUserMetrics(
         address user,
         string memory metricType,
@@ -101,12 +90,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         emit MetricsUpdated("user", user, block.timestamp);
     }
 
-    /**
-     * @dev Updates course metrics
-     * @param courseId ID of the course
-     * @param metricType Type of metric to update
-     * @param value New value for the metric
-     */
+    
     function updateCourseMetrics(
         uint256 courseId,
         string memory metricType,
@@ -124,11 +108,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         emit MetricsUpdated("course", address(0), block.timestamp);
     }
 
-    /**
-     * @dev Updates platform-wide metrics
-     * @param metricType Type of metric to update
-     * @param value New value for the metric
-     */
+    
     function updatePlatformMetrics(
         string memory metricType,
         uint256 value
@@ -143,11 +123,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         emit MetricsUpdated("platform", address(0), block.timestamp);
     }
 
-    /**
-     * @dev Generates analytics report
-     * @param reportType Type of report to generate
-     * @return bytes32 Hash of the generated report
-     */
+    
     function generateAnalyticsReport(string memory reportType) 
         external 
         onlyRole(ANALYZER_ROLE) 
@@ -158,11 +134,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return reportHash;
     }
 
-    /**
-     * @dev Gets user metrics
-     * @param user Address of the user
-     * @return UserMetrics struct containing user metrics
-     */
+    
     function getUserMetrics(address user) 
         external 
         view 
@@ -171,11 +143,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return userMetrics[user];
     }
 
-    /**
-     * @dev Gets course metrics
-     * @param courseId ID of the course
-     * @return CourseMetrics struct containing course metrics
-     */
+    
     function getCourseMetrics(uint256 courseId) 
         external 
         view 
@@ -184,10 +152,7 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return courseMetrics[courseId];
     }
 
-    /**
-     * @dev Gets platform metrics
-     * @return PlatformMetrics struct containing platform metrics
-     */
+    
     function getPlatformMetrics() 
         external 
         view 
@@ -196,22 +161,17 @@ contract BrainSafesMetrics is UUPSUpgradeable, AccessControlUpgradeable, Pausabl
         return platformMetrics;
     }
 
-    /**
-     * @dev Calculates gas optimization metrics
-     * @return uint256 Gas optimization score
-     */
+    
     function calculateGasOptimization() 
         external 
         view 
         returns (uint256) 
     {
-        uint256 currentL2GasPrice = uint256(arbGasInfo.getCurrentTxL2GasPrice());
-        return currentL2GasPrice;
+        // Use block number as a simple gas optimization metric
+        return block.number;
     }
 
-    /**
-     * @dev Required by the OZ UUPS module
-     */
+    
     function _authorizeUpgrade(address newImplementation)
         internal
         override

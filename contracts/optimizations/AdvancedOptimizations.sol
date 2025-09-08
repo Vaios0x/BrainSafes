@@ -3,20 +3,15 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import "@arbitrum/nitro-contracts/src/precompiles/NodeInterface.sol";
+import "../interfaces/INodeInterface.sol";
 import "../cache/DistributedCache.sol";
 
-/**
- * @title AdvancedOptimizations
- * @notice Advanced gas and storage optimization contract for BrainSafes
- * @dev Implements cutting-edge optimization techniques
- * @author BrainSafes Team
- */
+
 contract AdvancedOptimizations is AccessControl {
     bytes32 public constant OPTIMIZER_ROLE = keccak256("OPTIMIZER_ROLE");
     
     ArbSys constant arbsys = ArbSys(address(0x64));
-    NodeInterface constant nodeInterface = NodeInterface(address(0xc8));
+    INodeInterface constant nodeInterface = INodeInterface(address(0xc8));
     DistributedCache public cache;
 
     struct BoLDConfig {
@@ -94,9 +89,7 @@ contract AdvancedOptimizations is AccessControl {
         });
     }
 
-    /**
-     * @dev Habilitar BoLD
-     */
+    
     function enableBoLD(
         uint256 _batchSize,
         uint256 _compressionLevel,
@@ -115,9 +108,7 @@ contract AdvancedOptimizations is AccessControl {
         emit BoLDEnabled(boldConfig);
     }
 
-    /**
-     * @dev Habilitar TimeBoost
-     */
+    
     function enableTimeBoost(
         uint256 _maxTimeSkip,
         uint256 _minConfirmations,
@@ -136,9 +127,7 @@ contract AdvancedOptimizations is AccessControl {
         emit TimeBoostEnabled(timeBoostConfig);
     }
 
-    /**
-     * @dev Procesar batch con BoLD
-     */
+    
     function processBatch(
         bytes calldata data,
         bytes32[] calldata validatorSignatures
@@ -179,9 +168,7 @@ contract AdvancedOptimizations is AccessControl {
         return batchId;
     }
 
-    /**
-     * @dev Aplicar TimeBoost
-     */
+    
     function applyTimeBoost(
         address user,
         uint256 confirmations
@@ -208,17 +195,13 @@ contract AdvancedOptimizations is AccessControl {
         return boostFactor;
     }
 
-    /**
-     * @dev Comprimir datos usando el nivel configurado
-     */
+    
     function _compressData(bytes memory data) internal view returns (bytes memory) {
         // Implementar algoritmo de compresión real
         return data;
     }
 
-    /**
-     * @dev Verificar firmas de validadores
-     */
+    
     function _verifyValidatorSignatures(
         bytes32 batchId,
         bytes32[] calldata signatures
@@ -227,9 +210,7 @@ contract AdvancedOptimizations is AccessControl {
         return true;
     }
 
-    /**
-     * @dev Calcular ahorro de gas basado en reducción de tamaño
-     */
+    
     function _calculateGasSavings(
         uint256 originalSize,
         uint256 compressedSize
@@ -237,9 +218,7 @@ contract AdvancedOptimizations is AccessControl {
         return (originalSize - compressedSize) * 16; // 16 gas por byte reducido
     }
 
-    /**
-     * @dev Calcular factor de boost basado en confirmaciones
-     */
+    
     function _calculateBoostFactor(uint256 confirmations) internal view returns (uint256) {
         if (confirmations < timeBoostConfig.minConfirmations) return 100; // 1x
         
@@ -249,9 +228,7 @@ contract AdvancedOptimizations is AccessControl {
         return boost > timeBoostConfig.boostFactor ? timeBoostConfig.boostFactor : boost;
     }
 
-    /**
-     * @dev Obtener estadísticas de optimización
-     */
+    
     function getOptimizationStats() external view returns (
         uint256 dataCompressed,
         uint256 gasSaved,
@@ -266,9 +243,7 @@ contract AdvancedOptimizations is AccessControl {
         );
     }
 
-    /**
-     * @dev Verificar elegibilidad para TimeBoost
-     */
+    
     function isTimeBoostEligible(address user) external view returns (
         bool eligible,
         uint256 cooldownRemaining
@@ -284,9 +259,7 @@ contract AdvancedOptimizations is AccessControl {
         return (false, timeBoostConfig.cooldownPeriod - timeSinceLastBoost);
     }
 
-    /**
-     * @dev Obtener score de disponibilidad de datos
-     */
+    
     function getDataAvailabilityScore(bytes32 batchId) external view returns (uint256) {
         return dataAvailabilityScores[batchId];
     }

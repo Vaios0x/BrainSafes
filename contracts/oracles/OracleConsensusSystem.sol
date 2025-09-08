@@ -9,12 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./DataValidationSystem.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title OracleConsensusSystem
- * @dev Sistema de consenso avanzado para oráculos en BrainSafes
- * @notice Maneja consenso distribuido, votación ponderada y resolución de disputas
- * @custom:security-contact security@brainsafes.com
- */
+
 contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
 
@@ -171,9 +166,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
     event DisputeResolved(uint256 indexed disputeId, bool upheld, address resolver);
     event ReputationUpdated(address indexed node, uint256 oldReputation, uint256 newReputation);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(
         address _stakingToken,
         address _validationSystem,
@@ -191,9 +184,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         _setupRole(CONSENSUS_ADMIN, msg.sender);
     }
 
-    /**
-     * @dev Registrar nuevo nodo oráculo
-     */
+    
     function registerNode(
         uint256 stakeAmount,
         string memory metadata
@@ -225,9 +216,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         emit NodeRegistered(msg.sender, stakeAmount);
     }
 
-    /**
-     * @dev Iniciar nueva ronda de consenso
-     */
+    
     function startConsensusRound(
         bytes32 dataKey
     ) external onlyRole(CONSENSUS_ADMIN) returns (uint256) {
@@ -248,9 +237,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         return roundCounter;
     }
 
-    /**
-     * @dev Comprometer voto (commit phase)
-     */
+    
     function commitVote(
         uint256 roundId,
         bytes32 commitment
@@ -275,9 +262,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         emit VoteCommitted(roundId, msg.sender, commitment);
     }
 
-    /**
-     * @dev Revelar voto (reveal phase)
-     */
+    
     function revealVote(
         uint256 roundId,
         bytes32 value,
@@ -314,9 +299,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         emit VoteRevealed(roundId, msg.sender, value);
     }
 
-    /**
-     * @dev Finalizar ronda de consenso
-     */
+    
     function finalizeRound(
         uint256 roundId
     ) external onlyRole(CONSENSUS_ADMIN) whenNotPaused {
@@ -345,9 +328,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         emit ConsensusReached(roundId, winningValue, confidence);
     }
 
-    /**
-     * @dev Calcular consenso y confianza
-     */
+    
     function _calculateConsensus(
         uint256 roundId
     ) internal view returns (bytes32 winningValue, uint256 confidence) {
@@ -379,9 +360,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         return (bestValue, confidence);
     }
 
-    /**
-     * @dev Calcular peso del voto basado en múltiples factores
-     */
+    
     function _calculateVoteWeight(address voter) internal view returns (uint256) {
         OracleNode storage node = oracleNodes[voter];
         
@@ -409,18 +388,14 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         return weight;
     }
 
-    /**
-     * @dev Calcular factor de participación
-     */
+    
     function _calculateParticipationFactor(address voter) internal view returns (uint256) {
         // Implementar lógica basada en participación histórica
         // Por simplicidad, retornamos un valor fijo
         return 75;
     }
 
-    /**
-     * @dev Calcular factor de longevidad
-     */
+    
     function _calculateLongevityFactor(address voter) internal view returns (uint256) {
         OracleNode storage node = oracleNodes[voter];
         uint256 timeActive = block.timestamp.sub(node.joinedAt);
@@ -430,9 +405,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         return longevityScore > 100 ? 100 : longevityScore;
     }
 
-    /**
-     * @dev Actualizar reputaciones después del consenso
-     */
+    
     function _updateReputations(uint256 roundId, bytes32 winningValue) internal {
         ConsensusRound storage round = consensusRounds[roundId];
         VoteGroup storage winningGroup = round.voteGroups[winningValue];
@@ -480,9 +453,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Crear disputa sobre un resultado de consenso
-     */
+    
     function raiseDispute(
         uint256 roundId,
         bytes32 proposedValue,
@@ -517,9 +488,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         emit DisputeRaised(disputeCounter, roundId, msg.sender);
     }
 
-    /**
-     * @dev Slash un nodo por comportamiento malicioso
-     */
+    
     function slashNode(
         address nodeAddress,
         string memory reason
@@ -559,9 +528,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         emit ReputationUpdated(nodeAddress, oldReputation, node.reputation);
     }
 
-    /**
-     * @dev Actualizar métricas del sistema
-     */
+    
     function _updateMetrics(
         uint256 roundId,
         bool successful,
@@ -587,9 +554,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         metrics.lastUpdated = block.timestamp;
     }
 
-    /**
-     * @dev Remover nodo de la lista activa
-     */
+    
     function _removeFromActiveNodes(address nodeAddress) internal {
         for (uint256 i = 0; i < activeNodes.length; i++) {
             if (activeNodes[i] == nodeAddress) {
@@ -600,9 +565,7 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Transición automática de fases de votación
-     */
+    
     function progressRoundState(uint256 roundId) external {
         ConsensusRound storage round = consensusRounds[roundId];
         
@@ -612,16 +575,12 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Obtener información del nodo
-     */
+    
     function getNodeInfo(address nodeAddress) external view returns (OracleNode memory) {
         return oracleNodes[nodeAddress];
     }
 
-    /**
-     * @dev Obtener información de la ronda
-     */
+    
     function getRoundInfo(uint256 roundId) external view returns (
         uint256 id,
         bytes32 dataKey,
@@ -647,23 +606,17 @@ contract OracleConsensusSystem is AccessControl, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @dev Obtener métricas del sistema
-     */
+    
     function getSystemMetrics() external view returns (ConsensusMetrics memory) {
         return metrics;
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(CONSENSUS_ADMIN) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(CONSENSUS_ADMIN) {
         _unpause();
     }

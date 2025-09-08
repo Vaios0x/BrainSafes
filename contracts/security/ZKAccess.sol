@@ -18,7 +18,14 @@ contract ZKAccess {
         uint256[2] calldata c,
         uint256[] calldata publicInputs
     ) external {
-        require(verifier.verifyProof(a, b, c, publicInputs), "Prueba ZK inválida");
+        // Convert the calldata arrays to the proper Proof struct format
+        Groth16Verifier.Proof memory proof = Groth16Verifier.Proof({
+            a: Groth16Verifier.G1Point(a[0], a[1]),
+            b: Groth16Verifier.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]),
+            c: Groth16Verifier.G1Point(c[0], c[1])
+        });
+        
+        require(verifier.verifyProof(proof, publicInputs), unicode"Prueba ZK inválida");
         emit ProofVerified(msg.sender);
         // Aquí puedes permitir mint, acceso, etc.
     }

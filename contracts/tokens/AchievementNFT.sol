@@ -8,11 +8,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../core/BrainSafesArbitrum.sol";
 import "../utils/SecurityManager.sol";
 
-/**
- * @title AchievementNFT
- * @dev Sistema de NFTs de logros para BrainSafes
- * @custom:security-contact security@brainsafes.com
- */
+
 contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
     // Roles
     bytes32 public constant ACHIEVEMENT_MANAGER = keccak256("ACHIEVEMENT_MANAGER");
@@ -93,14 +89,12 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
     event BadgeAwarded(address indexed user, string badge);
     event CategoryProgressUpdated(address indexed user, string category, uint256 progress);
 
-    /**
-     * @dev Constructor
-     */
+    
     constructor(
-        string memory uri,
+        string memory tokenUri,
         address _brainSafes,
         address _securityManager
-    ) ERC1155(uri) {
+    ) ERC1155("https://api.brainsafes.com/metadata/{id}") {
         require(_brainSafes != address(0), "Invalid BrainSafes address");
         require(_securityManager != address(0), "Invalid SecurityManager address");
 
@@ -111,9 +105,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         _setupRole(ACHIEVEMENT_MANAGER, msg.sender);
     }
 
-    /**
-     * @dev Crear nuevo logro
-     */
+    
     function createAchievement(
         string memory name,
         string memory description,
@@ -148,9 +140,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         emit AchievementCreated(achievementCounter, name, rarity);
     }
 
-    /**
-     * @dev Otorgar logro
-     */
+    
     function awardAchievement(
         address user,
         uint256 achievementId
@@ -186,9 +176,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         emit AchievementEarned(user, achievementId);
     }
 
-    /**
-     * @dev Crear colección
-     */
+    
     function createCollection(
         string memory name,
         string memory description,
@@ -215,9 +203,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         emit CollectionCreated(collectionCounter, name);
     }
 
-    /**
-     * @dev Verificar colecciones
-     */
+    
     function _checkCollections(address user) internal {
         UserAchievements storage userStats = userAchievements[user];
 
@@ -241,9 +227,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Actualizar rango
-     */
+    
     function _updateRank(address user) internal {
         UserAchievements storage userStats = userAchievements[user];
         
@@ -262,9 +246,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Obtener logros de usuario
-     */
+    
     function getUserAchievements(
         address user
     ) external view returns (
@@ -286,9 +268,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Obtener progreso por categoría
-     */
+    
     function getCategoryProgress(
         address user,
         string memory category
@@ -299,9 +279,7 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Verificar elegibilidad para logro
-     */
+    
     function checkAchievementEligibility(
         address user,
         uint256 achievementId
@@ -321,32 +299,24 @@ contract AchievementNFT is ERC1155, AccessControl, Pausable, ReentrancyGuard {
         return (true, "Eligible");
     }
 
-    /**
-     * @dev Obtener URI de metadata
-     */
+    
     function uri(
         uint256 tokenId
     ) public view override returns (string memory) {
         return achievements[tokenId].metadataURI;
     }
 
-    /**
-     * @dev Pausar el contrato
-     */
+    
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Reanudar el contrato
-     */
+    
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
 
-    /**
-     * @dev Override required by Solidity
-     */
+    
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(ERC1155, AccessControl) returns (bool) {

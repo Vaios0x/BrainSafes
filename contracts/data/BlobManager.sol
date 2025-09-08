@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../cache/DistributedCache.sol";
 
-/**
- * @title BlobManager
- * @notice Blob storage manager for BrainSafes
- * @dev Handles large data storage and retrieval
- * @author BrainSafes Team
- */
+
 contract BlobManager is AccessControl, ReentrancyGuard {
     bytes32 public constant BLOB_ADMIN_ROLE = keccak256("BLOB_ADMIN_ROLE");
     bytes32 public constant BLOB_PROVIDER_ROLE = keccak256("BLOB_PROVIDER_ROLE");
@@ -80,17 +75,13 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         });
     }
 
-    /**
-     * @dev Habilitar soporte para blobs
-     */
+    
     function enableBlobs(bool enable) external onlyRole(BLOB_ADMIN_ROLE) {
         config.blobsEnabled = enable;
         emit BlobsEnabled(enable);
     }
 
-    /**
-     * @dev Actualizar configuración de blobs
-     */
+    
     function updateBlobConfig(
         uint256 _maxBlobSize,
         uint256 _minBlobSize,
@@ -107,9 +98,7 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         emit BlobConfigUpdated(config);
     }
 
-    /**
-     * @dev Almacenar nuevo blob
-     */
+    
     function storeBlob(
         bytes calldata data,
         uint256 expiryTime
@@ -151,9 +140,7 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         return blobHash;
     }
 
-    /**
-     * @dev Verificar blob
-     */
+    
     function verifyBlob(
         bytes32 blobHash,
         bytes calldata data
@@ -162,9 +149,7 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         return keccak256(data) == blobHash;
     }
 
-    /**
-     * @dev Expirar blob
-     */
+    
     function expireBlob(bytes32 blobHash) external {
         BlobData storage blob = blobs[blobHash];
         require(blob.isValid, "Blob not found");
@@ -181,9 +166,7 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         emit StatsUpdated(stats);
     }
 
-    /**
-     * @dev Limpiar blobs expirados
-     */
+    
     function cleanupExpiredBlobs() external onlyRole(BLOB_ADMIN_ROLE) {
         bytes32[] memory blobHashes = _getAllBlobHashes();
         uint256 cleaned = 0;
@@ -204,26 +187,20 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Obtener todos los hashes de blobs
-     */
+    
     function _getAllBlobHashes() internal pure returns (bytes32[] memory) {
         // Implementar obtención real de hashes
         return new bytes32[](0);
     }
 
-    /**
-     * @dev Obtener información de blob
-     */
+    
     function getBlobInfo(
         bytes32 blobHash
     ) external view returns (BlobData memory) {
         return blobs[blobHash];
     }
 
-    /**
-     * @dev Obtener blobs de proveedor
-     */
+    
     function getProviderBlobs(
         address provider
     ) external view returns (bytes32[] memory) {
@@ -237,9 +214,7 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         return new bytes32[](0);
     }
 
-    /**
-     * @dev Obtener estadísticas de blobs
-     */
+    
     function getBlobStats() external view returns (
         uint256 total,
         uint256 active,
@@ -254,9 +229,7 @@ contract BlobManager is AccessControl, ReentrancyGuard {
         );
     }
 
-    /**
-     * @dev Verificar disponibilidad de blob
-     */
+    
     function isBlobAvailable(bytes32 blobHash) external view returns (bool) {
         BlobData storage blob = blobs[blobHash];
         return blob.isValid && block.timestamp < blob.expiryTime;

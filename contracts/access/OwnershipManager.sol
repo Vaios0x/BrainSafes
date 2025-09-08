@@ -5,10 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-/**
- * @title OwnershipManager
- * @dev Gestión descentralizada de propiedad y accesos para la cadena Arbitrum
- */
+
 contract OwnershipManager is AccessControl, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -83,9 +80,7 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         roleThresholds[PROPOSER_ROLE] = 60;  // 60% de aprobación requerida
     }
 
-    /**
-     * @dev Crear una nueva propuesta
-     */
+    
     function createProposal(
         ProposalType proposalType,
         address target,
@@ -114,9 +109,7 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         return proposalCount;
     }
 
-    /**
-     * @dev Votar en una propuesta
-     */
+    
     function voteOnProposal(
         uint256 proposalId,
         bool approve
@@ -148,9 +141,7 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         }
     }
 
-    /**
-     * @dev Ejecutar una propuesta aprobada
-     */
+    
     function executeProposal(uint256 proposalId) external nonReentrant {
         Proposal storage proposal = proposals[proposalId];
         require(!proposal.executed, "Already executed");
@@ -178,9 +169,7 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         emit ProposalExecuted(proposalId);
     }
 
-    /**
-     * @dev Registrar nuevo validador
-     */
+    
     function registerValidator() external payable {
         require(msg.value >= minValidatorStake, "Insufficient stake");
         require(!validators[msg.sender].isActive, "Already registered");
@@ -200,9 +189,7 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         emit ValidatorAdded(msg.sender, msg.value);
     }
 
-    /**
-     * @dev Remover validador
-     */
+    
     function removeValidator(address validator) external {
         require(
             msg.sender == validator || hasRole(OWNERSHIP_ADMIN_ROLE, msg.sender),
@@ -222,9 +209,7 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         emit ValidatorRemoved(validator);
     }
 
-    /**
-     * @dev Verificar si una propuesta puede ser ejecutada
-     */
+    
     function _canExecuteProposal(Proposal storage proposal) internal view returns (bool) {
         if (proposal.executed || block.timestamp >= proposal.expiresAt) {
             return false;
@@ -237,42 +222,32 @@ contract OwnershipManager is AccessControl, ReentrancyGuard {
         return (proposal.approvals * 100) / totalVotes >= threshold;
     }
 
-    /**
-     * @dev Programar ejecución de propuesta
-     */
+    
     function _scheduleExecution(uint256 proposalId) internal {
         // Implementar lógica de programación
         // Este es un placeholder - la implementación real dependería del contexto
     }
 
-    /**
-     * @dev Obtener validadores activos
-     */
+    
     function getActiveValidators() external view returns (address[] memory) {
         return activeValidators.values();
     }
 
-    /**
-     * @dev Obtener información de propuesta
-     */
+    
     function getProposalInfo(
         uint256 proposalId
     ) external view returns (Proposal memory) {
         return proposals[proposalId];
     }
 
-    /**
-     * @dev Obtener información de validador
-     */
+    
     function getValidatorInfo(
         address validator
     ) external view returns (ValidatorInfo memory) {
         return validators[validator];
     }
 
-    /**
-     * @dev Verificar quórum
-     */
+    
     function hasQuorum(uint256 proposalId) external view returns (bool) {
         Proposal storage proposal = proposals[proposalId];
         return _canExecuteProposal(proposal);

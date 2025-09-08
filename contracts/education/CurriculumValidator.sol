@@ -3,11 +3,13 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+// Note: IAccreditationBody interface is not defined
+// This is a placeholder interface for the accreditation body
 interface IAccreditationBody {
-    function accreditors(address) external view returns (
-        address, string memory, string memory, bool
-    );
+    function accreditors(address) external view returns (address, string memory, uint256, bool);
 }
+
+
 
 contract CurriculumValidator is AccessControl {
     IAccreditationBody public accreditationBody;
