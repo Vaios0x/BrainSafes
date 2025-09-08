@@ -361,12 +361,12 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = "+", prefix = "" }) =>
   return (
     <motion.span 
       id={`counter-${end}`}
-      className="text-5xl font-bold bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600 bg-clip-text text-transparent"
+      className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-600 via-brain-600 to-purple-600 bg-clip-text text-transparent break-words"
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
-      {prefix}{count}{suffix}
+      {prefix}{count.toLocaleString()}{suffix}
     </motion.span>
   );
 };
@@ -671,12 +671,12 @@ export default function Landing() {
                 viewport={{ once: true }}
                 className="text-center"
               >
-                <AdvancedGlassCard intensity="medium" variant="default" className="p-6">
-                  <div className="text-4xl mb-4">{stat.icon}</div>
-                  <div className="mb-2">
+                <AdvancedGlassCard intensity="medium" variant="default" className="p-4 sm:p-6 overflow-hidden">
+                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">{stat.icon}</div>
+                  <div className="mb-2 min-h-[3rem] flex items-center justify-center">
                     <AnimatedCounter end={stat.value} />
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.label}</div>
+                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium text-center leading-tight">{stat.label}</div>
                 </AdvancedGlassCard>
               </motion.div>
             ))}
