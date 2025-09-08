@@ -10,12 +10,15 @@ import ReownWalletConnect from './ReownWalletConnect';
 // Componente de menú desplegable simple
 const DropdownNavLink = ({ link, isActive, onClick, themeMode }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
   const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && 
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
@@ -29,11 +32,22 @@ const DropdownNavLink = ({ link, isActive, onClick, themeMode }) => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX + (rect.width / 2)
+      });
+    }
+  }, [isOpen]);
+
   const hasActiveSubmenu = link.submenu?.some(subLink => location.pathname === subLink.to);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
           hasActiveSubmenu || isOpen
             ? themeMode === 'dark'
@@ -51,11 +65,19 @@ const DropdownNavLink = ({ link, isActive, onClick, themeMode }) => {
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full mt-2 left-1/2 transform -translate-x-1/2 min-w-[200px] rounded-lg shadow-lg border z-50 overflow-hidden ${
-          themeMode === 'dark'
-            ? 'bg-gray-800 border-gray-600'
-            : 'bg-white border-gray-200'
-        }`}>
+        <div
+          ref={dropdownRef}
+          className={`fixed min-w-[200px] rounded-lg shadow-xl border z-[9999] overflow-hidden ${
+            themeMode === 'dark'
+              ? 'bg-gray-800 border-gray-600'
+              : 'bg-white border-gray-200'
+          }`}
+          style={{
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
           {link.submenu.map((subLink) => (
             <Link
               key={subLink.to}
@@ -80,7 +102,7 @@ const DropdownNavLink = ({ link, isActive, onClick, themeMode }) => {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -244,7 +266,7 @@ export default function Navbar({ themeMode, setThemeMode }) {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 w-full border-b ${
+    <nav className={`sticky top-0 z-40 w-full border-b ${
       themeMode === 'dark'
         ? 'bg-gray-900 border-gray-700'
         : 'bg-white border-gray-200'
