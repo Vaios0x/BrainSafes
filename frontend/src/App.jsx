@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NeuralBackground from './components/NeuralBackground';
 import { useTheme } from './hooks/useTheme';
 import { ThemeProvider } from './context/ThemeContext';
+import './i18n';
 
 import { ToastProvider } from './components/ToastContainer';
 import Dashboard from "./components/Dashboard/Dashboard";

@@ -133,7 +133,9 @@ const NavLink = ({ link, isActive, onClick, isMobile = false, themeMode }) => {
 // Componente de selector de idioma simple
 const LanguageSelector = ({ i18n, themeMode }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
 
   if (!i18n) {
     return null;
@@ -141,7 +143,8 @@ const LanguageSelector = ({ i18n, themeMode }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && 
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
@@ -157,6 +160,16 @@ const LanguageSelector = ({ i18n, themeMode }) => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.right + window.scrollX - 140 // Alinear a la derecha
+      });
+    }
+  }, [isOpen]);
+
   const languages = [
     { code: 'es', name: 'Español', flag: '🇪🇸' },
     { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -166,28 +179,40 @@ const LanguageSelector = ({ i18n, themeMode }) => {
   const currentLang = languages.find(lang => lang.code === currentLanguage) || languages[0];
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-          themeMode === 'dark'
-            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+          isOpen
+            ? themeMode === 'dark'
+              ? 'bg-blue-600 text-white'
+              : 'bg-blue-600 text-white'
+            : themeMode === 'dark'
+              ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         }`}
       >
         <span className="text-lg">{currentLang.flag}</span>
         <span className="hidden sm:block text-xs font-bold">
           {currentLang.code.toUpperCase()}
         </span>
-        <span className="text-xs">▼</span>
+        <span className="text-xs">{isOpen ? '▲' : '▼'}</span>
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full mt-2 right-0 min-w-[140px] rounded-lg shadow-lg border z-[9999] overflow-hidden ${
-          themeMode === 'dark'
-            ? 'bg-gray-800 border-gray-600'
-            : 'bg-white border-gray-200'
-        }`}>
+        <div
+          ref={dropdownRef}
+          className={`fixed min-w-[140px] rounded-lg shadow-xl border z-[9999] overflow-hidden ${
+            themeMode === 'dark'
+              ? 'bg-gray-800 border-gray-600'
+              : 'bg-white border-gray-200'
+          }`}
+          style={{
+            top: `${position.top}px`,
+            left: `${position.left}px`
+          }}
+        >
           {languages.map((lang) => (
             <button
               key={lang.code}
@@ -211,7 +236,7 @@ const LanguageSelector = ({ i18n, themeMode }) => {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
