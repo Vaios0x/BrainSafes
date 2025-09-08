@@ -1,7 +1,7 @@
 import React from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiProvider } from 'wagmi';
-import { arbitrum, mainnet, base, scroll, polygon, arbitrumSepolia } from '@reown/appkit/networks';
+import { arbitrum, arbitrumSepolia } from '@reown/appkit/networks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
@@ -15,12 +15,12 @@ const projectId = 'af00a4191edad9fbd34be1ad20567d53';
 const metadata = {
   name: 'BrainSafes',
   description: 'Tu plataforma segura de aprendizaje y credenciales blockchain',
-  url: 'http://localhost:3000', // origin must match your domain & subdomain
+  url: 'http://localhost:3004', // origin must match your domain & subdomain
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 };
 
-// 3. Set the networks (including Arbitrum Sepolia for testnet)
-const networks = [arbitrumSepolia, arbitrum, mainnet, base, scroll, polygon];
+// 3. Set the networks (only Arbitrum Sepolia and Arbitrum One)
+const networks = [arbitrumSepolia, arbitrum];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
