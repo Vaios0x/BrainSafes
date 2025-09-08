@@ -19,7 +19,7 @@ import {
   LightBulbIcon,
   ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
-  BadgeCheckIcon,
+  CheckBadgeIcon,
   CogIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
@@ -322,7 +322,7 @@ const ReputationSystem = () => {
                             {user.name}
                           </h3>
                           {user.verified && (
-                            <BadgeCheckIcon className="h-5 w-5 text-blue-600" />
+                            <CheckBadgeIcon className="h-5 w-5 text-blue-600" />
                           )}
                         </div>
                         <p className="text-gray-600 dark:text-gray-300 text-sm">
@@ -423,7 +423,7 @@ const ReputationSystem = () => {
                             {company.name}
                           </h3>
                           {company.verified && (
-                            <BadgeCheckIcon className="h-5 w-5 text-blue-600" />
+                            <CheckBadgeIcon className="h-5 w-5 text-blue-600" />
                           )}
                         </div>
                         <p className="text-gray-600 dark:text-gray-300 text-sm">
@@ -515,7 +515,7 @@ const ReputationSystem = () => {
                             {review.title}
                           </h3>
                           {review.verified && (
-                            <BadgeCheckIcon className="h-5 w-5 text-blue-600" />
+                            <CheckBadgeIcon className="h-5 w-5 text-blue-600" />
                           )}
                         </div>
                         <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
@@ -778,7 +778,7 @@ const ReputationSystem = () => {
                     {/* Badges */}
                     <div className="bg-white dark:bg-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-                        <BadgeCheckIcon className="h-5 w-5 text-green-600" />
+                        <CheckBadgeIcon className="h-5 w-5 text-green-600" />
                         <span>{t('badges')}</span>
                       </h3>
                       <div className="flex flex-wrap gap-2">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ethers } from 'ethers';
+import { ethers, BrowserProvider, formatEther, parseEther } from 'ethers';
 import { useAccount, useWalletClient } from 'wagmi';
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS, getContractAddress, getContractABI } from '../config/contracts';
 
@@ -28,7 +28,7 @@ export const useContracts = () => {
         }
 
         // Create provider from wallet client
-        const provider = new ethers.BrowserProvider(walletClient);
+        const provider = new BrowserProvider(walletClient);
         const signer = await provider.getSigner();
 
         // Initialize all contracts
@@ -103,7 +103,7 @@ export const useContracts = () => {
     if (!userAddress) return '0';
     try {
       const balance = await callContract('eduToken', 'balanceOf', [userAddress]);
-      return ethers.formatEther(balance);
+      return formatEther(balance);
     } catch (err) {
       console.error('Error getting EDU balance:', err);
       return '0';
@@ -111,7 +111,7 @@ export const useContracts = () => {
   }, [address, callContract]);
 
   const approveEDU = useCallback(async (spenderAddress, amount) => {
-    const amountInWei = ethers.parseEther(amount.toString());
+    const amountInWei = parseEther(amount.toString());
     return callContract('eduToken', 'approve', [spenderAddress, amountInWei]);
   }, [callContract]);
 
@@ -126,12 +126,12 @@ export const useContracts = () => {
 
   // Course NFT helpers
   const createCourse = useCallback(async (title, description, price, duration, ipfsHash) => {
-    const priceInWei = ethers.parseEther(price.toString());
+    const priceInWei = parseEther(price.toString());
     return callContract('courseNFT', 'createCourse', [title, description, priceInWei, duration, ipfsHash]);
   }, [callContract]);
 
   const enrollInCourse = useCallback(async (courseId, price) => {
-    const priceInWei = ethers.parseEther(price.toString());
+    const priceInWei = parseEther(price.toString());
     return callContract('courseNFT', 'enrollInCourse', [courseId], { value: priceInWei });
   }, [callContract]);
 
@@ -146,12 +146,12 @@ export const useContracts = () => {
 
   // Job Marketplace helpers
   const postJob = useCallback(async (title, description, budget, deadline, requiredSkills) => {
-    const budgetInWei = ethers.parseEther(budget.toString());
+    const budgetInWei = parseEther(budget.toString());
     return callContract('jobMarketplace', 'postJob', [title, description, budgetInWei, deadline, requiredSkills]);
   }, [callContract]);
 
   const applyForJob = useCallback(async (jobId, proposal, proposedBudget) => {
-    const budgetInWei = ethers.parseEther(proposedBudget.toString());
+    const budgetInWei = parseEther(proposedBudget.toString());
     return callContract('jobMarketplace', 'applyForJob', [jobId, proposal, budgetInWei]);
   }, [callContract]);
 
