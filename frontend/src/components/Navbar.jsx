@@ -148,10 +148,12 @@ const LanguageSelector = ({ i18n, themeMode }) => {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [isOpen]);
 
@@ -181,7 +183,7 @@ const LanguageSelector = ({ i18n, themeMode }) => {
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full mt-2 right-0 min-w-[140px] rounded-lg shadow-lg border z-50 overflow-hidden ${
+        <div className={`absolute top-full mt-2 right-0 min-w-[140px] rounded-lg shadow-lg border z-[9999] overflow-hidden ${
           themeMode === 'dark'
             ? 'bg-gray-800 border-gray-600'
             : 'bg-white border-gray-200'
