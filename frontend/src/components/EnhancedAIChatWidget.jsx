@@ -97,8 +97,8 @@ const SmartSuggestions = ({ suggestions, onSuggestionClick }) => {
       className="space-y-2"
     >
       <p className="text-xs sm:text-sm text-gray-400 font-medium">💡 Sugerencias</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {suggestions.slice(0, 4).map((suggestion, index) => (
+      <div className="grid grid-cols-1 gap-2">
+        {suggestions.slice(0, 2).map((suggestion, index) => (
           <button
             key={index}
             onClick={() => onSuggestionClick(suggestion)}
@@ -138,7 +138,7 @@ const EnhancedAIChatWidget = () => {
   const [messages, setMessages] = useState([
     { 
       id: 1, 
-      text: '¡Hola! Soy tu asistente IA de BrainSafes 🧠. Estoy especializado en nuestro ecosistema educativo descentralizado en Arbitrum. Puedo ayudarte con contratos inteligentes, Stylus, bridges L1↔L2, gas optimization, certificados NFT, becas, marketplace y más. ¿En qué puedo asistirte hoy?', 
+      text: '¡Hola! Soy tu asistente IA de BrainSafes 🧠', 
       isUser: false,
       timestamp: new Date()
     }
@@ -341,7 +341,7 @@ const EnhancedAIChatWidget = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-2 right-2 left-2 sm:left-auto sm:w-80 md:w-96 lg:w-[400px] z-50"
+            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 md:w-[420px] z-50"
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
@@ -349,7 +349,7 @@ const EnhancedAIChatWidget = () => {
             style={{ perspective: 1000 }}
           >
             <AdvancedGlassCard
-              className="h-[600px] sm:h-[650px] md:h-[700px] max-h-[95vh] flex flex-col overflow-hidden"
+              className="h-[540px] sm:h-[580px] md:h-[600px] max-h-[85vh] flex flex-col overflow-hidden"
               intensity="high"
               variant="primary"
             >
@@ -384,15 +384,15 @@ const EnhancedAIChatWidget = () => {
                 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 cursor-pointer border border-white/20 hover:border-white/40"
+                  className="p-2 sm:p-3 rounded-full bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 cursor-pointer border border-red-400/30 hover:border-red-400/50 min-w-[40px] min-h-[40px] flex items-center justify-center"
                   title="Cerrar chatbot"
                 >
-                  <span className="text-white text-lg sm:text-xl font-bold">×</span>
+                  <span className="text-white text-xl sm:text-2xl font-bold">×</span>
                 </button>
               </motion.div>
 
               {/* Área de mensajes */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 max-h-[400px] sm:max-h-[450px] md:max-h-[500px]">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 min-h-0 max-h-[280px] sm:max-h-[300px]">
                 <AnimatePresence>
                   {messages.map((message, index) => (
                     <NeuralMessage
