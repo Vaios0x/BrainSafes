@@ -341,7 +341,7 @@ const EnhancedAIChatWidget = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-80 md:w-96 lg:w-[400px] z-50"
+            className="fixed bottom-2 right-2 left-2 sm:left-auto sm:w-80 md:w-96 lg:w-[400px] z-50"
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
@@ -349,7 +349,7 @@ const EnhancedAIChatWidget = () => {
             style={{ perspective: 1000 }}
           >
             <AdvancedGlassCard
-              className="h-[500px] sm:h-[550px] md:h-[600px] max-h-[90vh] flex flex-col overflow-hidden"
+              className="h-[600px] sm:h-[650px] md:h-[700px] max-h-[95vh] flex flex-col overflow-hidden"
               intensity="high"
               variant="primary"
             >
@@ -391,7 +391,7 @@ const EnhancedAIChatWidget = () => {
               </motion.div>
 
               {/* Área de mensajes */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 max-h-[350px] sm:max-h-[400px] md:max-h-[450px]">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 max-h-[400px] sm:max-h-[450px] md:max-h-[500px]">
                 <AnimatePresence>
                   {messages.map((message, index) => (
                     <NeuralMessage
@@ -458,7 +458,7 @@ const EnhancedAIChatWidget = () => {
                   <button
                     onClick={handleSendMessage}
                     disabled={!input.trim() || isTyping}
-                    className="px-4 py-3 bg-gradient-to-r from-primary-500 to-brain-500 text-white rounded-2xl font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-3 bg-gradient-to-r from-primary-500 to-brain-500 text-white rounded-2xl font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <motion.span
                       animate={{ rotate: isTyping ? 360 : 0 }}
