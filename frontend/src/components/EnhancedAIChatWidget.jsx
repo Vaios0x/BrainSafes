@@ -119,25 +119,15 @@ const PredictiveAnalysis = ({ predictions }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.5 }}
-      className="p-3 sm:p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-purple-500/20 rounded-xl"
+      className="p-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-purple-500/20 rounded-lg"
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-sm">🔮</span>
-        <p className="text-sm text-purple-300 font-medium">Análisis Predictivo</p>
+      <div className="flex items-center gap-1 mb-1">
+        <span className="text-xs">🔮</span>
+        <p className="text-xs text-purple-300 font-medium">Análisis</p>
       </div>
-      <div className="space-y-2">
-        {predictions.slice(0, 2).map((prediction, index) => (
-          <motion.p
-            key={index}
-            className="text-xs sm:text-sm text-gray-300 leading-relaxed"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 + index * 0.1 }}
-          >
-            • {prediction}
-          </motion.p>
-        ))}
-      </div>
+      <p className="text-xs text-gray-300 leading-tight">
+        {predictions[0]}
+      </p>
     </motion.div>
   );
 };
@@ -148,7 +138,7 @@ const EnhancedAIChatWidget = () => {
   const [messages, setMessages] = useState([
     { 
       id: 1, 
-      text: '¡Hola! Soy tu asistente IA de BrainSafes. ¿En qué puedo ayudarte?', 
+      text: '¡Hola! Soy tu asistente IA de BrainSafes 🧠. Estoy especializado en nuestro ecosistema educativo descentralizado en Arbitrum. Puedo ayudarte con contratos inteligentes, Stylus, bridges L1↔L2, gas optimization, certificados NFT, becas, marketplace y más. ¿En qué puedo asistirte hoy?', 
       isUser: false,
       timestamp: new Date()
     }
@@ -156,16 +146,16 @@ const EnhancedAIChatWidget = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [suggestions] = useState([
-    '¿Cómo funciona la seguridad en blockchain?',
+    '¿Cómo funciona BrainSafes en Arbitrum?',
     'Explícame los contratos inteligentes',
-    '¿Qué es Web3?',
-    'Ayúdame con DeFi',
-    'Análisis de mercado crypto'
+    '¿Qué es Arbitrum Stylus?',
+    'Ayúdame con el bridge L1↔L2',
+    'Análisis de gas fees en Arbitrum'
   ]);
   const [predictions] = useState([
-    'Posible congestión de red detectada para mañana',
-    'Se recomienda optimizar el contrato BrainSafes.sol',
-    'Nuevas oportunidades de yield farming disponibles'
+    'ArbOS 32 actualizado - Mejoras de seguridad implementadas',
+    'Protocolo Yap integrado - Nuevas funciones sociales disponibles',
+    'Stylus optimizado - Procesamiento IA on-chain más eficiente'
   ]);
   
   const messagesEndRef = useRef(null);
@@ -213,19 +203,76 @@ const EnhancedAIChatWidget = () => {
   const generateAIResponse = (userInput) => {
     const input = userInput.toLowerCase();
     
-    if (input.includes('blockchain') || input.includes('seguridad')) {
-      return 'La seguridad en blockchain se basa en criptografía, consenso distribuido y transparencia. Los contratos inteligentes de BrainSafes implementan múltiples capas de seguridad incluyendo auditorías automáticas, validación de múltiples firmas y sistemas de detección de anomalías.';
-    } else if (input.includes('contrato') || input.includes('smart contract')) {
-      return 'Los contratos inteligentes son programas autoejecutables que se ejecutan en blockchain. BrainSafes utiliza contratos optimizados con gas eficiente, actualizaciones seguras y compatibilidad cross-chain. ¿Te gustaría que analice algún contrato específico?';
-    } else if (input.includes('web3') || input.includes('decentralizado')) {
-      return 'Web3 representa la evolución hacia una web descentralizada donde los usuarios tienen control total de sus datos y activos. BrainSafes está construyendo la infraestructura para esta nueva era con protocolos seguros y escalables.';
-    } else if (input.includes('defi') || input.includes('finanzas')) {
-      return 'DeFi (Finanzas Descentralizadas) permite servicios financieros sin intermediarios. BrainSafes ofrece herramientas avanzadas para yield farming, lending, y análisis de riesgo en tiempo real.';
-    } else if (input.includes('mercado') || input.includes('crypto') || input.includes('precio')) {
-      return 'El análisis de mercado crypto requiere múltiples factores: volumen, sentimiento, on-chain metrics, y datos macroeconómicos. BrainSafes integra análisis predictivo con IA para optimizar estrategias de trading.';
-    } else {
-      return 'Interesante pregunta. Como asistente IA especializado en blockchain y Web3, puedo ayudarte con temas de seguridad, desarrollo de contratos inteligentes, análisis de mercado, y arquitectura descentralizada. ¿Hay algún aspecto específico que te gustaría explorar?';
+    if (input.includes('hola') || input.includes('hi') || input.includes('hello')) {
+      return "¡Hola! Soy tu asistente IA de BrainSafes 🧠. Estoy aquí para ayudarte con nuestro ecosistema educativo descentralizado en Arbitrum. Puedo explicarte sobre contratos inteligentes, Stylus, bridges L1↔L2, gas optimization y más. ¿En qué puedo asistirte hoy?";
     }
+    
+    if (input.includes('brainsafes') || input.includes('cómo funciona')) {
+      return "BrainSafes es una plataforma educativa descentralizada que combina blockchain, IA y oráculos. Está optimizada para Arbitrum con contratos inteligentes que gestionan cursos, certificados NFT, becas y marketplace. Utilizamos Stylus para procesamiento IA on-chain y bridges cross-chain para interoperabilidad. ¿Te interesa algún componente específico?";
+    }
+    
+    if (input.includes('arbitrum') || input.includes('l2') || input.includes('layer 2')) {
+      return "Arbitrum es nuestra red principal. Con ArbOS 32 actualizado, tenemos mejoras de seguridad y el Protocolo Yap integrado para funciones sociales. BrainSafes aprovecha las tarifas de gas 95% menores, confirmaciones más rápidas y mayor throughput. ¿Quieres saber sobre el bridge L1↔L2 o las optimizaciones específicas?";
+    }
+    
+    if (input.includes('stylus') || input.includes('rust') || input.includes('wasm')) {
+      return "Arbitrum Stylus nos permite ejecutar código Rust on-chain para procesamiento IA más eficiente. En BrainSafes, usamos Stylus para AIProcessor, análisis predictivo y optimizaciones de gas. Esto reduce costos y mejora el rendimiento de nuestros algoritmos de IA. ¿Te interesa la implementación técnica?";
+    }
+    
+    if (input.includes('contrato') || input.includes('smart contract')) {
+      return "BrainSafes tiene una arquitectura modular con contratos especializados: BrainSafes.sol (core), ScholarshipManager, JobMarketplace, CertificateNFT, EDUToken, AIOracle, y más. Todos optimizados para Arbitrum con precompilados, batch processing y gas optimization. ¿Quieres conocer algún contrato específico?";
+    }
+    
+    if (input.includes('bridge') || input.includes('cross-chain') || input.includes('l1') || input.includes('l2')) {
+      return "Nuestro CrossChainBridge permite transferencias seguras entre Ethereum L1 y Arbitrum L2. Utiliza retryable tickets, merkle proofs y el sistema de mensajería de Arbitrum. Los usuarios pueden mover tokens EDU, certificados y datos entre redes. ¿Necesitas ayuda con una transferencia específica?";
+    }
+    
+    if (input.includes('gas') || input.includes('fee') || input.includes('costo')) {
+      return "En Arbitrum, las tarifas de gas son hasta 95% menores que en Ethereum. BrainSafes está optimizado con batch processing, precompilados de Arbitrum y compresión de datos. Una transacción que costaría $50 en Ethereum cuesta solo $2.50 en Arbitrum. ¿Quieres ver comparaciones específicas?";
+    }
+    
+    if (input.includes('nft') || input.includes('certificado')) {
+      return "Los CertificateNFT en BrainSafes son credenciales verificables únicas. Cada certificado está respaldado por blockchain, es inmutable y puede ser verificado por empleadores. Utilizamos metadatos IPFS y estándares ERC-721 optimizados para Arbitrum. ¿Quieres crear o verificar un certificado?";
+    }
+    
+    if (input.includes('ia') || input.includes('ai') || input.includes('oracle')) {
+      return "Nuestro AIOracle utiliza Stylus para procesamiento on-chain de IA. Analiza patrones de aprendizaje, predice rendimiento estudiantil y optimiza rutas de aprendizaje. Integra Chainlink para datos externos y procesamiento por lotes para eficiencia. ¿Te interesa el análisis predictivo?";
+    }
+    
+    if (input.includes('beca') || input.includes('scholarship')) {
+      return "El ScholarshipManager gestiona becas descentralizadas con contratos inteligentes transparentes. Los fondos se distribuyen automáticamente según criterios verificables, con tracking de progreso y pagos por hitos. Todo optimizado para Arbitrum con menores costos. ¿Quieres aplicar a una beca?";
+    }
+    
+    if (input.includes('marketplace') || input.includes('trabajo') || input.includes('empleo')) {
+      return "Nuestro JobMarketplace conecta estudiantes con empleos Web3. Utiliza IA para matching inteligente, contratos de trabajo automatizados y pagos en tokens EDU. Integra con el sistema de reputación y certificados para verificación de habilidades. ¿Buscas trabajo o quieres contratar?";
+    }
+    
+    if (input.includes('seguridad') || input.includes('audit') || input.includes('hack')) {
+      return "BrainSafes tiene múltiples capas de seguridad: contratos auditados, SecurityManager con roles granulares, monitoreo en tiempo real, y integración con herramientas como Slither. Utilizamos OpenZeppelin y mejores prácticas de Arbitrum. ¿Tienes alguna preocupación específica de seguridad?";
+    }
+    
+    if (input.includes('analytics') || input.includes('métricas') || input.includes('datos')) {
+      return "Nuestro AdvancedAnalytics proporciona insights en tiempo real sobre aprendizaje, rendimiento de cursos, y tendencias del mercado. Utiliza BrainSafesMetrics para tracking detallado y predicciones basadas en IA. ¿Quieres ver analytics específicos?";
+    }
+    
+    if (input.includes('yap') || input.includes('social') || input.includes('comunidad')) {
+      return "Con la integración del Protocolo Yap en Arbitrum, BrainSafes ahora tiene funciones sociales avanzadas. Los usuarios pueden interactuar, formar comunidades de estudio, y colaborar en proyectos. Esto mejora la experiencia de aprendizaje colaborativo. ¿Quieres explorar las funciones sociales?";
+    }
+    
+    if (input.includes('blockchain') || input.includes('web3')) {
+      return "Blockchain es la base de BrainSafes. Utilizamos Arbitrum para escalabilidad, Stylus para IA on-chain, y bridges para interoperabilidad. Nuestro ecosistema incluye educación descentralizada, certificados verificables, y marketplace Web3. ¿Te interesa algún aspecto específico?";
+    }
+    
+    if (input.includes('defi') || input.includes('finanzas')) {
+      return "BrainSafes integra DeFi con educación. Los tokens EDU permiten staking, yield farming educativo, y pagos descentralizados. Nuestro sistema de becas utiliza contratos inteligentes para distribución automática de fondos. ¿Quieres explorar las oportunidades DeFi?";
+    }
+    
+    if (input.includes('mercado') || input.includes('crypto') || input.includes('precio')) {
+      return "Nuestro análisis de mercado utiliza IA on-chain para predecir tendencias educativas y oportunidades de empleo Web3. Integra datos de múltiples fuentes y proporciona insights personalizados para estudiantes e instructores. ¿Quieres ver análisis específicos?";
+    }
+    
+    // Respuesta por defecto más contextual
+    return "Interesante pregunta sobre BrainSafes. Como asistente IA especializado en nuestro ecosistema educativo descentralizado, puedo ayudarte con Arbitrum, Stylus, contratos inteligentes, bridges cross-chain, gas optimization, certificados NFT, becas, marketplace, seguridad, analytics y más. ¿Podrías ser más específico sobre lo que te gustaría saber?";
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -287,7 +334,7 @@ const EnhancedAIChatWidget = () => {
           <span className="relative z-10">
             {isOpen ? '✕' : '🤖'}
           </span>
-        </motion.button>
+        </button>
       </motion.div>
 
       {/* Panel del chatbot */}
@@ -344,7 +391,7 @@ const EnhancedAIChatWidget = () => {
               </motion.div>
 
               {/* Área de mensajes */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 max-h-[300px] sm:max-h-[350px] md:max-h-[400px]">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 max-h-[350px] sm:max-h-[400px] md:max-h-[450px]">
                 <AnimatePresence>
                   {messages.map((message, index) => (
                     <NeuralMessage
