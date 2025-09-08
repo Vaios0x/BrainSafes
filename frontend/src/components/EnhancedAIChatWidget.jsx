@@ -384,9 +384,10 @@ const EnhancedAIChatWidget = () => {
                 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors duration-200 cursor-pointer"
+                  className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 cursor-pointer border border-white/20 hover:border-white/40"
+                  title="Cerrar chatbot"
                 >
-                  <span className="text-white text-sm sm:text-base">×</span>
+                  <span className="text-white text-lg sm:text-xl font-bold">×</span>
                 </button>
               </motion.div>
 
