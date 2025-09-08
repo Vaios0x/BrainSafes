@@ -63,7 +63,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 3004,
+    host: true, // Permite acceso desde cualquier IP
+    open: true, // Abre automáticamente el navegador
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
